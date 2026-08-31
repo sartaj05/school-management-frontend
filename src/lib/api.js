@@ -29,6 +29,7 @@ export const schoolApi = {
   students: () => api('/student/all'),
   classes: () => api('/class/all'),
   users: (superAdmin = false) => api(superAdmin ? '/super-admin/users' : '/users'),
+  createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values) }),
   createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values) }),
   createClass: (values) => api('/class/create', { method: 'POST', body: JSON.stringify(values) }),
   attendance: (date, className = 'All', section = 'All') => api(`/attendance/get?attendance_date=${date}&class_name=${encodeURIComponent(className)}&section=${encodeURIComponent(section)}`),
