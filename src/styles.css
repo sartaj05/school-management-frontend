@@ -12,3 +12,4 @@
 
 /* Wide dashboards should use all space remaining beside the sidebar. */
 .dashboard-content{max-width:none;width:100%}
+.field-help{display:block;margin-top:5px;color:#879aa8;font-size:10px;font-weight:500}
