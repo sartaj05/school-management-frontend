@@ -1,0 +1,41 @@
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+
+export class ApiError extends Error {
+  constructor(message, status, data) { super(message); this.status = status; this.data = data }
+}
+
+export async function api(path, options = {}) {
+  const token = localStorage.getItem('school_access_token')
+  const isForm = options.body instanceof FormData
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      ...(!isForm && options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new ApiError(data.error || data.message || 'Request failed. Please try again.', response.status, data)
+  return data
+}
+
+export const schoolApi = {
+  schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values) }),
+  superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
+  dashboard: () => api('/dashboard/home'),
+  schools: () => api('/school/list'),
+  students: () => api('/student/all'),
+  classes: () => api('/class/all'),
+  users: (superAdmin = false) => api(superAdmin ? '/super-admin/users' : '/users'),
+  createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values) }),
+  createClass: (values) => api('/class/create', { method: 'POST', body: JSON.stringify(values) }),
+  attendance: (date, className = 'All', section = 'All') => api(`/attendance/get?attendance_date=${date}&class_name=${encodeURIComponent(className)}&section=${encodeURIComponent(section)}`),
+  markAttendance: (values) => api('/attendance/mark', { method: 'POST', body: JSON.stringify(values) }),
+}
+
+function toFormData(values) {
+  const form = new FormData()
+  Object.entries(values).forEach(([key, value]) => { if (value !== '' && value != null) form.append(key, value) })
+  return form
+}
