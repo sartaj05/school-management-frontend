@@ -52,6 +52,7 @@ export const schoolApi = {
   sendNotification: (type, values) => api(`/notifications/${type}`, { method: 'POST', body: JSON.stringify(values) }),
   notificationHistory: (limit = 50) => api(`/notifications/all?limit=${limit}`),
   notificationsByUser: (userId) => api(`/notifications/user?user_id=${encodeURIComponent(userId)}`),
+  upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
 function toFormData(values) {
