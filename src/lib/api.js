@@ -34,6 +34,7 @@ export const schoolApi = {
   dashboard: () => api('/dashboard/home'),
   people: () => api('/master/people'),
   academics: () => api('/master/academics'),
+  settings: () => api('/master/settings'),
   schools: () => api('/school/list'),
   createSchool: (values) => api('/school/setup', { method: 'POST', body: toFormData(values) }),
   students: () => api('/student/all'),
