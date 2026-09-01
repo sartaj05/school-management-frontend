@@ -32,6 +32,7 @@ export const schoolApi = {
   schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values) }),
   superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
   dashboard: () => api('/dashboard/home'),
+  people: () => api('/master/people'),
   schools: () => api('/school/list'),
   createSchool: (values) => api('/school/setup', { method: 'POST', body: toFormData(values) }),
   students: () => api('/student/all'),
