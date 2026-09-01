@@ -1,5 +1,13 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
+export function schoolLogoUrl(logoPath) {
+  if (!logoPath) return ''
+  const normalized = logoPath.replaceAll('\\', '/')
+  const relativePath = normalized.includes('uploads/') ? normalized.split('uploads/').pop() : normalized
+  const encodedPath = relativePath.split('/').map(encodeURIComponent).join('/')
+  return `${API_BASE}/school/uploads/${encodedPath}`
+}
+
 export class ApiError extends Error {
   constructor(message, status, data) { super(message); this.status = status; this.data = data }
 }
