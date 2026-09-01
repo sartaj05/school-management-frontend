@@ -37,6 +37,7 @@ export const schoolApi = {
   attendance: (date, className = 'All', section = 'All') => api(`/attendance/get?attendance_date=${date}&class_name=${encodeURIComponent(className)}&section=${encodeURIComponent(section)}`),
   markAttendance: (values) => api('/attendance/mark', { method: 'POST', body: JSON.stringify(values) }),
   sendNotification: (type, values) => api(`/notifications/${type}`, { method: 'POST', body: JSON.stringify(values) }),
+  notificationHistory: (limit = 50) => api(`/notifications/all?limit=${limit}`),
 }
 
 function toFormData(values) {
