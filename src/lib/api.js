@@ -12,19 +12,49 @@ export class ApiError extends Error {
   constructor(message, status, data) { super(message); this.status = status; this.data = data }
 }
 
+let refreshPromise = null
+
 export async function api(path, options = {}) {
+  const { retry = true, ...fetchOptions } = options
   const token = localStorage.getItem('school_access_token')
-  const isForm = options.body instanceof FormData
+  const isForm = fetchOptions.body instanceof FormData
   const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
+    ...fetchOptions,
     headers: {
-      ...(!isForm && options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...(!isForm && fetchOptions.body ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
+      ...fetchOptions.headers,
     },
   })
   const data = await response.json().catch(() => ({}))
+  const refreshToken = localStorage.getItem('school_refresh_token')
+  if (response.status === 401 && retry && refreshToken && path !== '/auth/refresh') {
+    try {
+      if (!refreshPromise) refreshPromise = refreshAccessToken(refreshToken).finally(() => { refreshPromise = null })
+      await refreshPromise
+      return api(path, { ...fetchOptions, retry: false })
+    } catch {
+      localStorage.removeItem('school_access_token')
+      localStorage.removeItem('school_refresh_token')
+      localStorage.removeItem('school_session')
+      window.dispatchEvent(new Event('school-session-expired'))
+    }
+  }
   if (!response.ok) throw new ApiError(data.error || data.message || 'Request failed. Please try again.', response.status, data)
+  return data
+}
+
+async function refreshAccessToken(refreshToken) {
+  const response = await fetch(`${API_BASE}/auth/refresh`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${refreshToken}` },
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new ApiError(data.error || data.message || 'Your session has expired.', response.status, data)
+  localStorage.setItem('school_access_token', data.token)
+  localStorage.setItem('school_refresh_token', data.refresh_token)
+  const session = JSON.parse(localStorage.getItem('school_session') || '{}')
+  localStorage.setItem('school_session', JSON.stringify({ ...session, token: data.token, refresh_token: data.refresh_token }))
   return data
 }
 
