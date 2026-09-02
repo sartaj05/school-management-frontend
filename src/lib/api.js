@@ -63,6 +63,7 @@ export const schoolApi = {
   changePassword: (values) => api('/auth/change-password', { method: 'POST', body: JSON.stringify(values) }),
   forgotPassword: (values) => api('/auth/forgot-password', { method: 'POST', body: JSON.stringify(values) }),
   resetPassword: (values) => api('/auth/reset-password', { method: 'POST', body: JSON.stringify(values) }),
+  logout: (refreshToken) => api('/auth/logout', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${refreshToken}` } }),
   superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
   dashboard: () => api('/dashboard/home'),
   people: () => api('/master/people'),
