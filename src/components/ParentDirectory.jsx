@@ -1,6 +1,7 @@
 import { Edit3, Eye, HeartHandshake, Save, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi } from '../lib/api'
+import ParentRelationshipManager from './ParentRelationshipManager'
 
 export default function ParentDirectory({ rows, canDelete, reload }) {
   const [selected, setSelected] = useState(null)
@@ -13,7 +14,7 @@ export default function ParentDirectory({ rows, canDelete, reload }) {
     setBusy(true); setError(''); setMessage('')
     try {
       const result = await schoolApi.parent(parent.id)
-      setSelected(result.parent); setEditing(edit && result.parent.status === 'active')
+      setSelected({ ...result.parent, _canManage: canDelete }); setEditing(edit && result.parent.status === 'active')
     } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
 
@@ -22,7 +23,7 @@ export default function ParentDirectory({ rows, canDelete, reload }) {
     try {
       const values = { father_name: selected.father_name || '', mother_name: selected.mother_name || '', mobile: selected.mobile || '', email: selected.email || '', address: selected.address || '' }
       const result = await schoolApi.updateParent(selected.id, values)
-      setSelected(result.parent); setEditing(false); setMessage(result.message); await reload()
+      setSelected({ ...result.parent, _canManage: canDelete }); setEditing(false); setMessage(result.message); await reload()
     } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
 
@@ -41,6 +42,10 @@ export default function ParentDirectory({ rows, canDelete, reload }) {
 }
 
 function ParentDetails({ parent }) {
+  return <><ParentProfileFields parent={parent} /><ParentRelationshipManager parent={parent} canManage={Boolean(parent._canManage)} /></>
+}
+
+function ParentProfileFields({ parent }) {
   const values = [['Father name', parent.father_name], ['Mother name', parent.mother_name], ['Mobile', parent.mobile], ['Email', parent.email], ['Address', parent.address], ['Status', parent.status], ['Created', parent.created_at ? new Date(parent.created_at).toLocaleString() : null]]
   return <dl className="student-details-grid">{values.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || '—'}</dd></div>)}</dl>
 }
