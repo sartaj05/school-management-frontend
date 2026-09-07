@@ -2,6 +2,7 @@ import { Edit3, Eye, HeartHandshake, Save, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi } from '../lib/api'
 import ParentRelationshipManager from './ParentRelationshipManager'
+import { confirmPopup } from '../lib/confirmPopup'
 
 export default function ParentDirectory({ rows, canDelete, reload }) {
   const [selected, setSelected] = useState(null)
@@ -29,7 +30,7 @@ export default function ParentDirectory({ rows, canDelete, reload }) {
 
   async function archive(parent) {
     const name = parent.father_name || parent.mother_name || 'this parent'
-    if (!window.confirm(`Archive ${name}? Contact history will be preserved.`)) return
+    if (!await confirmPopup({ title: `Archive ${name}?`, message: 'Contact and relationship history will be preserved.', confirmLabel: 'Archive parent' })) return
     setBusy(true); setError(''); setMessage('')
     try {
       const result = await schoolApi.deleteParent(parent.id)

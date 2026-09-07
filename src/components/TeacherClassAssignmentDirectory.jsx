@@ -1,6 +1,7 @@
 import { Edit3, Link2, Plus, Save, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { confirmPopup } from '../lib/confirmPopup'
 
 const empty = { teacher_id: '', class_id: '', subject_id: '', academic_year: '' }
 
@@ -67,7 +68,7 @@ export default function TeacherClassAssignmentDirectory({ rows, canManage, reloa
   }
 
   async function archive(item) {
-    if (!window.confirm(`Archive the assignment for ${item.teacher_name}?`)) return
+    if (!await confirmPopup({ title: `Archive ${item.teacher_name}'s assignment?`, message: `${item.class_name} · ${item.subject_name} will become inactive.`, confirmLabel: 'Archive assignment' })) return
     setBusy(true)
     setError('')
     setMessage('')
@@ -109,4 +110,3 @@ export default function TeacherClassAssignmentDirectory({ rows, canManage, reloa
     </section>
   </>
 }
-

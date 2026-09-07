@@ -1,6 +1,7 @@
 import { LogOut, MonitorSmartphone, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { confirmPopup } from '../lib/confirmPopup'
 
 export default function ActiveSessionsCard() {
   const [sessions, setSessions] = useState([])
@@ -24,7 +25,7 @@ export default function ActiveSessionsCard() {
   useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [load])
 
   async function revoke(session) {
-    if (!window.confirm(`Sign out ${session.device}?`)) return
+    if (!await confirmPopup({ title: 'Sign out this device?', message: `${session.device} will lose refresh access and must sign in again.`, confirmLabel: 'Sign out' })) return
     setRevoking(session.id); setError(''); setMessage('')
     try {
       const result = await schoolApi.revokeSession(session.id)

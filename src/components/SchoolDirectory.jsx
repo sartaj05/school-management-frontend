@@ -1,6 +1,7 @@
 import { Building2, Edit3, Eye, Power, PowerOff, Save, X } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi, schoolLogoUrl } from '../lib/api'
+import { confirmPopup } from '../lib/confirmPopup'
 
 export default function SchoolDirectory({ rows, reload }) {
   const [selected, setSelected] = useState(null)
@@ -29,7 +30,7 @@ export default function SchoolDirectory({ rows, reload }) {
   async function toggle(item) {
     const next = item.status === 'active' ? 'inactive' : 'active'
     const warning = next === 'inactive' ? ' Users will not be able to log in and active refresh sessions will be revoked.' : ''
-    if (!window.confirm(`${next === 'active' ? 'Activate' : 'Deactivate'} ${item.schoolName}?${warning}`)) return
+    if (!await confirmPopup({ title: `${next === 'active' ? 'Activate' : 'Deactivate'} ${item.schoolName}?`, message: warning.trim() || 'Users will be able to sign in again.', confirmLabel: next === 'active' ? 'Activate school' : 'Deactivate school', tone: next === 'active' ? 'primary' : 'danger' })) return
     setBusy(true); setError(''); setMessage('')
     try {
       const result = await schoolApi.updateSchoolStatus(item.id, next)

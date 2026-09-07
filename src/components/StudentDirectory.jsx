@@ -1,6 +1,7 @@
 import { Edit3, Eye, Save, Trash2, UserRound, X } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { confirmPopup } from '../lib/confirmPopup'
 
 const editableFields = ['admission_no', 'first_name', 'last_name', 'gender', 'dob', 'mobile', 'email', 'father_name', 'mother_name', 'class_name', 'section', 'address']
 
@@ -29,7 +30,7 @@ export default function StudentDirectory({ rows, canDelete, reload }) {
   }
 
   async function archive(student) {
-    if (!window.confirm(`Archive ${student.first_name} ${student.last_name || ''}? Attendance history will be preserved.`)) return
+    if (!await confirmPopup({ title: `Archive ${student.first_name} ${student.last_name || ''}?`, message: 'Attendance history will be preserved.', confirmLabel: 'Archive student' })) return
     setBusy(true); setError(''); setMessage('')
     try {
       const result = await schoolApi.deleteStudent(student.id)

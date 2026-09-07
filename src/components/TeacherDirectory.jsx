@@ -1,6 +1,7 @@
 import { Edit3, Eye, GraduationCap, Save, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { confirmPopup } from '../lib/confirmPopup'
 
 const fields = ['full_name', 'email', 'phone', 'gender', 'address', 'employment_type', 'joining_date', 'department', 'role', 'section']
 
@@ -29,7 +30,7 @@ export default function TeacherDirectory({ rows, canManage, reload }) {
   }
 
   async function archive(teacher) {
-    if (!window.confirm(`Archive ${teacher.full_name}? Professional history will be preserved.`)) return
+    if (!await confirmPopup({ title: `Archive ${teacher.full_name}?`, message: 'Professional and academic history will be preserved.', confirmLabel: 'Archive teacher' })) return
     setBusy(true); setError(''); setMessage('')
     try {
       const result = await schoolApi.deleteTeacher(teacher.id)

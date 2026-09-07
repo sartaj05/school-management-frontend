@@ -1,6 +1,7 @@
 import { BookOpen, Edit3, Eye, Plus, Save, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { confirmPopup } from '../lib/confirmPopup'
 
 const empty = { code: '', name: '', description: '' }
 
@@ -28,7 +29,7 @@ export default function SubjectDirectory({ rows, canManage, reload }) {
   }
 
   async function archive(item) {
-    if (!window.confirm(`Archive ${item.name}? Existing academic history will be preserved.`)) return
+    if (!await confirmPopup({ title: `Archive ${item.name}?`, message: 'Existing academic history will be preserved.', confirmLabel: 'Archive subject' })) return
     setBusy(true); setError(''); setMessage('')
     try {
       const result = await schoolApi.deleteSubject(item.id)

@@ -1,6 +1,7 @@
 import { BookOpen, Edit3, Eye, Save, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { confirmPopup } from '../lib/confirmPopup'
 
 export default function ClassDirectory({ rows, canDelete, reload }) {
   const [selected, setSelected] = useState(null)
@@ -26,7 +27,7 @@ export default function ClassDirectory({ rows, canDelete, reload }) {
   }
 
   async function archive(item) {
-    if (!window.confirm(`Archive ${item.class_name}? Student and attendance history will be preserved.`)) return
+    if (!await confirmPopup({ title: `Archive ${item.class_name}?`, message: 'Student and attendance history will be preserved.', confirmLabel: 'Archive class' })) return
     setBusy(true); setError(''); setMessage('')
     try {
       const result = await schoolApi.deleteClass(item.id)
