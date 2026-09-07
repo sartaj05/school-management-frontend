@@ -120,6 +120,7 @@ export const schoolApi = {
   createParent: (values) => api('/parent/create', { method: 'POST', body: JSON.stringify(values) }),
   createClass: (values) => api('/class/create', { method: 'POST', body: JSON.stringify(values) }),
   attendance: (date, className = 'All', section = 'All') => api(`/attendance/get?attendance_date=${date}&class_name=${encodeURIComponent(className)}&section=${encodeURIComponent(section)}`),
+  attendanceReport: (filters = '') => api(`/attendance/report${filters ? `?${filters}` : ''}`),
   markAttendance: (values) => api('/attendance/mark', { method: 'POST', body: JSON.stringify(values) }),
   sendNotification: (type, values) => api(`/notifications/${type}`, { method: 'POST', body: JSON.stringify(values) }),
   notificationHistory: (limit = 50) => api(`/notifications/all?limit=${limit}`),
