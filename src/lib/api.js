@@ -125,6 +125,11 @@ export const schoolApi = {
   sendNotification: (type, values) => api(`/notifications/${type}`, { method: 'POST', body: JSON.stringify(values) }),
   notificationHistory: (limit = 50) => api(`/notifications/all?limit=${limit}`),
   notificationsByUser: (userId) => api(`/notifications/user?user_id=${encodeURIComponent(userId)}`),
+  notificationQueue: (status = 'all', page = 1) => api(`/notifications/queue?status=${encodeURIComponent(status)}&page=${page}&per_page=25`),
+  queueNotification: (values) => api('/notifications/queue', { method: 'POST', body: JSON.stringify(values) }),
+  retryNotification: (notificationId) => api(`/notifications/queue/${notificationId}/retry`, { method: 'POST' }),
+  cancelNotification: (notificationId) => api(`/notifications/queue/${notificationId}/cancel`, { method: 'POST' }),
+  processNotificationQueue: (limit = 25) => api('/notifications/queue/process', { method: 'POST', body: JSON.stringify({ limit }) }),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
