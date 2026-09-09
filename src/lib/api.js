@@ -152,6 +152,13 @@ export const schoolApi = {
   assignmentStudents: (assignmentId) => api(`/assignments/${assignmentId}/students`),
   saveAssignmentSubmission: (assignmentId, values) => api(`/assignments/${assignmentId}/submissions`, { method: 'POST', body: JSON.stringify(values) }),
   gradeAssignmentSubmission: (assignmentId, studentId, values) => api(`/assignments/${assignmentId}/submissions/${studentId}/grade`, { method: 'PUT', body: JSON.stringify(values) }),
+  libraryBooks: (search = '') => api(`/library/books${search ? `?search=${encodeURIComponent(search)}` : ''}`),
+  createLibraryBook: (values) => api('/library/books', { method: 'POST', body: JSON.stringify(values) }),
+  updateLibraryBook: (bookId, values) => api(`/library/books/${bookId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  issueLibraryBook: (bookId, values) => api(`/library/books/${bookId}/issue`, { method: 'POST', body: JSON.stringify(values) }),
+  libraryLoans: (status = 'all') => api(`/library/loans?status=${encodeURIComponent(status)}`),
+  returnLibraryBook: (loanId, values) => api(`/library/loans/${loanId}/return`, { method: 'POST', body: JSON.stringify(values) }),
+  librarySummary: () => api('/library/summary'),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
