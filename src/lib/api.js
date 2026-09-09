@@ -137,6 +137,14 @@ export const schoolApi = {
   examStudents: (examId, subjectId) => api(`/exams/${examId}/students?subject_id=${encodeURIComponent(subjectId)}`),
   saveExamMarks: (examId, values) => api(`/exams/${examId}/marks`, { method: 'PUT', body: JSON.stringify(values) }),
   examReportCards: (examId, studentId = '') => api(`/exams/${examId}/report-cards${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  feeStructures: () => api('/fees/structures'),
+  createFeeStructure: (values) => api('/fees/structures', { method: 'POST', body: JSON.stringify(values) }),
+  generateFeeInvoices: (structureId) => api(`/fees/structures/${structureId}/generate`, { method: 'POST' }),
+  feeInvoices: (status = 'all') => api(`/fees/invoices?status=${encodeURIComponent(status)}`),
+  recordFeePayment: (invoiceId, values) => api(`/fees/invoices/${invoiceId}/payments`, { method: 'POST', body: JSON.stringify(values) }),
+  feePayments: (invoiceId) => api(`/fees/invoices/${invoiceId}/payments`),
+  queueFeeReminder: (invoiceId, values) => api(`/fees/invoices/${invoiceId}/reminder`, { method: 'POST', body: JSON.stringify(values) }),
+  feeSummary: () => api('/fees/summary'),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
