@@ -145,6 +145,13 @@ export const schoolApi = {
   feePayments: (invoiceId) => api(`/fees/invoices/${invoiceId}/payments`),
   queueFeeReminder: (invoiceId, values) => api(`/fees/invoices/${invoiceId}/reminder`, { method: 'POST', body: JSON.stringify(values) }),
   feeSummary: () => api('/fees/summary'),
+  assignments: (status = 'all') => api(`/assignments?status=${encodeURIComponent(status)}`),
+  createAssignment: (values) => api('/assignments', { method: 'POST', body: JSON.stringify(values) }),
+  updateAssignment: (assignmentId, values) => api(`/assignments/${assignmentId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  changeAssignmentStatus: (assignmentId, status) => api(`/assignments/${assignmentId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  assignmentStudents: (assignmentId) => api(`/assignments/${assignmentId}/students`),
+  saveAssignmentSubmission: (assignmentId, values) => api(`/assignments/${assignmentId}/submissions`, { method: 'POST', body: JSON.stringify(values) }),
+  gradeAssignmentSubmission: (assignmentId, studentId, values) => api(`/assignments/${assignmentId}/submissions/${studentId}/grade`, { method: 'PUT', body: JSON.stringify(values) }),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
