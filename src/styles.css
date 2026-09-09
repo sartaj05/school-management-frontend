@@ -81,6 +81,15 @@ body,.site-shell,.app-shell,.login-panel{background:var(--background);color:var(
 .login-tabs button{color:#64748b}.login-tabs button.active{color:var(--blue);box-shadow:0 3px 10px rgba(79,70,229,.10)}
 .input-wrap:focus-within,.field-grid input:focus,.field-grid select:focus,.field-grid textarea:focus,.attendance-filter input:focus,.attendance-report-filter input:focus,.password-fields input:focus,.profile-update-fields input:focus,.user-notification-lookup input:focus,.maintenance-body>label input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--pale)}
 .sidebar nav button:hover{background:#273449;color:#fff}.sidebar nav button.active{background:var(--blue);color:#fff;box-shadow:0 8px 20px rgba(79,70,229,.28)}
+
+/* Keep long role-based menus usable on short desktop and mobile viewports. */
+.sidebar{overflow:hidden}
+.sidebar-head,.profile-card{flex:0 0 auto}
+.sidebar nav{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#64748b transparent;overscroll-behavior:contain}
+.sidebar nav::-webkit-scrollbar{width:6px}
+.sidebar nav::-webkit-scrollbar-track{background:transparent}
+.sidebar nav::-webkit-scrollbar-thumb{background:#64748b;border-radius:999px}
+.sidebar nav::-webkit-scrollbar-thumb:hover{background:#94a3b8}
 .panel-title span,.people-hero span,.settings-profile small,.relationship-heading span{color:var(--blue)}
 .panel-title>b,.relationship-list article>span{background:var(--pale);color:var(--deep)}
 .empty-panel>svg,.people-hero>svg,.settings-logo,.academic-actions button>svg:first-child,.class-schedule time{color:var(--blue)}
