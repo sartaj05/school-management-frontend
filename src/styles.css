@@ -85,7 +85,7 @@ body,.site-shell,.app-shell,.login-panel{background:var(--background);color:var(
 /* Keep long role-based menus usable on short desktop and mobile viewports. */
 .sidebar{overflow:hidden}
 .sidebar-head,.profile-card{flex:0 0 auto}
-.sidebar nav{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#64748b transparent;overscroll-behavior:contain}
+.sidebar nav{flex:1;min-height:0;align-content:start;overflow-y:auto;overflow-x:hidden;padding-right:6px;scrollbar-width:thin;scrollbar-color:#64748b transparent;overscroll-behavior:contain}
 .sidebar nav::-webkit-scrollbar{width:6px}
 .sidebar nav::-webkit-scrollbar-track{background:transparent}
 .sidebar nav::-webkit-scrollbar-thumb{background:#64748b;border-radius:999px}

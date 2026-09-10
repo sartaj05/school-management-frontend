@@ -10,7 +10,12 @@ export default function TimetableDirectory({ rows, canManage, reload }) {
   const [options,setOptions]=useState({classes:[],subjects:[],teachers:[]})
   const [editing,setEditing]=useState(null), [form,setForm]=useState(blank)
   const [busy,setBusy]=useState(false), [error,setError]=useState(''), [message,setMessage]=useState('')
-  useEffect(()=>{Promise.all([schoolApi.classes(),schoolApi.subjects(),schoolApi.teachers()]).then(([c,s,t])=>setOptions({classes:(c.data||[]).filter(x=>x.status==='active'),subjects:(s.data||[]).filter(x=>x.status==='active'),teachers:(t.data||[]).filter(x=>x.status==='active')})).catch(e=>setError(e.message))},[])
+  useEffect(()=>{
+    if (!canManage) return
+    Promise.all([schoolApi.classes(),schoolApi.subjects(),schoolApi.teachers()])
+      .then(([c,s,t])=>setOptions({classes:(c.data||[]).filter(x=>x.status==='active'),subjects:(s.data||[]).filter(x=>x.status==='active'),teachers:(t.data||[]).filter(x=>x.status==='active')}))
+      .catch(e=>setError(e.message))
+  },[canManage])
   const field=(name,value)=>setForm({...form,[name]:value})
   function open(row){setEditing(row?.id||'new');setForm(row?{class_id:row.class_id,subject_id:row.subject_id,teacher_id:row.teacher_id,weekday:row.weekday,start_time:row.start_time.slice(0,5),end_time:row.end_time.slice(0,5),room:row.room||''}:blank);setError('');setMessage('')}
   async function save(e){e.preventDefault();setBusy(true);setError('');try{const result=editing==='new'?await schoolApi.createTimetablePeriod(form):await schoolApi.updateTimetablePeriod(editing,form);setMessage(result.message);setEditing(null);await reload()}catch(err){setError(err.message)}finally{setBusy(false)}}
