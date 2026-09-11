@@ -44,6 +44,13 @@ export async function api(path, options = {}) {
   return data
 }
 
+export async function downloadApi(path, filename) {
+  const token = localStorage.getItem('school_access_token')
+  const response = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!response.ok) { const data = await response.json().catch(() => ({})); throw new ApiError(data.message || 'Download failed.', response.status, data) }
+  const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href=url; link.download=filename; link.target='_blank'; link.click(); URL.revokeObjectURL(url)
+}
+
 async function refreshAccessToken(refreshToken) {
   const response = await fetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',
@@ -179,6 +186,9 @@ export const schoolApi = {
   submitAdmission: (values) => api('/admissions/apply', { method: 'POST', body: JSON.stringify(values) }),
   admissionApplications: (status = 'all') => api(`/admissions/applications?status=${encodeURIComponent(status)}`),
   updateAdmissionApplication: (applicationId, values) => api(`/admissions/applications/${applicationId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  documents: () => api('/documents/history'),
+  downloadAttendanceCsv: (attendanceDate) => downloadApi(`/documents/attendance.csv?attendance_date=${encodeURIComponent(attendanceDate)}`, `attendance-${attendanceDate}.csv`),
+  openReportCard: (examId, studentId) => downloadApi(`/documents/report-cards/${examId}/students/${studentId}`, `report-card-${examId}-${studentId}.html`),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
