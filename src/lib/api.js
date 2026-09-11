@@ -159,6 +159,18 @@ export const schoolApi = {
   libraryLoans: (status = 'all') => api(`/library/loans?status=${encodeURIComponent(status)}`),
   returnLibraryBook: (loanId, values) => api(`/library/loans/${loanId}/return`, { method: 'POST', body: JSON.stringify(values) }),
   librarySummary: () => api('/library/summary'),
+  portalLinkOptions: (profileType) => api(`/portal/link-options?profile_type=${encodeURIComponent(profileType)}`),
+  portalLinks: () => api('/portal/profile-links'),
+  createPortalLink: (values) => api('/portal/profile-links', { method: 'POST', body: JSON.stringify(values) }),
+  revokePortalLink: (linkId) => api(`/portal/profile-links/${linkId}`, { method: 'DELETE' }),
+  portalMe: () => api('/portal/me'),
+  portalOverview: (studentId) => api(`/portal/overview${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  portalAttendance: (studentId) => api(`/portal/attendance${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  portalTimetable: (studentId) => api(`/portal/timetable${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  portalAssignments: (studentId) => api(`/portal/assignments${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  portalResults: (studentId) => api(`/portal/results${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  portalFees: (studentId) => api(`/portal/fees${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  portalLibraryLoans: (studentId) => api(`/portal/library-loans${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
