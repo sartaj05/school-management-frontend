@@ -5,7 +5,7 @@ import { schoolApi } from '../lib/api'
 const tabs = [
   ['overview', 'Overview', UserRound], ['attendance', 'Attendance', CalendarCheck],
   ['timetable', 'Timetable', CalendarCheck], ['assignments', 'Assignments', BookCheck],
-  ['results', 'Results', Award], ['fees', 'Fees', CircleDollarSign], ['library', 'Library', LibraryBig],
+  ['results', 'Results', Award], ['fees', 'Fees', CircleDollarSign], ['library', 'Library', LibraryBig], ['calendar', 'Calendar', CalendarCheck],
 ]
 
 const date = value => value ? new Date(value).toLocaleDateString() : '—'
@@ -24,9 +24,10 @@ export default function ParentStudentPortal() {
 
   useEffect(() => {
     if (!studentId) return
-    const methods = { overview: schoolApi.portalOverview, attendance: schoolApi.portalAttendance, timetable: schoolApi.portalTimetable, assignments: schoolApi.portalAssignments, results: schoolApi.portalResults, fees: schoolApi.portalFees, library: schoolApi.portalLibraryLoans }
+    const methods = { overview: schoolApi.portalOverview, attendance: schoolApi.portalAttendance, timetable: schoolApi.portalTimetable, assignments: schoolApi.portalAssignments, results: schoolApi.portalResults, fees: schoolApi.portalFees, library: schoolApi.portalLibraryLoans, calendar: schoolApi.calendarEvents }
     setLoading(true); setError(''); setData(null)
-    methods[tab](studentId).then(setData).catch(e => setError(e.message)).finally(() => setLoading(false))
+    const portalRequest = tab === 'calendar' ? methods[tab]() : methods[tab](studentId)
+    portalRequest.then(setData).catch(e => setError(e.message)).finally(() => setLoading(false))
   }, [tab, studentId])
 
   if (loading && !me) return <div className="loading-grid"><i/><i/><i/></div>
@@ -50,9 +51,15 @@ function PortalData({ tab, data }) {
     <article><small>Fee balance</small><b>₹{data?.fee_balance ?? 0}</b><span>Current outstanding amount</span></article>
     <article><small>Library loans</small><b>{data?.active_library_loans ?? 0}</b><span>Books currently issued</span></article>
   </div>
+  if (tab === 'calendar') return <PortalCalendar rows={Array.isArray(data) ? data : []}/>
   const rows = Array.isArray(data) ? data : []
   if (!rows.length) return <section className="empty-state"><BookCheck/><h3>No records found</h3><p>There is no information to display for this student yet.</p></section>
   return <section className="data-panel"><div className="table-wrap"><table><thead><tr>{headers(tab).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{rows.map(row => <tr key={row.id || `${row.exam_id}-${row.subject_code}`}><Cells tab={tab} row={row}/></tr>)}</tbody></table></div></section>
+}
+
+function PortalCalendar({ rows }) {
+  if (!rows.length) return <section className="empty-state"><CalendarCheck/><h3>No upcoming events</h3><p>New school events and holidays will appear here.</p></section>
+  return <section className="calendar-event-grid">{rows.map(event=><article key={event.id} className="calendar-event published"><div className="calendar-event-date"><b>{new Date(event.starts_at).getDate()}</b><small>{new Date(event.starts_at).toLocaleString('default',{month:'short'})}</small></div><div><span>{event.event_type}</span><h3>{event.title}</h3><p>{event.description || 'No additional details.'}</p><small>{date(event.starts_at)} — {date(event.ends_at)}</small></div></article>)}</section>
 }
 
 function headers(tab) {

@@ -171,6 +171,11 @@ export const schoolApi = {
   portalResults: (studentId) => api(`/portal/results${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
   portalFees: (studentId) => api(`/portal/fees${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
   portalLibraryLoans: (studentId) => api(`/portal/library-loans${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  calendarEvents: (filters = '') => api(`/calendar/events${filters ? `?${filters}` : ''}`),
+  calendarEvent: (eventId) => api(`/calendar/events/${eventId}`),
+  createCalendarEvent: (values) => api('/calendar/events', { method: 'POST', body: JSON.stringify(values) }),
+  updateCalendarEvent: (eventId, values) => api(`/calendar/events/${eventId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  cancelCalendarEvent: (eventId) => api(`/calendar/events/${eventId}/cancel`, { method: 'POST' }),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
