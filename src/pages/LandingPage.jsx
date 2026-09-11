@@ -20,7 +20,7 @@ export default function LandingPage() {
           <div className="eyebrow"><Sparkles size={15} /> A simpler day for every school</div>
           <h1>Where school life<br /><span>flows beautifully.</span></h1>
           <p>Bring students, teachers, attendance and communication together in one friendly space—built to help your school focus on learning.</p>
-          <div className="hero-actions"><Link className="button" to="/login">Explore your dashboard <ArrowRight size={18} /></Link><a className="text-link" href="#features">See how it works</a></div>
+          <div className="hero-actions"><Link className="button" to="/login">Explore your dashboard <ArrowRight size={18} /></Link><Link className="text-link" to="/admissions/apply">Apply for admission</Link></div>
           <div className="trust-row"><span><CheckCircle2 /> Easy to use</span><span><CheckCircle2 /> Secure access</span><span><CheckCircle2 /> Works everywhere</span></div>
         </div>
         <div className="hero-visual" aria-label="School dashboard preview">

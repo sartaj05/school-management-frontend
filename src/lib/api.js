@@ -176,6 +176,9 @@ export const schoolApi = {
   createCalendarEvent: (values) => api('/calendar/events', { method: 'POST', body: JSON.stringify(values) }),
   updateCalendarEvent: (eventId, values) => api(`/calendar/events/${eventId}`, { method: 'PUT', body: JSON.stringify(values) }),
   cancelCalendarEvent: (eventId) => api(`/calendar/events/${eventId}/cancel`, { method: 'POST' }),
+  submitAdmission: (values) => api('/admissions/apply', { method: 'POST', body: JSON.stringify(values) }),
+  admissionApplications: (status = 'all') => api(`/admissions/applications?status=${encodeURIComponent(status)}`),
+  updateAdmissionApplication: (applicationId, values) => api(`/admissions/applications/${applicationId}`, { method: 'PUT', body: JSON.stringify(values) }),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
