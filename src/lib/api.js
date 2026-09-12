@@ -189,6 +189,12 @@ export const schoolApi = {
   documents: () => api('/documents/history'),
   downloadAttendanceCsv: (attendanceDate) => downloadApi(`/documents/attendance.csv?attendance_date=${encodeURIComponent(attendanceDate)}`, `attendance-${attendanceDate}.csv`),
   openReportCard: (examId, studentId) => downloadApi(`/documents/report-cards/${examId}/students/${studentId}`, `report-card-${examId}-${studentId}.html`),
+  staffAttendance: (attendanceDate) => api(`/payroll/attendance?attendance_date=${encodeURIComponent(attendanceDate)}`),
+  markStaffAttendance: (values) => api('/payroll/attendance', { method:'POST', body:JSON.stringify(values) }),
+  salaryStructures: () => api('/payroll/salary-structures'),
+  saveSalaryStructure: (values) => api('/payroll/salary-structures', { method:'POST', body:JSON.stringify(values) }),
+  runPayroll: (values) => api('/payroll/runs', { method:'POST', body:JSON.stringify(values) }),
+  payslips: (month) => api(`/payroll/payslips?payroll_month=${encodeURIComponent(month)}`),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
