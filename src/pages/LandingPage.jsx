@@ -1,7 +1,10 @@
 import { ArrowRight, BarChart3, BellRing, BookOpen, CalendarCheck, CheckCircle2, Quote, ShieldCheck, Sparkles, UsersRound } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicLayout from '../components/PublicLayout'
 import Logo from '../components/Logo'
+import heroDashboard from '../assets/education-hero-dashboard.svg'
+import { api } from '../lib/api'
 
 const features = [
   [UsersRound, 'Student & staff records', 'Keep every profile organized, searchable and available to the right people.'],
@@ -12,26 +15,56 @@ const features = [
   [ShieldCheck, 'Secure by role', 'Give admins, teachers, students and parents only the access they need.'],
 ]
 
+const dashboardPreview = {
+  title: 'EduFlow',
+  greeting: 'Principal',
+  summary: 'ur school today.',
+  stats: [
+    { label: 'Students', value: '1,248', note: '+24 this month' },
+    { label: 'Teachers', value: '86', note: 'All departments' },
+  ],
+  attendance: [66, 82, 72, 92, 86],
+  labels: ['M', 'T', 'W', 'T', 'F'],
+  quickNote: 'Parent meeting',
+  reminder: 'Reminder sent',
+}
+
 export default function LandingPage() {
+  const [content, setContent] = useState(null)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const result = await api('/public/content')
+        setContent(result.data || null)
+      } catch {
+        setContent(null)
+      }
+    }
+    load()
+  }, [])
+
+  const apiBase = import.meta.env.VITE_API_BASE_URL || '/api/v1'
+  const heroImage = content?.landing_image_path ? `${apiBase}/school/uploads/${encodeURIComponent(content.landing_image_path)}` : heroDashboard
+  const title = content?.landing_title || 'Where school life flows beautifully.'
+  const subtitle = content?.landing_subtitle || 'Bring students, teachers, attendance and communication together in one friendly space—built to help your school focus on learning.'
+
   return <PublicLayout>
     <main>
       <section className="hero container">
         <div className="hero-copy">
           <div className="eyebrow"><Sparkles size={15} /> A simpler day for every school</div>
-          <h1>Where school life<br /><span>flows beautifully.</span></h1>
-          <p>Bring students, teachers, attendance and communication together in one friendly space—built to help your school focus on learning.</p>
+          <h1>{title.split(' ').slice(0, 3).join(' ')}<br /><span>{title.split(' ').slice(3).join(' ') || 'flows beautifully.'}</span></h1>
+          <p>{subtitle}</p>
           <div className="hero-actions"><Link className="button" to="/login">Explore your dashboard <ArrowRight size={18} /></Link><Link className="text-link" to="/admissions/apply">Apply for admission</Link></div>
           <div className="trust-row"><span><CheckCircle2 /> Easy to use</span><span><CheckCircle2 /> Secure access</span><span><CheckCircle2 /> Works everywhere</span></div>
         </div>
         <div className="hero-visual" aria-label="School dashboard preview">
           <div className="float-card float-one"><span className="mini-icon mint"><CalendarCheck /></span><div><b>94%</b><small>Attendance today</small></div></div>
-          <div className="dashboard-preview">
-            <div className="preview-top"><Logo /><span className="avatar">AM</span></div>
-            <div className="preview-welcome"><small>Good morning, Principal</small><h3>Here’s your school today.</h3></div>
-            <div className="preview-stats"><div><small>Students</small><b>1,248</b><i>+24 this month</i></div><div><small>Teachers</small><b>86</b><i>All departments</i></div></div>
-            <div className="chart-card"><div><b>Weekly attendance</b><small>Mon — Fri</small></div><div className="bars">{[66,82,72,92,86].map((h, i) => <span key={i} style={{height:`${h}%`}} />)}</div><div className="bar-labels"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span></div></div>
+          <div className="dashboard-preview hero-asset-card">
+            <img src={heroImage} alt="School dashboard preview" />
           </div>
-          <div className="float-card float-two"><span className="mini-icon coral"><BellRing /></span><div><b>Parent meeting</b><small>Reminder sent</small></div></div>
+          <div className="float-card float-two"><span className="mini-icon coral"><BellRing /></span><div><b>{dashboardPreview.quickNote}</b><small>{dashboardPreview.reminder}</small></div></div>
         </div>
       </section>
 
