@@ -10,7 +10,9 @@ export default function PublicLayout({ children }) {
       <Link to="/" aria-label="EduFlow home"><Logo /></Link>
       <button className="menu-button" onClick={() => setOpen(!open)} aria-label="Toggle navigation">{open ? <X /> : <Menu />}</button>
       <nav className={open ? 'nav-open' : ''}>
-        <a href="/#features">Features</a><a href="/#about">About</a><a href="/#contact">Contact</a>
+        <Link to="/#features">Features</Link>
+        <Link to="/#about">About</Link>
+        <Link to="/contact">Contact</Link>
         <Link className="button button-small button-ghost" to="/login">Sign in</Link>
         <Link className="button button-small" to="/login">Get started</Link>
       </nav>
