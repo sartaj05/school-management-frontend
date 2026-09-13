@@ -67,6 +67,8 @@ async function refreshAccessToken(refreshToken) {
 
 export const schoolApi = {
   schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values) }),
+  publicContent: () => api('/public/content'),
+  updatePublicContent: (values) => api('/public/content', { method: 'PUT', body: values instanceof FormData ? values : toFormData(values) }),
   changePassword: (values) => api('/auth/change-password', { method: 'POST', body: JSON.stringify(values) }),
   forgotPassword: (values) => api('/auth/forgot-password', { method: 'POST', body: JSON.stringify(values) }),
   resetPassword: (values) => api('/auth/reset-password', { method: 'POST', body: JSON.stringify(values) }),
@@ -121,6 +123,8 @@ export const schoolApi = {
   updateTeacherClassAssignment: (assignmentId, values) => api(`/teacher-class-assignment/${assignmentId}`, { method: 'PUT', body: JSON.stringify(values) }),
   deleteTeacherClassAssignment: (assignmentId) => api(`/teacher-class-assignment/${assignmentId}`, { method: 'DELETE' }),
   users: (superAdmin = false) => api(superAdmin ? '/super-admin/users' : '/users'),
+  updateUser: (userId, values) => api(`/super-admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  updateUserStatus: (userId, values) => api(`/super-admin/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
   createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values) }),
   createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values) }),
   createTeacher: (values) => api('/teacher/create', { method: 'POST', body: toFormData(values) }),
