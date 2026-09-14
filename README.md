@@ -1,7 +1,7 @@
 # EduFlow React Website
 
 React/Vite client for the multi-tenant Flask School Management API. Updated
-14 September 2026 through Leave Management (feature 48).
+14 September 2026 through Inventory and Asset Management (feature 49).
 
 ## Run and build
 
@@ -19,6 +19,7 @@ to `.env.local` and set `VITE_API_BASE_URL` to the full URL ending in `/api/v1`.
 - Attendance/reports, exams, fees, assignments, library and notifications/queue.
 - Linked parent/student portal, calendar, admission review and document exports.
 - Staff attendance/payroll, vehicles/routes/stops/assignments and latest bus locations.
+- Inventory & Assets for School Admin: categories/rooms/items, receipts/write-offs, staff/room asset custody, returns, maintenance, low-stock alerts and stock history.
 - Leave Management for School Admin, Teacher and Student: requests, balances,
   allowance adjustments, decisions, cancellation and audit history.
 
@@ -34,3 +35,6 @@ The Payroll menu now renders the existing PayrollManagement component.
 See the [root README](../README.md) and
 [leave API handoff](../feature_docs/2026-09-14_leave-management_48thdocx.txt)
 for database setup, payloads and limitations.
+
+Inventory uses `src/components/InventoryManagement.jsx`. Apply the tenant upgrade
+before use. Details are in [feature 49](../feature_docs/2026-09-14_inventory-asset-management_49thdocx.txt).
