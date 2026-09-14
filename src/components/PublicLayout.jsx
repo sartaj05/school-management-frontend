@@ -1,10 +1,18 @@
 import { Menu, X } from 'lucide-react'
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import Logo from './Logo'
 
 export default function PublicLayout({ children }) {
   const [open, setOpen] = useState(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (!location.hash) return
+    const target = document.querySelector(location.hash)
+    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+  }, [location])
+
   return <div className="site-shell">
     <header className="public-header container">
       <Link to="/" aria-label="EduFlow home"><Logo /></Link>

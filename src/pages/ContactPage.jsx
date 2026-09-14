@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Mail, MapPin, Phone, Clock } from 'lucide-react'
+import { Mail, MapPin, Phone, Clock, Headphones } from 'lucide-react'
 import PublicLayout from '../components/PublicLayout'
 import { api } from '../lib/api'
 
@@ -38,6 +38,7 @@ export default function ContactPage() {
               <li><Phone size={18} /><div><small>Phone</small><b>{content?.contact_phone || '+91 98765 43210'}</b></div></li>
               <li><MapPin size={18} /><div><small>Address</small><b>{content?.contact_address || 'Main Campus Road, School District, India'}</b></div></li>
               <li><Clock size={18} /><div><small>Hours</small><b>{content?.contact_hours || 'Mon - Sat, 9:00 AM - 6:00 PM'}</b></div></li>
+              <li><Headphones size={18} /><div><small>Technical support</small><b>{content?.support_email || content?.contact_email || 'support@eduflow.com'}</b><b>{content?.support_phone || content?.contact_phone || '+91 98765 43210'}</b></div></li>
             </ul>
           </article>
 
