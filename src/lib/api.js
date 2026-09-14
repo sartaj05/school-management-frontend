@@ -214,6 +214,14 @@ export const schoolApi = {
   deleteTransportAssignment: (assignmentId) => api(`/transport/assignments/${assignmentId}`, { method: 'DELETE' }),
   transportLocations: () => api('/transport/locations'),
   updateTransportLocation: (vehicleId, values) => api(`/transport/vehicles/${vehicleId}/location`, { method: 'POST', body: JSON.stringify(values) }),
+  leaveOptions: () => api('/leave/options'),
+  leaveRequests: (filters = {}) => api(`/leave/requests?${new URLSearchParams(filters)}`),
+  createLeaveRequest: (values) => api('/leave/requests', { method: 'POST', body: JSON.stringify(values) }),
+  leaveBalances: (filters) => api(`/leave/balances?${new URLSearchParams(filters)}`),
+  setLeaveAllowance: (values) => api('/leave/allowances', { method: 'PUT', body: JSON.stringify(values) }),
+  updateLeaveStatus: (id, values) => api(`/leave/requests/${id}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
+  leaveHistory: (id) => api(`/leave/requests/${id}/history`),
+  leaveAllowanceHistory: (filters) => api(`/leave/allowances/history?${new URLSearchParams(filters)}`),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
