@@ -55,7 +55,6 @@ export default function LandingPage() {
   ]
   const summaryRows = [
     { label: 'Attendance', value: `${attendanceValue}%`, tone: 'mint', icon: CalendarCheck },
-    { label: 'Fees', value: '₹12.4k', tone: 'purple', icon: BarChart3 },
     { label: 'Classes', value: '24', tone: 'sky', icon: BookOpen },
     { label: 'Alerts', value: '08', tone: 'amber', icon: BellRing },
   ]
