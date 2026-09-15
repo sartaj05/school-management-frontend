@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, BellRing, BookOpen, CalendarCheck, CheckCircle2, Clock, Mail, Phone, Quote, ShieldCheck, Sparkles, UserCheck, UsersRound } from 'lucide-react'
+import { ArrowRight, BarChart3, BellRing, BookOpen, CalendarCheck, CheckCircle2, Clock, Mail, Phone, Quote, ShieldCheck, Sparkles, UserCheck, UsersRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicLayout from '../components/PublicLayout'
@@ -6,16 +6,26 @@ import Logo from '../components/Logo'
 import { api, schoolLogoUrl } from '../lib/api'
 
 const features = [
-  [UsersRound, 'Student & staff records', 'Keep every profile organized, searchable and available to the right people.'],
-  [CalendarCheck, 'Effortless attendance', 'Mark daily attendance quickly and see clear summaries at a glance.'],
-  [BarChart3, 'One clear dashboard', 'Understand your school through simple, meaningful live information.'],
-  [BellRing, 'Connected communication', 'Keep families informed with class updates, meetings and reminders.'],
-  [BookOpen, 'Academic organization', 'Bring classes, sections and daily academic work into one calm workspace.'],
-  [ShieldCheck, 'Secure by role', 'Give admins, teachers, students and parents only the access they need.'],
+  { Icon: UsersRound, title: 'Student & staff records', text: 'Keep every profile organized, searchable and available to the right people.', details: 'Create a reliable school directory with student, teacher, parent and staff profiles in one protected workspace.', plans: { Standard: 'Core records and directory access.', Premium: 'Core records plus richer school operations.', Enterprise: 'Core records with enterprise-wide controls.' }, related: ['Students', 'Teachers', 'Parents'] },
+  { Icon: CalendarCheck, title: 'Effortless attendance', text: 'Mark daily attendance quickly and see clear summaries at a glance.', details: 'Record attendance from a simple daily register and give authorized users the summaries they need.', plans: { Standard: 'Daily student attendance register.', Premium: 'Attendance plus advanced school operations.', Enterprise: 'Attendance with complete operational reporting.' }, related: ['Daily register', 'Attendance reports', 'Class summaries'] },
+  { Icon: BarChart3, title: 'One clear dashboard', text: 'Understand your school through simple, meaningful live information.', details: 'Bring the most important school totals, shortcuts and activity signals into one role-aware dashboard.', plans: { Standard: 'Core dashboard and school totals.', Premium: 'Dashboard plus Premium modules.', Enterprise: 'Dashboard plus all Enterprise modules.' }, related: ['School overview', 'Quick actions', 'Role-based access'] },
+  { Icon: BellRing, title: 'Connected communication', text: 'Keep families informed with class updates, meetings and reminders.', details: 'Keep staff, parents and students aligned with notifications, meetings and useful reminders.', plans: { Standard: 'Notifications and family communication.', Premium: 'Communication plus Premium workflows.', Enterprise: 'Communication with full organization controls.' }, related: ['Notifications', 'Meetings', 'Reminders'] },
+  { Icon: BookOpen, title: 'Academic organization', text: 'Bring classes, sections and daily academic work into one calm workspace.', details: 'Organize classes, subjects, timetables, assignments and academic records without scattered spreadsheets.', plans: { Standard: 'Classes, subjects and academic basics.', Premium: 'Academics plus richer operational tools.', Enterprise: 'Academics with organization-wide support.' }, related: ['Classes', 'Subjects', 'Timetable'] },
+  { Icon: ShieldCheck, title: 'Secure by role', text: 'Give admins, teachers, students and parents only the access they need.', details: 'Use role-based access so every person sees the workflows and records appropriate to their responsibility.', plans: { Standard: 'Role-based access for core modules.', Premium: 'Role access across Premium modules.', Enterprise: 'Role access with complete controls.' }, related: ['School Admin', 'Teacher', 'Parent and Student'] },
 ]
+
+const plans = [
+  { name: 'Standard', version: 'Core', description: 'Essential school management for everyday work.' },
+  { name: 'Premium', version: 'Growth', description: 'Standard plus hostel, inventory and scholarship tools.' },
+  { name: 'Enterprise', version: 'Complete', description: 'Premium plus expenses and vendor payment workflows.' },
+]
+
+const premiumFeatures = ['Hostel management', 'Inventory and assets', 'Scholarship and concessions']
+const enterpriseFeatures = ['Everything in Premium', 'Expense management', 'Vendor payments and purchasing controls']
 
 export default function LandingPage() {
   const [content, setContent] = useState(null)
+  const [selectedFeature, setSelectedFeature] = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -35,23 +45,17 @@ export default function LandingPage() {
   const title = content?.landing_title || 'Where school life flows beautifully.'
   const subtitle = content?.landing_subtitle || 'Bring students, teachers, attendance and communication together in one friendly space—built to help your school focus on learning.'
 
-  const today = new Date()
-  const dynamicBars = Array.from({ length: 5 }, (_, index) => {
-    const base = [66, 82, 72, 92, 86][index] ?? 75
-    const drift = ((today.getDate() + index * 3) % 12) - 5
-    return Math.max(40, Math.min(96, base + drift))
-  })
+  const previewBars = [64, 83, 76, 87, 84]
   const chartLabels = ['M', 'T', 'W', 'T', 'F']
-  const attendanceValue = Math.round(dynamicBars.reduce((sum, value) => sum + value, 0) / dynamicBars.length)
-  const reminderText = ['Parent meeting', 'Fee reminder', 'Class update', 'Staff sync'][today.getDay() % 4]
-  const connectedLearners = 980 + (((today.getDate() * 17) + (today.getMonth() * 13) + today.getFullYear()) % 620)
-  const liveAttendance = Math.min(99, Math.max(76, 84 + ((today.getDate() + today.getMonth()) % 10) - 4))
+  const attendanceValue = 79
+  const reminderText = 'Class update'
+  const connectedLearners = 1505
+  const liveAttendance = 83
   const brandName = content?.school_name || 'EduFlow School Management'
-  const summary = content?.summary || {}
   const platformRows = [
-    { label: 'User logins', value: summary.user_logins ?? 0, note: 'Total accounts created', icon: UsersRound },
-    { label: 'Student register', value: summary.student_registrations ?? 0, note: 'Students admitted', icon: UserCheck },
-    { label: 'Schools live', value: summary.schools ?? 0, note: 'Active campuses', icon: BookOpen },
+    { label: 'User logins', value: 4, note: 'Sample accounts', icon: UsersRound },
+    { label: 'Student register', value: 0, note: 'Sample students', icon: UserCheck },
+    { label: 'Schools live', value: 2, note: 'Sample campuses', icon: BookOpen },
   ]
   const summaryRows = [
     { label: 'Attendance', value: `${attendanceValue}%`, tone: 'mint', icon: CalendarCheck },
@@ -60,10 +64,21 @@ export default function LandingPage() {
   ]
   const weekRows = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => ({
     day,
-    attendance: `${dynamicBars[index]}%`,
+    attendance: `${previewBars[index]}%`,
     classes: 4 + (index % 3),
     alerts: index === 2 ? 'Fee follow-up' : index === 4 ? 'Weekly report' : 'Routine updates',
   }))
+
+  useEffect(() => {
+    if (!selectedFeature) return undefined
+    const closeOnEscape = event => event.key === 'Escape' && setSelectedFeature(null)
+    document.addEventListener('keydown', closeOnEscape)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape)
+      document.body.style.overflow = ''
+    }
+  }, [selectedFeature])
 
   return <PublicLayout>
     <main>
@@ -75,12 +90,12 @@ export default function LandingPage() {
           <div className="hero-actions"><Link className="button" to="/login">Explore your dashboard <ArrowRight size={18} /></Link><Link className="text-link" to="/admissions/apply">Apply for admission</Link></div>
           <div className="trust-row"><span><CheckCircle2 /> Easy to use</span><span><CheckCircle2 /> Secure access</span><span><CheckCircle2 /> Works everywhere</span></div>
         </div>
-        <div className="hero-visual" aria-label="School dashboard preview">
+        <div className="hero-visual" aria-label="Static school dashboard product preview">
           <div className="float-card float-one"><span className="mini-icon mint"><CalendarCheck /></span><div><b>{attendanceValue}%</b><small>Attendance today</small></div></div>
           <div className="dashboard-preview hero-asset-card">
             <div className="brand-strip">
               <span>{brandLogo ? <img src={brandLogo} alt={`${brandName} logo`} /> : <Logo />}</span>
-              <small>Public school portal</small>
+              <small>Product preview · Sample data</small>
             </div>
             {heroImage && <img className="landing-school-image" src={heroImage} alt={`${brandName} school`} />}
             <div className="dynamic-preview-shell">
@@ -130,7 +145,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="features" className="section container"><div className="section-heading"><span>Everything in one place</span><h2>Less administration.<br />More education.</h2><p>Thoughtful tools for the everyday work that keeps a school moving.</p></div><div className="feature-grid">{features.map(([Icon,title,text]) => <article className="feature-card" key={title}><span className="feature-icon"><Icon /></span><h3>{title}</h3><p>{text}</p></article>)}</div></section>
+      <section id="features" className="section container"><div className="section-heading"><span>Everything in one place</span><h2>Less administration.<br />More education.</h2><p>Click any feature to see what each plan includes.</p></div><div className="feature-grid">{features.map(feature => { const { Icon, title, text } = feature; return <button className="feature-card feature-card-button" type="button" key={title} onClick={() => setSelectedFeature(feature)} aria-label={`View plan details for ${title}`}><span className="feature-icon"><Icon /></span><h3>{title}</h3><p>{text}</p><span className="feature-card-link">View plan details <ArrowRight size={15} /></span></button> })}</div></section>
 
       <section id="about" className="story-section"><div className="container story-grid"><div className="story-art" aria-label="A connected digital school campus">{heroImage ? <img className="story-school-photo" src={heroImage} alt={`${brandName} campus`} /> : <><div className="campus-glow"/><div className="campus-cloud cloud-one"/><div className="campus-cloud cloud-two"/><div className="campus-sun"><Sparkles/></div><div className="campus-card campus-card-top"><UsersRound/><span><b>{connectedLearners.toLocaleString()}</b><small>Connected learners</small></span></div><div className="campus-card campus-card-bottom"><CalendarCheck/><span><b>{Math.round(liveAttendance)}% today</b><small>Live attendance</small></span></div><div className="school-building"><div className="building-flag"/><div className="building-roof"/><div className="building-body"><div className="building-title"><Logo/><small>Learning campus</small></div><div className="building-windows"><span/><span/><span/><span/></div><div className="building-door"/></div><div className="campus-tree tree-one"><i/><span/></div><div className="campus-tree tree-two"><i/><span/></div><div className="campus-path"/><div className="ground"/></div></>}</div><div className="story-copy"><span className="section-kicker">Designed around people</span><h2>Technology that feels human.</h2><p>EduFlow is designed to quietly support your team-not get in its way. Clear screens, useful information and fewer repetitive tasks mean more time for what matters.</p><blockquote><Quote/><p>For the first time, our team can see what is happening across the school without chasing spreadsheets.</p><footer>- School Administrator</footer></blockquote></div></div></section>
 
@@ -146,5 +161,6 @@ export default function LandingPage() {
       </div>
       <small>© {new Date().getFullYear()} {brandName}</small>
     </footer>
+    {selectedFeature && <div className="feature-modal" role="presentation" onMouseDown={() => setSelectedFeature(null)}><div className="feature-modal-card" role="dialog" aria-modal="true" aria-labelledby="feature-modal-title" onMouseDown={event => event.stopPropagation()}><button className="feature-modal-close" type="button" onClick={() => setSelectedFeature(null)} aria-label="Close feature details"><X size={19} /></button><div className="feature-modal-heading"><span className="feature-icon"><selectedFeature.Icon /></span><div><span>Feature and plan details</span><h2 id="feature-modal-title">{selectedFeature.title}</h2><p>{selectedFeature.details}</p></div></div><div className="feature-plan-grid">{plans.map(plan => <article className={`feature-plan-card plan-${plan.name.toLowerCase()}`} key={plan.name}><div><strong>{plan.name}</strong><small>{plan.version} plan</small></div><CheckCircle2 size={20} /><p>{selectedFeature.plans[plan.name]}</p><span>{plan.description}</span></article>)}</div><div className="feature-modal-section"><span>Related tools</span><div className="feature-related-list">{selectedFeature.related.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</div></div><div className="feature-tier-summary"><article><strong>Premium includes</strong>{premiumFeatures.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</article><article><strong>Enterprise includes</strong>{enterpriseFeatures.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</article></div><Link className="button feature-modal-action" to="/login" onClick={() => setSelectedFeature(null)}>Open dashboard <ArrowRight size={16} /></Link></div></div>}
   </PublicLayout>
 }
