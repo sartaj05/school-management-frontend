@@ -1,6 +1,7 @@
 import { Package } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import InventoryPurchaseManagement from './InventoryPurchaseManagement'
 
 function Field({ label, name, type = 'text', required = true, ...props }) {
   return <label>{label}<input name={name} type={type} required={required} {...props} /></label>
@@ -66,6 +67,7 @@ export default function InventoryManagement() {
 
   return <>
     <section className="people-hero"><div><span>School operations</span><h2>Inventory and assets</h2><p>Track stock, custody, returns and maintenance across your school.</p></div><Package /></section>
+    <InventoryPurchaseManagement />
     {error && <div className="form-error" role="alert">{error}</div>}{notice && <div className="success-notice" role="status">{notice}</div>}
     <div className="page-actions"><b>{summary.items || 0} items</b><button onClick={() => { setLow(true); setOffset(0) }}>{summary.low_stock_items || 0} low-stock alerts</button><span>{summary.outstanding_assignments || 0} outstanding assignments</span><span>{summary.open_maintenance || 0} open maintenance · {summary.overdue_maintenance || 0} overdue</span></div>
     <div className="page-actions"><label>Search items<input value={search} maxLength="180" onChange={e => { setSearch(e.target.value); setOffset(0) }} placeholder="Name or code" /></label><label><input type="checkbox" checked={low} onChange={e => { setLow(e.target.checked); setOffset(0) }} /> Low stock only</label><button className="button button-small" disabled={busy} onClick={() => setCreate(value => !value)}>{create ? 'Close setup' : 'Add items / categories / rooms'}</button><button disabled={busy || loading} onClick={() => setRefresh(value => value + 1)}>Refresh</button></div>
