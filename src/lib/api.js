@@ -235,6 +235,8 @@ export const schoolApi = {
   meetingBookings: (filters = {}) => api(`/meetings/bookings?${new URLSearchParams(filters)}`),
   createMeetingBooking: (values) => api('/meetings/bookings', { method: 'POST', body: JSON.stringify(values) }),
   updateMeetingBookingStatus: (id, values) => api(`/meetings/bookings/${id}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
+  auditSummary: () => api('/audit/summary'),
+  auditEvents: (filters = {}) => api(`/audit/events?${new URLSearchParams(filters)}`),
   leaveOptions: () => api('/leave/options'),
   leaveRequests: (filters = {}) => api(`/leave/requests?${new URLSearchParams(filters)}`),
   createLeaveRequest: (values) => api('/leave/requests', { method: 'POST', body: JSON.stringify(values) }),
