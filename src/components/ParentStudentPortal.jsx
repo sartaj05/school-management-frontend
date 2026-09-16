@@ -1,4 +1,4 @@
-import { BookCheck, CalendarCheck, CircleDollarSign, LibraryBig, Award, UserRound, Download, Send, CreditCard, FileText } from 'lucide-react'
+import { BookCheck, CalendarCheck, CircleDollarSign, LibraryBig, Award, UserRound, Download, Send, CreditCard, FileText, Bell, CheckCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
@@ -6,7 +6,7 @@ import { confirmPopup } from '../lib/confirmPopup'
 const tabs = [
   ['overview', 'Overview', UserRound], ['attendance', 'Attendance', CalendarCheck],
   ['timetable', 'Timetable', CalendarCheck], ['assignments', 'Assignments', BookCheck],
-  ['results', 'Results', Award], ['fees', 'Fees', CircleDollarSign], ['library', 'Library', LibraryBig], ['documents', 'Documents', FileText], ['calendar', 'Calendar', CalendarCheck],
+  ['results', 'Results', Award], ['fees', 'Fees', CircleDollarSign], ['library', 'Library', LibraryBig], ['documents', 'Documents', FileText], ['notifications', 'Notifications', Bell], ['calendar', 'Calendar', CalendarCheck],
 ]
 
 const date = value => value ? new Date(value).toLocaleDateString() : '—'
@@ -25,9 +25,9 @@ export default function ParentStudentPortal() {
 
   useEffect(() => {
     if (!studentId) return
-    const methods = { overview: schoolApi.portalOverview, attendance: schoolApi.portalAttendance, timetable: schoolApi.portalTimetable, assignments: schoolApi.portalAssignments, results: schoolApi.portalResults, fees: schoolApi.portalFees, library: schoolApi.portalLibraryLoans, documents: schoolApi.portalDocuments, calendar: schoolApi.calendarEvents }
+    const methods = { overview: schoolApi.portalOverview, attendance: schoolApi.portalAttendance, timetable: schoolApi.portalTimetable, assignments: schoolApi.portalAssignments, results: schoolApi.portalResults, fees: schoolApi.portalFees, library: schoolApi.portalLibraryLoans, documents: schoolApi.portalDocuments, notifications: schoolApi.portalNotifications, calendar: schoolApi.calendarEvents }
     setLoading(true); setError(''); setData(null)
-    const portalRequest = tab === 'calendar' ? methods[tab]() : methods[tab](studentId)
+    const portalRequest = ['calendar', 'notifications'].includes(tab) ? methods[tab]() : methods[tab](studentId)
     portalRequest.then(setData).catch(e => setError(e.message)).finally(() => setLoading(false))
   }, [tab, studentId, revision])
 
@@ -41,11 +41,11 @@ export default function ParentStudentPortal() {
     {children.length > 1 && <label className="portal-child-picker">Viewing student<select value={studentId} onChange={e => setStudentId(e.target.value)}>{children.map(child => <option key={child.id} value={child.id}>{child.first_name} {child.last_name || ''} · {child.class_name} {child.section || ''}</option>)}</select></label>}
     <div className="portal-tabs">{tabs.map(([key,label,Icon]) => <button key={key} className={tab===key?'active':''} onClick={() => setTab(key)}><Icon size={16}/>{label}</button>)}</div>
     {error && <div className="api-notice"><b>Could not load portal data.</b><span>{error}</span></div>}
-    {loading ? <div className="loading-grid"><i/><i/><i/></div> : <PortalData tab={tab} data={data?.data} studentId={studentId} onChanged={() => setRevision(value => value + 1)} />}
+    {loading ? <div className="loading-grid"><i/><i/><i/></div> : <PortalData tab={tab} data={data?.data} unreadCount={data?.unread_count} studentId={studentId} onChanged={() => setRevision(value => value + 1)} />}
   </>
 }
 
-function PortalData({ tab, data, studentId, onChanged }) {
+function PortalData({ tab, data, unreadCount, studentId, onChanged }) {
   if (tab === 'overview') return <div className="stat-grid">
     <article><small>Attendance</small><b>{data?.attendance?.percentage ?? 0}%</b><span>{data?.attendance?.present || 0} present days</span></article>
     <article><small>Open assignments</small><b>{data?.assignments_open ?? 0}</b><span>Published and due</span></article>
@@ -57,6 +57,7 @@ function PortalData({ tab, data, studentId, onChanged }) {
   if (tab === 'assignments') return <PortalAssignments rows={rows} onChanged={onChanged}/>
   if (tab === 'fees') return <PortalFees rows={rows} onChanged={onChanged}/>
   if (tab === 'documents') return <PortalDocuments rows={rows} studentId={studentId}/>
+  if (tab === 'notifications') return <PortalNotifications rows={rows} unreadCount={unreadCount} onChanged={onChanged}/>
   if (!rows.length) return <section className="empty-state"><BookCheck/><h3>No records found</h3><p>There is no information to display for this student yet.</p></section>
   return <section className="data-panel"><div className="table-wrap"><table><thead><tr>{headers(tab).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{rows.map(row => <tr key={row.id || `${row.exam_id}-${row.subject_code}`}><Cells tab={tab} row={row}/></tr>)}</tbody></table></div></section>
 }
@@ -96,6 +97,24 @@ function PortalDocuments({ rows, studentId }) {
     try { await schoolApi.downloadPortalReportCard(row.exam_id, studentId) } catch (e) { setError(e.message) } finally { setBusy(null) }
   }
   return <section className="data-panel portal-action-panel"><div className="panel-title"><div><span>Published records</span><h2>Downloadable documents</h2></div><b>{rows.length} documents</b></div>{error && <div className="form-error">{error}</div>}<div className="table-wrap"><table><thead><tr><th>Document</th><th>Academic year</th><th>Exam period</th><th>Class</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.exam_id}><td><b>Report card</b><small>{row.exam_name}</small></td><td>{row.academic_year}</td><td>{date(row.start_date)} — {date(row.end_date)}</td><td>{row.class_name} {row.section}</td><td><button className="button button-small" onClick={() => download(row)} disabled={busy === row.exam_id}><Download size={14} />{busy === row.exam_id ? 'Preparing…' : 'Download'}</button></td></tr>)}</tbody></table></div></section>
+}
+
+function PortalNotifications({ rows, unreadCount = 0, onChanged }) {
+  const [busy, setBusy] = useState(null), [error, setError] = useState('')
+
+  async function markRead(notificationId) {
+    setBusy(notificationId); setError('')
+    try { await schoolApi.markPortalNotificationRead(notificationId); onChanged() }
+    catch (e) { setError(e.message) } finally { setBusy(null) }
+  }
+
+  async function markAllRead() {
+    setBusy('all'); setError('')
+    try { await schoolApi.markAllPortalNotificationsRead(); onChanged() }
+    catch (e) { setError(e.message) } finally { setBusy(null) }
+  }
+
+  return <section className="data-panel portal-notifications"><div className="panel-title"><div><span>School communication</span><h2>Notification inbox</h2></div><div className="portal-notification-toolbar"><b>{unreadCount} unread</b>{unreadCount > 0 && <button className="button button-small" onClick={markAllRead} disabled={busy === 'all'}><CheckCheck size={14}/>{busy === 'all' ? 'Updating…' : 'Mark all read'}</button>}</div></div>{error && <div className="form-error">{error}</div>}{!rows.length ? <div className="empty-state"><Bell/><h3>Your inbox is clear</h3><p>School announcements and reminders will appear here.</p></div> : <div className="portal-notification-list">{rows.map(row => <article key={row.id} className={row.is_read ? 'portal-notification' : 'portal-notification unread'}><span className="portal-notification-icon"><Bell size={17}/></span><div className="portal-notification-copy"><div><b>{row.title}</b>{!row.is_read && <span className="portal-unread-badge">New</span>}</div><p>{row.message}</p><small>{date(row.created_at)}{row.status ? ` · ${row.status}` : ''}</small></div>{!row.is_read && <button className="button button-small" onClick={() => markRead(row.id)} disabled={busy === row.id}>{busy === row.id ? 'Saving…' : 'Mark read'}</button>}</article>)}</div>}</section>
 }
 
 function headers(tab) {
