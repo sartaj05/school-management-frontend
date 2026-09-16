@@ -1,4 +1,4 @@
-import { BookCheck, CalendarCheck, CircleDollarSign, LibraryBig, Award, UserRound, Download, Send, CreditCard, FileText, Bell, CheckCheck } from 'lucide-react'
+import { BookCheck, CalendarCheck, CircleDollarSign, LibraryBig, Award, UserRound, Download, Send, CreditCard, FileText, Bell, CheckCheck, MessageCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
@@ -6,12 +6,12 @@ import { confirmPopup } from '../lib/confirmPopup'
 const tabs = [
   ['overview', 'Overview', UserRound], ['attendance', 'Attendance', CalendarCheck],
   ['timetable', 'Timetable', CalendarCheck], ['assignments', 'Assignments', BookCheck],
-  ['results', 'Results', Award], ['fees', 'Fees', CircleDollarSign], ['library', 'Library', LibraryBig], ['documents', 'Documents', FileText], ['notifications', 'Notifications', Bell], ['calendar', 'Calendar', CalendarCheck],
+  ['results', 'Results', Award], ['fees', 'Fees', CircleDollarSign], ['library', 'Library', LibraryBig], ['documents', 'Documents', FileText], ['notifications', 'Notifications', Bell], ['messages', 'Messages', MessageCircle], ['calendar', 'Calendar', CalendarCheck],
 ]
 
 const date = value => value ? new Date(value).toLocaleDateString() : '—'
 
-export default function ParentStudentPortal() {
+export default function ParentStudentPortal({ user }) {
   const [me, setMe] = useState(null), [studentId, setStudentId] = useState(''), [tab, setTab] = useState('overview')
   const [data, setData] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [revision, setRevision] = useState(0)
 
@@ -25,9 +25,9 @@ export default function ParentStudentPortal() {
 
   useEffect(() => {
     if (!studentId) return
-    const methods = { overview: schoolApi.portalOverview, attendance: schoolApi.portalAttendance, timetable: schoolApi.portalTimetable, assignments: schoolApi.portalAssignments, results: schoolApi.portalResults, fees: schoolApi.portalFees, library: schoolApi.portalLibraryLoans, documents: schoolApi.portalDocuments, notifications: schoolApi.portalNotifications, calendar: schoolApi.calendarEvents }
+    const methods = { overview: schoolApi.portalOverview, attendance: schoolApi.portalAttendance, timetable: schoolApi.portalTimetable, assignments: schoolApi.portalAssignments, results: schoolApi.portalResults, fees: schoolApi.portalFees, library: schoolApi.portalLibraryLoans, documents: schoolApi.portalDocuments, notifications: schoolApi.portalNotifications, messages: schoolApi.messageThreads, calendar: schoolApi.calendarEvents }
     setLoading(true); setError(''); setData(null)
-    const portalRequest = ['calendar', 'notifications'].includes(tab) ? methods[tab]() : methods[tab](studentId)
+    const portalRequest = ['calendar', 'notifications', 'messages'].includes(tab) ? methods[tab]() : methods[tab](studentId)
     portalRequest.then(setData).catch(e => setError(e.message)).finally(() => setLoading(false))
   }, [tab, studentId, revision])
 
@@ -41,11 +41,11 @@ export default function ParentStudentPortal() {
     {children.length > 1 && <label className="portal-child-picker">Viewing student<select value={studentId} onChange={e => setStudentId(e.target.value)}>{children.map(child => <option key={child.id} value={child.id}>{child.first_name} {child.last_name || ''} · {child.class_name} {child.section || ''}</option>)}</select></label>}
     <div className="portal-tabs">{tabs.map(([key,label,Icon]) => <button key={key} className={tab===key?'active':''} onClick={() => setTab(key)}><Icon size={16}/>{label}</button>)}</div>
     {error && <div className="api-notice"><b>Could not load portal data.</b><span>{error}</span></div>}
-    {loading ? <div className="loading-grid"><i/><i/><i/></div> : <PortalData tab={tab} data={data?.data} unreadCount={data?.unread_count} studentId={studentId} onChanged={() => setRevision(value => value + 1)} />}
+    {loading ? <div className="loading-grid"><i/><i/><i/></div> : <PortalData tab={tab} data={data?.data} unreadCount={data?.unread_count} studentId={studentId} user={user} onChanged={() => setRevision(value => value + 1)} />}
   </>
 }
 
-function PortalData({ tab, data, unreadCount, studentId, onChanged }) {
+function PortalData({ tab, data, unreadCount, studentId, user, onChanged }) {
   if (tab === 'overview') return <div className="stat-grid">
     <article><small>Attendance</small><b>{data?.attendance?.percentage ?? 0}%</b><span>{data?.attendance?.present || 0} present days</span></article>
     <article><small>Open assignments</small><b>{data?.assignments_open ?? 0}</b><span>Published and due</span></article>
@@ -58,6 +58,7 @@ function PortalData({ tab, data, unreadCount, studentId, onChanged }) {
   if (tab === 'fees') return <PortalFees rows={rows} onChanged={onChanged}/>
   if (tab === 'documents') return <PortalDocuments rows={rows} studentId={studentId}/>
   if (tab === 'notifications') return <PortalNotifications rows={rows} unreadCount={unreadCount} onChanged={onChanged}/>
+  if (tab === 'messages') return <PortalMessages rows={rows} studentId={studentId} user={user} onChanged={onChanged}/>
   if (!rows.length) return <section className="empty-state"><BookCheck/><h3>No records found</h3><p>There is no information to display for this student yet.</p></section>
   return <section className="data-panel"><div className="table-wrap"><table><thead><tr>{headers(tab).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{rows.map(row => <tr key={row.id || `${row.exam_id}-${row.subject_code}`}><Cells tab={tab} row={row}/></tr>)}</tbody></table></div></section>
 }
@@ -129,6 +130,36 @@ function PortalNotifications({ rows, unreadCount = 0, onChanged }) {
   }
 
   return <section className="data-panel portal-notifications"><div className="panel-title"><div><span>School communication</span><h2>Notification inbox</h2></div><div className="portal-notification-toolbar"><b>{unreadCount} unread</b>{unreadCount > 0 && <button className="button button-small" onClick={markAllRead} disabled={busy === 'all'}><CheckCheck size={14}/>{busy === 'all' ? 'Updating…' : 'Mark all read'}</button>}</div></div>{error && <div className="form-error">{error}</div>}{!rows.length ? <div className="empty-state"><Bell/><h3>Your inbox is clear</h3><p>School announcements and reminders will appear here.</p></div> : <div className="portal-notification-list">{rows.map(row => <article key={row.id} className={row.is_read ? 'portal-notification' : 'portal-notification unread'}><span className="portal-notification-icon"><Bell size={17}/></span><div className="portal-notification-copy"><div><b>{row.title}</b>{!row.is_read && <span className="portal-unread-badge">New</span>}</div><p>{row.message}</p><small>{date(row.created_at)}{row.status ? ` · ${row.status}` : ''}</small></div>{!row.is_read && <button className="button button-small" onClick={() => markRead(row.id)} disabled={busy === row.id}>{busy === row.id ? 'Saving…' : 'Mark read'}</button>}</article>)}</div>}</section>
+}
+
+function PortalMessages({ rows, studentId, user, onChanged }) {
+  const [selected, setSelected] = useState(null), [thread, setThread] = useState(null), [recipients, setRecipients] = useState([])
+  const [form, setForm] = useState({ recipient_user_id: '', subject: '', body: '' }), [reply, setReply] = useState('')
+  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
+
+  useEffect(() => {
+    schoolApi.messageRecipients(studentId).then(result => setRecipients(result.data || [])).catch(error => setError(error.message))
+  }, [studentId])
+
+  useEffect(() => {
+    if (!selected) { setThread(null); return }
+    schoolApi.messageThread(selected).then(result => { setThread(result.data); schoolApi.markMessageThreadRead(selected).catch(() => {}) }).catch(error => setError(error.message))
+  }, [selected])
+
+  async function start(event) {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('')
+    try { const result = await schoolApi.createMessageThread({ ...form, student_id: studentId, recipient_user_id: Number(form.recipient_user_id) }); setMessage(result.message); setForm({ recipient_user_id: '', subject: '', body: '' }); onChanged() }
+    catch (error) { setError(error.message) } finally { setBusy(false) }
+  }
+
+  async function sendReply(event) {
+    event.preventDefault(); if (!reply.trim()) return
+    setBusy(true); setError('')
+    try { await schoolApi.sendMessage(selected, { body: reply }); setReply(''); const result = await schoolApi.messageThread(selected); setThread(result.data); onChanged() }
+    catch (error) { setError(error.message) } finally { setBusy(false) }
+  }
+
+  return <section className="data-panel portal-messages"><div className="panel-title"><div><span>Two-way school communication</span><h2>Parent–teacher messages</h2></div><b>{rows.length} conversations</b></div>{error && <div className="form-error">{error}</div>}{message && <div className="success-notice">{message}</div>}<div className="message-layout"><div className="message-thread-list">{!rows.length ? <div className="empty-state"><MessageCircle/><h3>No conversations yet</h3><p>Start a conversation with an available teacher.</p></div> : rows.map(row => <button key={row.id} className={selected === row.id ? 'message-thread active' : 'message-thread'} onClick={() => setSelected(row.id)}><span><b>{row.subject}</b><small>{row.student_name}</small></span>{Number(row.unread_count) > 0 && <em>{row.unread_count}</em>}<small>{row.last_message || 'No messages yet'}</small></button>)}</div><div className="message-conversation">{thread ? <><div className="message-conversation-head"><div><span>{thread.thread.student_name}</span><h3>{thread.thread.subject}</h3></div><small>{thread.thread.status}</small></div><div className="message-bubbles">{thread.messages.map(item => <article key={item.id} className={item.sender_user_id === Number(user?.id) ? 'message-bubble own' : 'message-bubble'}><b>{item.sender_name || item.sender_role}</b><p>{item.body}</p><small>{date(item.created_at)}</small></article>)}</div><form className="message-reply" onSubmit={sendReply}><textarea required rows="2" value={reply} onChange={event => setReply(event.target.value)} placeholder="Reply to this conversation"/><button className="button button-small" disabled={busy}><Send size={14}/>{busy ? 'Sending…' : 'Send reply'}</button></form></> : <form className="message-compose" onSubmit={start}><div className="editor-heading"><MessageCircle/><div><h3>Start a conversation</h3><p>Ask a teacher about attendance, homework, exams, or school activities.</p></div></div><label>Teacher<select required value={form.recipient_user_id} onChange={event => setForm({ ...form, recipient_user_id: event.target.value })}><option value="">Choose a teacher</option>{recipients.map(row => <option key={row.id} value={row.id}>{row.name} · {row.role}</option>)}</select></label><label>Subject<input required maxLength="180" value={form.subject} onChange={event => setForm({ ...form, subject: event.target.value })} placeholder="Question about homework"/></label><label>Message<textarea required maxLength="2000" rows="5" value={form.body} onChange={event => setForm({ ...form, body: event.target.value })} placeholder="Write your message"/></label><button className="button button-small" disabled={busy}>{busy ? 'Starting…' : 'Start conversation'}</button></form>}</div></div></section>
 }
 
 function headers(tab) {
