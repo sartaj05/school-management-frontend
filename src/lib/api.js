@@ -143,6 +143,7 @@ export const schoolApi = {
   processNotificationQueue: (limit = 25) => api('/notifications/queue/process', { method: 'POST', body: JSON.stringify({ limit }) }),
   runAutomatedAlerts: () => api('/notifications/automation/run', { method: 'POST' }),
   exams: (status = 'all') => api(`/exams?status=${encodeURIComponent(status)}`),
+  academicAnalytics: (filters = {}) => api(`/analytics/academic?${new URLSearchParams(filters)}`),
   createExam: (values) => api('/exams', { method: 'POST', body: JSON.stringify(values) }),
   updateExam: (examId, values) => api(`/exams/${examId}`, { method: 'PUT', body: JSON.stringify(values) }),
   publishExam: (examId) => api(`/exams/${examId}/publish`, { method: 'POST' }),
