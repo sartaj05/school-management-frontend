@@ -16,11 +16,11 @@ const features = [
 
 const plans = [
   { name: 'Standard', version: 'Core', description: 'Essential school management for everyday work.' },
-  { name: 'Premium', version: 'Growth', description: 'Standard plus hostel, inventory and scholarship tools.' },
+  { name: 'Premium', version: 'Growth', description: 'Standard plus hostel, inventory, scholarships and payroll.' },
   { name: 'Enterprise', version: 'Complete', description: 'Premium plus expenses and vendor payment workflows.' },
 ]
 
-const premiumFeatures = ['Hostel management', 'Inventory and assets', 'Scholarship and concessions']
+const premiumFeatures = ['Hostel management', 'Inventory and assets', 'Scholarship and concessions', 'Salary setup and monthly payslips']
 const enterpriseFeatures = ['Everything in Premium', 'Expense management', 'Vendor payments and purchasing controls']
 
 export default function LandingPage() {

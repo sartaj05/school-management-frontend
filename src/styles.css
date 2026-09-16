@@ -229,6 +229,19 @@ input,select,textarea{max-width:100%}
   .login-panel{padding-inline:16px}
 }
 
+/* Payroll controls */
+.payroll-management{display:grid;gap:20px;min-width:0}
+.payroll-management .editor-card,.payroll-management .page-actions{margin-bottom:0}
+.payroll-salary-form fieldset{border:0;padding:0;margin:0;min-width:0}
+.payroll-salary-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.payroll-salary-footer strong{display:block;font-size:24px;color:var(--ink)}
+.payroll-help{color:#64748b;font-size:12px;line-height:1.6}
+.payroll-status{border:1px solid #cbd5e1;border-radius:9px;min-height:40px;padding:8px;background:white;color:var(--ink)}
+.payroll-row-actions{display:flex;gap:8px;flex-wrap:wrap;min-width:175px}
+.payroll-management button:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.payroll-management .form-error .text-action{margin-left:12px}
+@media(max-width:600px){.payroll-salary-footer{align-items:stretch;flex-direction:column}.payroll-salary-footer button{width:100%}}
+
 /* Public feature details */
 .feature-card-button{display:flex;width:100%;min-height:226px;flex-direction:column;align-items:flex-start;text-align:left;color:var(--ink);font:inherit;cursor:pointer;appearance:none}
 .feature-card-button:focus-visible{outline:3px solid rgba(79,70,229,.35);outline-offset:4px}

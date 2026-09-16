@@ -196,6 +196,7 @@ export const schoolApi = {
   staffAttendance: (attendanceDate) => api(`/payroll/attendance?attendance_date=${encodeURIComponent(attendanceDate)}`),
   markStaffAttendance: (values) => api('/payroll/attendance', { method:'POST', body:JSON.stringify(values) }),
   salaryStructures: () => api('/payroll/salary-structures'),
+  payslipDocument: (id) => api(`/payroll/payslips/${id}/document`),
   saveSalaryStructure: (values) => api('/payroll/salary-structures', { method:'POST', body:JSON.stringify(values) }),
   runPayroll: (values) => api('/payroll/runs', { method:'POST', body:JSON.stringify(values) }),
   payslips: (month) => api(`/payroll/payslips?payroll_month=${encodeURIComponent(month)}`),
