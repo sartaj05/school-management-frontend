@@ -308,6 +308,14 @@ export const schoolApi = {
   updateLeaveStatus: (id, values) => api(`/leave/requests/${id}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
   leaveHistory: (id) => api(`/leave/requests/${id}/history`),
   leaveAllowanceHistory: (filters) => api(`/leave/allowances/history?${new URLSearchParams(filters)}`),
+  hrStaff: (teacherId = '') => api(`/hr/staff${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
+  hrDocuments: (teacherId = '') => api(`/hr/documents${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
+  createHrDocument: (values) => api('/hr/documents', { method: 'POST', body: JSON.stringify(values) }),
+  hrContracts: (teacherId = '') => api(`/hr/contracts${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
+  createHrContract: (values) => api('/hr/contracts', { method: 'POST', body: JSON.stringify(values) }),
+  hrReviews: (teacherId = '') => api(`/hr/reviews${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
+  createHrReview: (values) => api('/hr/reviews', { method: 'POST', body: JSON.stringify(values) }),
+  hrSalaryHistory: (teacherId = '') => api(`/hr/salary-history${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
 }
 
