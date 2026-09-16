@@ -1,4 +1,4 @@
-import { Clock3, Play, RefreshCw, RotateCcw, Send, XCircle } from 'lucide-react'
+import { BellRing, Clock3, Play, RefreshCw, RotateCcw, Send, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
@@ -40,6 +40,12 @@ export default function NotificationQueue({ user }) {
     catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
 
+  async function generateAlerts() {
+    setBusy(true); setError(''); setMessage('')
+    try { const result = await schoolApi.runAutomatedAlerts(); const summary = result.summary || {}; setMessage(`Generated ${Object.values(summary).reduce((total, value) => total + value, 0)} automated alert(s).`); await load() }
+    catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
+  }
+
   async function retry(row) {
     if (!await confirmPopup({ title: `Retry “${row.title}”?`, message: 'Attempts will reset and the message will become immediately available to the worker.', confirmLabel: 'Queue retry', tone: 'primary' })) return
     setBusy(true); setError(''); try { const result = await schoolApi.retryNotification(row.id); setMessage(result.message); await load() } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
@@ -54,7 +60,7 @@ export default function NotificationQueue({ user }) {
   const pages = queue.pagination || {}
 
   return <section className="notification-queue-section">
-    <div className="queue-heading"><div><span>Reliable delivery</span><h2>Schedule and retry queue</h2><p>Store WhatsApp messages for background delivery with automatic backoff.</p></div>{isAdmin && <button className="button button-small" onClick={processDue} disabled={busy}><Play />Process due now</button>}</div>
+    <div className="queue-heading"><div><span>Reliable delivery</span><h2>Schedule and retry queue</h2><p>Store WhatsApp messages for background delivery with automatic backoff.</p></div>{isAdmin && <div className="queue-heading-actions"><button className="button button-small button-ghost" onClick={generateAlerts} disabled={busy}><BellRing />Generate alerts</button><button className="button button-small" onClick={processDue} disabled={busy}><Play />Process due now</button></div>}</div>
     <form className="editor-card queue-form" onSubmit={submit}><div className="field-grid three"><label>Title *<input required maxLength="150" value={form.title} onChange={e => field('title', e.target.value)} /></label><label>Recipient phone *<input required value={form.phone_number} onChange={e => field('phone_number', e.target.value.replace(/[^0-9+]/g, ''))} placeholder="919876543210" /></label><label>Target role<select value={form.target_role} onChange={e => field('target_role', e.target.value)}><option value="parent">Parent</option><option value="student">Student</option><option value="teacher">Teacher</option></select></label><label>Portal user ID (optional)<input type="number" min="1" value={form.target_user_id} onChange={e => field('target_user_id', e.target.value)} placeholder="Links this message to inbox" /><small className="field-help">Use the Parent/Student login user ID to show it in their inbox.</small></label><label>Schedule date and time *<input required type="datetime-local" value={form.scheduled_for} onChange={e => field('scheduled_for', e.target.value)} /></label><label>Maximum attempts<input type="number" min="1" max="10" value={form.max_attempts} onChange={e => field('max_attempts', e.target.value)} /></label><label className="wide">Message *<textarea required rows="3" value={form.message} onChange={e => field('message', e.target.value)} /></label></div><button className="button button-small" disabled={busy}><Clock3 />{busy ? 'Saving…' : 'Schedule notification'}</button></form>
     {error && <div className="form-error queue-message">{error}</div>}{message && <div className="success-notice queue-message">{message}</div>}
     <div className="queue-toolbar"><div>{['all','queued','retrying','sent','failed','cancelled'].map(value => <button key={value} className={status === value ? 'active' : ''} onClick={() => changeStatus(value)}>{value}<span>{value === 'all' ? Object.values(queue.counts || {}).reduce((sum, count) => sum + count, 0) : queue.counts?.[value] || 0}</span></button>)}</div><button className="refresh-button" onClick={() => load()} disabled={busy}><RefreshCw />Refresh</button></div>

@@ -141,6 +141,7 @@ export const schoolApi = {
   retryNotification: (notificationId) => api(`/notifications/queue/${notificationId}/retry`, { method: 'POST' }),
   cancelNotification: (notificationId) => api(`/notifications/queue/${notificationId}/cancel`, { method: 'POST' }),
   processNotificationQueue: (limit = 25) => api('/notifications/queue/process', { method: 'POST', body: JSON.stringify({ limit }) }),
+  runAutomatedAlerts: () => api('/notifications/automation/run', { method: 'POST' }),
   exams: (status = 'all') => api(`/exams?status=${encodeURIComponent(status)}`),
   createExam: (values) => api('/exams', { method: 'POST', body: JSON.stringify(values) }),
   updateExam: (examId, values) => api(`/exams/${examId}`, { method: 'PUT', body: JSON.stringify(values) }),
