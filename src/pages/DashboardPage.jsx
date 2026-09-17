@@ -1,3 +1,5 @@
+/* Dashboard loader effects intentionally synchronize remote API data. */
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Award, Banknote, BarChart3, BellRing, BookCheck, BookOpen, Building2, Bus, CalendarCheck, CalendarDays, ChevronRight, CircleDollarSign, ContactRound, Database, Edit3, FileText, GraduationCap, HeartHandshake, LayoutDashboard, LibraryBig, Link2, LockKeyhole, LogOut, Menu, MessageCircle, Package, Plus, Power, PowerOff, Save, School, Send, Settings, ShieldCheck, UserRound, UsersRound, Video, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { confirmPopup } from '../lib/confirmPopup'
@@ -62,11 +64,28 @@ const recommendedDomain = (base, domains) => {
 export default function DashboardPage({ session, onLogout, onProfileUpdated, language = 'en' }) {
   const [page,setPage]=useState('overview'), [mobile,setMobile]=useState(false), [data,setData]=useState(null), [error,setError]=useState(''), [loading,setLoading]=useState(false)
   const [formOpen,setFormOpen]=useState(false), [notice,setNotice]=useState(''), [resolvedPlan,setResolvedPlan]=useState('')
+  const [featureMatrix,setFeatureMatrix]=useState(null)
   const user=session?.user || {}; const isSuper=user.role==='super_admin', isPortalUser=['Parent','Student'].includes(user.role)
   const nav=baseNav.map(([Icon,label,key,scope])=>[Icon,language==='hi'?(hindiNav[label]||label):label,key,scope])
-  const schoolPlan=String(user.school_plan||user.plan_setup||session?.school_plan||session?.plan_setup||resolvedPlan||data?.data?.user?.school_plan||'standard').trim().toLowerCase()
+  const schoolPlan=String(user.school_plan||user.plan_setup||session?.school_plan||session?.plan_setup||resolvedPlan||data?.data?.user?.school_plan||'free').trim().toLowerCase()
   const sessionPlanKnown=isSuper||Boolean(user.school_plan||user.plan_setup||session?.school_plan||session?.plan_setup)
-  const featureAccess={payroll:isSuper||['premium','enterprise'].includes(schoolPlan),leave:isSuper||['premium','enterprise'].includes(schoolPlan),smartClassroom:isSuper||schoolPlan==='enterprise',hostel:isSuper||['premium','enterprise'].includes(schoolPlan),inventory:isSuper||['premium','enterprise'].includes(schoolPlan),scholarships:isSuper||['premium','enterprise'].includes(schoolPlan),expenses:isSuper||schoolPlan==='enterprise'}
+  useEffect(() => {
+    if (isSuper) return undefined
+    let active = true
+    schoolApi.featureAccess().then(result => {
+      if (!active) return
+      setFeatureMatrix(result.features || {})
+      if (result.plan) setResolvedPlan(result.plan)
+    }).catch(() => { if (active) setFeatureMatrix({}) })
+    return () => { active = false }
+  }, [isSuper])
+  const localPlanAllows = name => {
+    const premium = ['hostel', 'leave_and_payroll', 'scholarship_and_concession', 'inventory_purchase_management', 'academic_analytics'].includes(name)
+    const enterprise = ['expense_and_vendor_payments', 'smart_classroom_recording'].includes(name)
+    return premium ? ['premium', 'enterprise'].includes(schoolPlan) : enterprise ? schoolPlan === 'enterprise' : true
+  }
+  const serverEnabled = name => isSuper || (featureMatrix ? featureMatrix[name]?.enabled === true : localPlanAllows(name))
+  const featureAccess={analytics:serverEnabled('academic_analytics'),payroll:serverEnabled('leave_and_payroll'),leave:serverEnabled('leave_and_payroll'),smartClassroom:serverEnabled('smart_classroom_recording'),hostel:serverEnabled('hostel'),inventory:serverEnabled('inventory_purchase_management'),scholarships:serverEnabled('scholarship_and_concession'),expenses:serverEnabled('expense_and_vendor_payments')}
   const schoolLogo = data?.data?.school?.logo || data?.data?.school?.logo_path || data?.school?.logo || data?.school?.logo_path || session?.school_logo || session?.user?.school_logo || ''
   const profileInitial = (user.name || 'U').slice(0, 1).toUpperCase()
   const load=useCallback(async()=>{ setLoading(true); setError(''); try { let result; if(page==='people') result=await schoolApi.people(); else if(page==='academics') result=await schoolApi.academics(); else if(page==='settings') result=await schoolApi.settings(); else if(page==='subjects') result=await schoolApi.subjects(); else if(page==='teacherAssignments') result=await schoolApi.teacherClassAssignments(); else if(page==='timetable') result=await schoolApi.timetable(); else if(page==='students') result=await schoolApi.students(); else if(page==='teachers') result=await schoolApi.teachers(); else if(page==='parents') result=await schoolApi.parents(); else if(page==='classes') result=await schoolApi.classes(); else if(page==='schools') result=await schoolApi.schools(); else if(page==='users') result=await schoolApi.users(isSuper); else if(page==='attendance') result=await schoolApi.attendance(today); else if(page==='attendanceReports') result=await schoolApi.attendanceReport(); else if(page==='notifications'||page==='messages'||page==='analytics'||page==='staffHr'||page==='smartClassroom'||page==='maintenance'||page==='exams'||page==='fees'||page==='assignments'||page==='library'||page==='transport'||page==='inventory'||page==='leave'||page==='meetings'||page==='audit'||page==='hostel'||page==='scholarships'||page==='expenses'||page==='payroll'||page==='portal'||page==='portalLinks'||page==='calendar'||page==='admissions'||page==='documents') result=sessionPlanKnown?{}:await schoolApi.dashboard(); else result=await schoolApi.dashboard(); if(result?.data?.user?.school_plan) setResolvedPlan(result.data.user.school_plan); setData(result) } catch(e){ setError(e.message) } finally{setLoading(false)} },[page,isSuper,sessionPlanKnown])

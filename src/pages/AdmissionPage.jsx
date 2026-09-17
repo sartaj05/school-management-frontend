@@ -3,6 +3,14 @@ import { useEffect, useState } from 'react'
 import PublicLayout from '../components/PublicLayout'
 import { schoolApi } from '../lib/api'
 
+const phoneValue = value => {
+  const digits = String(value || '').replace(/\D/g, '')
+  const normalized = digits.startsWith('91') ? digits.slice(0, 12) : `91${digits.slice(0, 10)}`
+  return normalized.length <= 2 ? '+91' : `+${normalized}`
+}
+const phoneOk = value => /^\+91[6-9]\d{9}$/.test(value || '')
+const emailOk = value => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value || '')
+
 export default function AdmissionPage() {
   const [schools,setSchools]=useState([]),[values,setValues]=useState({school_domain:'',student_first_name:'',student_last_name:'',gender:'',dob:'',applying_class:'',previous_school:'',address:'',guardian_name:'',guardian_relation:'guardian',guardian_mobile:'+91',guardian_email:''}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[done,setDone]=useState(null)
   useEffect(()=>{schoolApi.schools().then(data=>setSchools(data.schools||[])).catch(e=>setError(e.message))},[])

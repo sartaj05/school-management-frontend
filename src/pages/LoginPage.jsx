@@ -10,7 +10,6 @@ export default function LoginPage({ onLogin }) {
   const [mode, setMode] = useState('login')
   const [show, setShow] = useState(false)
   const [schools, setSchools] = useState([])
-  const [schoolDisplay, setSchoolDisplay] = useState('')
   const [form, setForm] = useState({ email: '', password: '', school_domain: '', token: '', new_password: '', confirm_password: '' })
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -21,10 +20,6 @@ export default function LoginPage({ onLogin }) {
     schoolApi.schools().then((data) => setSchools(data.schools || [])).catch(() => setSchools([]))
   }, [superAdmin])
 
-  useEffect(() => {
-    const selected = schools.find((school) => school.domain === form.school_domain)
-    setSchoolDisplay(selected ? selected.schoolName : form.school_domain)
-  }, [schools, form.school_domain])
   const change = e => setForm({ ...form, [e.target.name]: e.target.value })
   const switchMode = next => { setMode(next); setError(''); setMessage('') }
 
@@ -57,10 +52,10 @@ export default function LoginPage({ onLogin }) {
     } catch (err) { setError(err.message) } finally { setBusy(false) }
   }
 
-  return <main className="login-page"><section className="login-aside"><Link to="/"><Logo light /></Link><div><span className="eyebrow eyebrow-dark">Built for better school days</span><h1>Welcome back to your school community.</h1><p>One secure place for your people, classes and daily progress.</p></div><small>Simple. Connected. Thoughtful.</small></section><section className="login-panel"><div className="login-box"><Link className="back-link" to="/"><ArrowLeft size={17} /> Back to home</Link><div className="login-heading"><span className="login-icon">{mode === 'login' ? <LockKeyhole /> : <KeyRound />}</span><h2>{mode === 'login' ? 'Sign in to EduFlow' : mode === 'forgot' ? 'Forgot password' : 'Reset password'}</h2><p>{mode === 'login' ? 'Use the details provided by your school.' : mode === 'forgot' ? 'Request a secure, 15-minute reset token.' : 'Enter the token sent to your email.'}</p></div>{mode === 'login' && <><div className="login-tabs"><button className={!superAdmin ? 'active' : ''} onClick={() => setSuperAdmin(false)}>School user</button><button className={superAdmin ? 'active' : ''} onClick={() => setSuperAdmin(true)}>Super admin</button></div><form onSubmit={submitLogin} className="form-stack">{!superAdmin && <DomainField form={form} change={change} schools={schools} setForm={setForm} schoolDisplay={schoolDisplay} setSchoolDisplay={setSchoolDisplay} />}<EmailField form={form} change={change} /><PasswordField name="password" label="Password" value={form.password} change={change} show={show} setShow={setShow} />{message && <div className="success-notice login-message">{message}</div>}{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in securely'}</button>{!superAdmin && <button type="button" className="text-action" onClick={() => switchMode('forgot')}>Forgot your password?</button>}</form></>}{mode === 'forgot' && <form onSubmit={requestReset} className="form-stack"><DomainField form={form} change={change} schools={schools} setForm={setForm} schoolDisplay={schoolDisplay} setSchoolDisplay={setSchoolDisplay} /><EmailField form={form} change={change} />{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Requesting…' : 'Send reset instructions'}</button><button type="button" className="text-action" onClick={() => switchMode('login')}>Back to sign in</button></form>}{mode === 'reset' && <form onSubmit={resetPassword} className="form-stack">{message && <div className="success-notice login-message">{message}</div>}<label>Reset token<div className="input-wrap"><KeyRound /><input name="token" value={form.token} onChange={change} required autoComplete="one-time-code" /></div></label><PasswordField name="new_password" label="New password" value={form.new_password} change={change} show={show} setShow={setShow} minLength={8} /><PasswordField name="confirm_password" label="Confirm new password" value={form.confirm_password} change={change} show={show} setShow={setShow} minLength={8} />{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Resetting…' : 'Reset password'}</button><button type="button" className="text-action" onClick={() => switchMode('forgot')}>Request another token</button></form>}<p className="login-help">Need access? Contact your school administrator.</p></div></section></main>
+  return <main className="login-page"><section className="login-aside"><Link to="/"><Logo light /></Link><div><span className="eyebrow eyebrow-dark">Built for better school days</span><h1>Welcome back to your school community.</h1><p>One secure place for your people, classes and daily progress.</p></div><small>Simple. Connected. Thoughtful.</small></section><section className="login-panel"><div className="login-box"><Link className="back-link" to="/"><ArrowLeft size={17} /> Back to home</Link><div className="login-heading"><span className="login-icon">{mode === 'login' ? <LockKeyhole /> : <KeyRound />}</span><h2>{mode === 'login' ? 'Sign in to EduFlow' : mode === 'forgot' ? 'Forgot password' : 'Reset password'}</h2><p>{mode === 'login' ? 'Use the details provided by your school.' : mode === 'forgot' ? 'Request a secure, 15-minute reset token.' : 'Enter the token sent to your email.'}</p></div>{mode === 'login' && <><div className="login-tabs"><button className={!superAdmin ? 'active' : ''} onClick={() => setSuperAdmin(false)}>School user</button><button className={superAdmin ? 'active' : ''} onClick={() => setSuperAdmin(true)}>Super admin</button></div><form onSubmit={submitLogin} className="form-stack">{!superAdmin && <DomainField form={form} schools={schools} setForm={setForm} />}<EmailField form={form} change={change} /><PasswordField name="password" label="Password" value={form.password} change={change} show={show} setShow={setShow} />{message && <div className="success-notice login-message">{message}</div>}{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in securely'}</button>{!superAdmin && <button type="button" className="text-action" onClick={() => switchMode('forgot')}>Forgot your password?</button>}</form></>}{mode === 'forgot' && <form onSubmit={requestReset} className="form-stack"><DomainField form={form} schools={schools} setForm={setForm} /><EmailField form={form} change={change} />{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Requesting…' : 'Send reset instructions'}</button><button type="button" className="text-action" onClick={() => switchMode('login')}>Back to sign in</button></form>}{mode === 'reset' && <form onSubmit={resetPassword} className="form-stack">{message && <div className="success-notice login-message">{message}</div>}<label>Reset token<div className="input-wrap"><KeyRound /><input name="token" value={form.token} onChange={change} required autoComplete="one-time-code" /></div></label><PasswordField name="new_password" label="New password" value={form.new_password} change={change} show={show} setShow={setShow} minLength={8} /><PasswordField name="confirm_password" label="Confirm new password" value={form.confirm_password} change={change} show={show} setShow={setShow} minLength={8} />{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Resetting…' : 'Reset password'}</button><button type="button" className="text-action" onClick={() => switchMode('forgot')}>Request another token</button></form>}<p className="login-help">Need access? Contact your school administrator.</p></div></section></main>
 }
 
-function DomainField({ form, change, schools, setForm, schoolDisplay, setSchoolDisplay }) {
+function DomainField({ form, schools, setForm }) {
   const handleSchoolPick = (value) => {
     const trimmed = value.trim()
     const match = schools.find((school) => {
@@ -70,9 +65,11 @@ function DomainField({ form, change, schools, setForm, schoolDisplay, setSchoolD
       return schoolName === trimmed.toLowerCase() || domain === trimmed.toLowerCase() || combined === trimmed.toLowerCase()
     })
 
-    setSchoolDisplay(match ? match.schoolName : trimmed)
     setForm((current) => ({ ...current, school_domain: match ? match.domain : trimmed }))
   }
+
+  const match = schools.find((school) => school.domain === form.school_domain)
+  const schoolDisplay = match ? match.schoolName : form.school_domain
 
   return (
     <label>

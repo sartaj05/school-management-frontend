@@ -86,6 +86,7 @@ export const schoolApi = {
   revokeSession: (sessionId) => api(`/auth/sessions/${sessionId}`, { method: 'DELETE' }),
   superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
   dashboard: () => api('/dashboard/home'),
+  featureAccess: () => api('/school/feature-access'),
   people: () => api('/master/people'),
   academics: () => api('/master/academics'),
   settings: () => api('/master/settings'),

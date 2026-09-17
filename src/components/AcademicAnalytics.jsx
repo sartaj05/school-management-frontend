@@ -1,3 +1,5 @@
+/* API loader effects intentionally update local state after requests. */
+/* eslint-disable react-hooks/set-state-in-effect */
 import { Award, BarChart3, Download, TrendingUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'

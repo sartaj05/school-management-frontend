@@ -1,3 +1,5 @@
+/* MediaRecorder timestamps are created in user-triggered callbacks. */
+/* eslint-disable react-hooks/purity, react-hooks/set-state-in-effect */
 import { MonitorUp, Play, RefreshCw, Square, Trash2, Upload, Video } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { blobApi, schoolApi } from '../lib/api'
