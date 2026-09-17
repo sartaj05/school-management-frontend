@@ -1,4 +1,4 @@
-import { CalendarCheck } from 'lucide-react'
+import { CalendarCheck, CalendarClock, Save, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 
@@ -18,6 +18,9 @@ export default function LeaveManagement({ user }) {
   const [adjustments, setAdjustments] = useState([])
   const [form, setForm] = useState({ leave_type: 'casual', start_date: '', end_date: '', reason: '' })
   const [allowance, setAllowance] = useState({ leave_type: 'casual', days: '', notes: '' })
+  const [policy, setPolicy] = useState(null)
+  const [holidays, setHolidays] = useState([])
+  const [holiday, setHoliday] = useState({ holiday_date: '', name: '', is_optional: false })
   const [review, setReview] = useState(null)
   const [decision, setDecision] = useState('approved')
   const [notes, setNotes] = useState('')
@@ -39,6 +42,17 @@ export default function LeaveManagement({ user }) {
     }).catch(err => { if (active) setError(err.message) })
     return () => { active = false }
   }, [admin])
+
+  useEffect(() => {
+    let active = true
+    if (!validYear) return undefined
+    Promise.all([schoolApi.leavePolicy(year), schoolApi.leaveHolidays(year)]).then(([policyResult, holidayResult]) => {
+      if (!active) return
+      setPolicy(policyResult.data || null)
+      setHolidays(holidayResult.data || policyResult.holidays || [])
+    }).catch(err => { if (active) setError(err.message) })
+    return () => { active = false }
+  }, [year, validYear])
 
   useEffect(() => {
     let active = true
@@ -88,6 +102,34 @@ export default function LeaveManagement({ user }) {
     mutate(() => schoolApi.setLeaveAllowance({ ...allowance, year, person_type: person.person_type, person_id: person.person_id }), () => setAllowance({ ...allowance, notes: '' }))
   }
 
+  function savePolicy(event) {
+    event.preventDefault()
+    mutate(async () => {
+      const result = await schoolApi.saveLeavePolicy({ ...policy, policy_year: Number(year) })
+      setPolicy(result.data || policy)
+      return result
+    })
+  }
+
+  function addHoliday(event) {
+    event.preventDefault()
+    mutate(async () => {
+      const result = await schoolApi.createLeaveHoliday(holiday)
+      setHoliday({ holiday_date: '', name: '', is_optional: false })
+      const refreshed = await schoolApi.leaveHolidays(year)
+      setHolidays(refreshed.data || [])
+      return result
+    })
+  }
+
+  function removeHoliday(id) {
+    mutate(async () => {
+      const result = await schoolApi.deleteLeaveHoliday(id)
+      setHolidays(current => current.filter(item => item.id !== id))
+      return result
+    })
+  }
+
   function openReview(row) {
     setHistory([]); setNotes(''); setDecision(admin && row.status === 'pending' ? 'approved' : 'cancelled'); setReview(row)
   }
@@ -98,6 +140,7 @@ export default function LeaveManagement({ user }) {
     <section className="people-hero"><div><span>School operations</span><h2>Leave management</h2><p>Request time off, track annual balances, and review decisions.</p></div><CalendarCheck /></section>
     {error && <div className="form-error" role="alert">{error}</div>}
     {notice && <div className="success-notice" role="status">{notice}</div>}
+    {policy && <section className="data-panel leave-policy-panel"><div className="panel-title"><div><span>Premium policy controls</span><h2>{policy.policy_name}</h2><p>Leave dates, attendance linkage, and payroll absence rules for {year}.</p></div><CalendarClock /></div>{admin ? <form className="editor-card leave-policy-form" onSubmit={savePolicy}><div className="field-grid"><label>Policy name<input required maxLength="120" value={policy.policy_name || ''} onChange={e => setPolicy({ ...policy, policy_name: e.target.value })} /></label><label>Payroll working days<input required type="number" min="0.1" max="366" step="0.1" value={policy.payroll_working_days ?? 26} onChange={e => setPolicy({ ...policy, payroll_working_days: e.target.value })} /></label><label className="policy-check"><input type="checkbox" checked={Boolean(policy.exclude_weekends)} onChange={e => setPolicy({ ...policy, exclude_weekends: e.target.checked })} />Exclude weekends from leave days</label><label className="policy-check"><input type="checkbox" checked={Boolean(policy.exclude_holidays)} onChange={e => setPolicy({ ...policy, exclude_holidays: e.target.checked })} />Exclude listed holidays from leave days</label><label className="policy-check"><input type="checkbox" checked={Boolean(policy.link_approved_leave_to_attendance)} onChange={e => setPolicy({ ...policy, link_approved_leave_to_attendance: e.target.checked })} />Link approved leave to staff attendance</label><label className="policy-check"><input type="checkbox" checked={Boolean(policy.deduct_absences_from_payroll)} onChange={e => setPolicy({ ...policy, deduct_absences_from_payroll: e.target.checked })} />Deduct marked absences from payroll</label><label className="wide">Policy notes<textarea maxLength="2000" value={policy.notes || ''} onChange={e => setPolicy({ ...policy, notes: e.target.value })} /></label></div><button className="button button-small" disabled={busy || !validYear}><Save size={15} />Save leave policy</button></form> : <div className="policy-summary"><span>{policy.exclude_weekends ? 'Weekends excluded' : 'Weekends counted'}</span><span>{policy.exclude_holidays ? 'Holidays excluded' : 'Holidays counted'}</span><span>{policy.link_approved_leave_to_attendance ? 'Approved leave links to attendance' : 'Attendance linkage off'}</span><span>{policy.deduct_absences_from_payroll ? 'Absences reduce payroll' : 'Absences do not reduce payroll'}</span></div>}<div className="leave-holiday-section"><div className="panel-title"><div><span>School calendar</span><h3>Leave holidays</h3></div><b>{holidays.length} dates</b></div>{admin && <form className="holiday-form" onSubmit={addHoliday}><label>Date<input required type="date" value={holiday.holiday_date} onChange={e => setHoliday({ ...holiday, holiday_date: e.target.value })} /></label><label>Name<input required maxLength="180" value={holiday.name} onChange={e => setHoliday({ ...holiday, name: e.target.value })} /></label><label className="policy-check"><input type="checkbox" checked={holiday.is_optional} onChange={e => setHoliday({ ...holiday, is_optional: e.target.checked })} />Optional</label><button className="button button-small" disabled={busy}><Save size={15} />Add holiday</button></form>}<div className="holiday-list">{holidays.map(item => <article key={item.id}><div><b>{item.holiday_date}</b><span>{item.name}</span></div><small>{item.is_optional ? 'Optional' : 'School holiday'}</small>{admin && <button type="button" disabled={busy} onClick={() => removeHoliday(item.id)} aria-label={`Remove ${item.name}`}><Trash2 size={14} /></button>}</article>)}{!holidays.length && <p>No holidays configured for {year}.</p>}</div></div></section>}
     <div className="page-actions">
       {admin && <label>Person<select value={selected} disabled={busy} onChange={e => { setSelected(e.target.value); setOffset(0); setReview(null) }}><option value="">All requests</option>{people.map(item => <option key={`${item.person_type}:${item.person_id}`} value={`${item.person_type}:${item.person_id}`}>{item.name} ({item.person_type}{item.status !== 'active' ? ', inactive' : ''})</option>)}</select></label>}
       {!admin && <b>{person?.name || 'A linked active profile is required.'}</b>}
@@ -107,7 +150,7 @@ export default function LeaveManagement({ user }) {
     </div>
     {!validYear && <div className="form-error">Enter a year between 2000 and 2100.</div>}
     {loading ? <p role="status">Loading leave records...</p> : <>
-      {!!balances.length && <section className="data-panel"><div className="panel-title"><div><h2>{year} leave balances</h2><p>Whole calendar days, including weekends. Pending requests reserve days. Allowances start at zero.</p></div></div><div className="table-wrap"><table><thead><tr><th>Type</th><th>Allowance</th><th>Used</th><th>Pending</th><th>Remaining</th><th>Available to request</th></tr></thead><tbody>{balances.map(row => <tr key={row.leave_type}><td>{row.leave_type}</td><td>{row.allowance}</td><td>{row.used}</td><td>{row.pending}</td><td>{row.remaining}</td><td>{row.available}</td></tr>)}</tbody></table></div></section>}
+      {!!balances.length && <section className="data-panel"><div className="panel-title"><div><h2>{year} leave balances</h2><p>{policy?.exclude_weekends ? 'Weekends are excluded.' : 'Weekends are counted.'} {policy?.exclude_holidays ? 'Listed holidays are excluded.' : ''} Pending requests reserve days.</p></div></div><div className="table-wrap"><table><thead><tr><th>Type</th><th>Allowance</th><th>Used</th><th>Pending</th><th>Remaining</th><th>Available to request</th></tr></thead><tbody>{balances.map(row => <tr key={row.leave_type}><td>{row.leave_type}</td><td>{row.allowance}</td><td>{row.used}</td><td>{row.pending}</td><td>{row.remaining}</td><td>{row.available}</td></tr>)}</tbody></table></div></section>}
       {person?.status === 'active' && <form className="editor-card" onSubmit={submit}><div className="editor-heading"><CalendarCheck /><div><h3>Request leave for {person.name}</h3><p>Use dates within one calendar year. Split requests that cross New Year.</p></div></div><div className="field-grid">
         <label>Leave type<select value={form.leave_type} onChange={e => setForm({ ...form, leave_type: e.target.value })}>{types.map(type => <option key={type}>{type}</option>)}</select></label>
         <label>Start date<input required type="date" min="2000-01-01" max="2100-12-31" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></label>

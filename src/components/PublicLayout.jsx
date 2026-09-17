@@ -19,6 +19,7 @@ export default function PublicLayout({ children }) {
       <button className="menu-button" onClick={() => setOpen(!open)} aria-label="Toggle navigation">{open ? <X /> : <Menu />}</button>
       <nav className={open ? 'nav-open' : ''}>
         <Link to="/#features">Features</Link>
+        <Link to="/#plans">Plans</Link>
         <Link to="/#about">About</Link>
         <Link to="/contact">Contact</Link>
         <Link className="button button-small button-ghost" to="/login">Sign in</Link>

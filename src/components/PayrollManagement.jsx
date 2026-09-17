@@ -97,7 +97,7 @@ export default function PayrollManagement() {
   }
 
   return <div className="payroll-management">
-    <section className="people-hero"><div><span>Premium staff operations</span><h2>Attendance and payroll</h2><p>Set teacher salaries, generate monthly payslips, and print or download saved payroll.</p></div><Banknote /></section>
+    <section className="people-hero"><div><span>Premium staff operations</span><h2>Attendance and payroll</h2><p>Set teacher salaries, apply the active leave policy, and print or download saved payroll.</p></div><Banknote /></section>
     <div className="page-actions payroll-toolbar">
       <label>Payroll month<input type="month" required value={month} disabled={busy} onChange={e => { if (e.target.value) { setMonth(e.target.value); setError(''); setNotice('') } }} /></label>
       <button className="button button-small" disabled={disabled || !structures.length || finalized} onClick={generate}>{busy ? 'Working…' : `${payslips.length ? 'Regenerate' : 'Generate'} ${monthLabel(month)} payslips`}</button>
@@ -114,7 +114,7 @@ export default function PayrollManagement() {
         </div>
         <div className="payroll-salary-footer"><span>Net monthly salary <strong>{money(net)}</strong></span><button className="button button-small" disabled={!salary.teacher_id || net < 0}><Save size={16} />Save salary</button></div>
       </fieldset>
-      <p className="payroll-help">Attendance and leave do not automatically reduce salary. Enter any adjustments in deductions.</p>
+      <p className="payroll-help">Base deductions stay in the salary structure. Policy-controlled absence deductions are calculated separately when payroll is generated.</p>
     </form>
     <section className="data-panel"><div className="panel-title"><div><span>Monthly configuration</span><h2>Salary structures</h2></div><b>{structures.length} teachers</b></div>
       <div className="table-wrap"><table><thead><tr><th>Teacher</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net salary</th><th>Action</th></tr></thead><tbody>
@@ -124,9 +124,9 @@ export default function PayrollManagement() {
     </section>
     <section className="data-panel"><div className="panel-title"><div><span>{monthLabel(month)}</span><h2>Payslips</h2><p className="payroll-help">Print to paper or choose Save as PDF. Download saves a printable HTML payslip.</p></div><b>{payslips.length} records</b></div>
       {finalized && <p className="payroll-help">This month is finalized and cannot be regenerated.</p>}
-      <div className="table-wrap"><table><thead><tr><th>Teacher</th><th>Basic</th><th>Allowances</th><th>Deductions</th><th>Net salary</th><th>Status</th><th>Payslip</th></tr></thead><tbody>
-        {payslips.map(row => <tr key={row.id}><td><b>{row.full_name}</b><small>{row.department || '—'}</small></td><td>{money(row.basic_salary)}</td><td>{money(row.allowances)}</td><td>{money(row.deductions)}</td><td><b>{money(row.net_salary)}</b></td><td>{row.payroll_status}</td><td><div className="payroll-row-actions"><button className="button button-small button-ghost" disabled={disabled} onClick={() => documentFor(row, true)} aria-label={`Print payslip for ${row.full_name}`}><Printer size={14} />Print / PDF</button><button className="button button-small button-ghost" disabled={disabled} onClick={() => documentFor(row, false)} aria-label={`Download payslip for ${row.full_name}`}><Download size={14} />Download HTML</button></div></td></tr>)}
-        {loaded && !payslips.length && <tr><td colSpan="7">No payslips for {monthLabel(month)}. Set salaries and generate this month’s payroll.</td></tr>}
+      <div className="table-wrap"><table><thead><tr><th>Teacher</th><th>Basic</th><th>Allowances</th><th>Base deductions</th><th>Leave / absence</th><th>Policy deduction</th><th>Net salary</th><th>Status</th><th>Payslip</th></tr></thead><tbody>
+        {payslips.map(row => <tr key={row.id}><td><b>{row.full_name}</b><small>{row.department || '—'}</small></td><td>{money(row.basic_salary)}</td><td>{money(row.allowances)}</td><td>{money(row.deductions)}</td><td><small>{row.leave_days || 0} leave · {row.absence_days || 0} absent</small><small>{row.working_days || 26} working days</small></td><td>{money(row.attendance_deduction)}</td><td><b>{money(row.net_salary)}</b></td><td>{row.payroll_status}</td><td><div className="payroll-row-actions"><button className="button button-small button-ghost" disabled={disabled} onClick={() => documentFor(row, true)} aria-label={`Print payslip for ${row.full_name}`}><Printer size={14} />Print / PDF</button><button className="button button-small button-ghost" disabled={disabled} onClick={() => documentFor(row, false)} aria-label={`Download payslip for ${row.full_name}`}><Download size={14} />Download HTML</button></div></td></tr>)}
+        {loaded && !payslips.length && <tr><td colSpan="9">No payslips for {monthLabel(month)}. Set salaries and generate this month’s payroll.</td></tr>}
       </tbody></table></div>
     </section>
     <section className="data-panel"><div className="panel-title"><div><span>Daily register</span><h2>Staff attendance</h2></div><div className="page-actions"><label>Attendance date<input type="date" required value={day} disabled={busy} onChange={e => { if (e.target.value) { setDay(e.target.value); setError('') } }} /></label></div></div>

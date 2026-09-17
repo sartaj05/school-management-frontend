@@ -51,6 +51,13 @@ export async function downloadApi(path, filename) {
   const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href=url; link.download=filename; link.target='_blank'; link.click(); URL.revokeObjectURL(url)
 }
 
+export async function blobApi(path) {
+  const token = localStorage.getItem('school_access_token')
+  const response = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+  if (!response.ok) { const data = await response.json().catch(() => ({})); throw new ApiError(data.message || 'Media request failed.', response.status, data) }
+  return response.blob()
+}
+
 async function refreshAccessToken(refreshToken) {
   const response = await fetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',
@@ -308,6 +315,17 @@ export const schoolApi = {
   updateLeaveStatus: (id, values) => api(`/leave/requests/${id}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
   leaveHistory: (id) => api(`/leave/requests/${id}/history`),
   leaveAllowanceHistory: (filters) => api(`/leave/allowances/history?${new URLSearchParams(filters)}`),
+  leavePolicy: (year) => api(`/leave/policy?year=${encodeURIComponent(year)}`),
+  saveLeavePolicy: (values) => api('/leave/policy', { method: 'PUT', body: JSON.stringify(values) }),
+  leaveHolidays: (year) => api(`/leave/holidays?year=${encodeURIComponent(year)}`),
+  createLeaveHoliday: (values) => api('/leave/holidays', { method: 'POST', body: JSON.stringify(values) }),
+  deleteLeaveHoliday: (id) => api(`/leave/holidays/${id}`, { method: 'DELETE' }),
+  smartClassroomOptions: () => api('/smart-classroom/options'),
+  smartClassroomSessions: (filters = {}) => api(`/smart-classroom/sessions?${new URLSearchParams(filters)}`),
+  createSmartClassroomSession: (values) => api('/smart-classroom/sessions', { method: 'POST', body: JSON.stringify(values) }),
+  updateSmartClassroomSession: (id, values) => api(`/smart-classroom/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
+  uploadSmartClassroomRecording: (id, values) => api(`/smart-classroom/sessions/${id}/recordings`, { method: 'POST', body: values }),
+  deleteSmartClassroomRecording: (id) => api(`/smart-classroom/recordings/${id}`, { method: 'DELETE' }),
   hrStaff: (teacherId = '') => api(`/hr/staff${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
   hrDocuments: (teacherId = '') => api(`/hr/documents${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
   createHrDocument: (values) => api('/hr/documents', { method: 'POST', body: JSON.stringify(values) }),
