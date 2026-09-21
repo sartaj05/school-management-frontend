@@ -19,6 +19,8 @@ export default function StaffHRManagement({ user }) {
     try { const [summary, docs, contractsResult, reviewsResult, history] = await Promise.all([schoolApi.hrStaff(teacherId), schoolApi.hrDocuments(teacherId), schoolApi.hrContracts(teacherId), schoolApi.hrReviews(teacherId), schoolApi.hrSalaryHistory(teacherId)]); setStaff(summary.data || []); setDocuments(docs.data || []); setContracts(contractsResult.data || []); setReviews(reviewsResult.data || []); setSalaryHistory(history.data || []) }
     catch (err) { setError(err.message) } finally { setBusy(false) }
   }
+  // Initial HR directory load intentionally uses the empty staff selection.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [])
   const selectedStaff = staff.find(item => String(item.teacher_id) === String(selected))
   const choose = value => { setSelected(value); setTab('overview'); load(value) }

@@ -27,6 +27,8 @@ export default function AdmissionManagement() {
     }
   }
 
+  // Reload when the status filter changes; load reads the selected status.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [status])
 
   async function save(row, nextStatus) {

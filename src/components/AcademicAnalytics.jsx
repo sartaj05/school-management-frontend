@@ -18,6 +18,8 @@ export default function AcademicAnalytics() {
     try { const result = await schoolApi.academicAnalytics(Object.fromEntries(Object.entries(next).filter(([, value]) => value))); setReport(result); if (!classes.length) { const classResult = await schoolApi.classes(); setClasses((classResult.data || []).filter(item => item.status === 'active')) } }
     catch (err) { setError(err.message) } finally { setBusy(false) }
   }
+  // Initial report load intentionally captures the initial filter state.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [])
   const field = (name, value) => setFilters(current => ({ ...current, [name]: value }))
   const summary = report?.summary || {}, performance = report?.student_performance || [], subjects = report?.subject_analysis || [], attendance = report?.attendance_comparison || []

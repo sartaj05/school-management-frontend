@@ -49,6 +49,8 @@ export default function ScholarshipManagement() {
     }
   }
 
+  // Initial load intentionally starts with all scholarship applications.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const timer = setTimeout(() => load('all'), 0); return () => clearTimeout(timer) }, [])
 
   async function saveProgram(event) {

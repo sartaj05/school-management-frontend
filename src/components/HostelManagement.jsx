@@ -70,6 +70,8 @@ export default function HostelManagement() {
     setAttendance(result.data || [])
   }
 
+  // Load the initial hostel snapshot once when the screen mounts.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [])
 
   async function saveBuilding(event) {

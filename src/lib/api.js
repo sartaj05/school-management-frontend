@@ -311,6 +311,8 @@ export const schoolApi = {
   createExpensePayment: (values) => api('/expenses/payments', { method: 'POST', body: JSON.stringify(values) }),
   financeSummary: (filters = {}) => api(`/finance/summary?${new URLSearchParams(filters)}`),
   financeEntries: (filters = {}) => api(`/finance/entries?${new URLSearchParams(filters)}`),
+  downloadFinanceCsv: (filters = {}) => downloadApi(`/finance/export.csv?${new URLSearchParams(filters)}`, 'finance-ledger.csv'),
+  downloadFinanceReport: (filters = {}) => downloadApi(`/finance/export.html?${new URLSearchParams(filters)}`, 'finance-ledger-report.html'),
   createFinanceEntry: (values) => api('/finance/entries', { method: 'POST', body: JSON.stringify(values) }),
   reconcileFinanceEntry: (id, values) => api(`/finance/entries/${id}/reconcile`, { method: 'PATCH', body: JSON.stringify(values) }),
   leaveOptions: () => api('/leave/options'),

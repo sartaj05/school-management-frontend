@@ -53,6 +53,8 @@ export default function ExpenseManagement() {
     }
   }
 
+  // Initial load uses the all-status view before the user chooses a filter.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const timer = setTimeout(() => load('all'), 0); return () => clearTimeout(timer) }, [])
 
   async function saveVendor(event) {

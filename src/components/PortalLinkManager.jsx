@@ -8,6 +8,8 @@ export default function PortalLinkManager() {
   const [type, setType] = useState('parent'), [options, setOptions] = useState({users:[],profiles:[]}), [links, setLinks] = useState([])
   const [values, setValues] = useState({user_id:'',profile_id:''}), [error, setError] = useState(''), [notice, setNotice] = useState('')
   const load = async () => { try { const [available, current] = await Promise.all([schoolApi.portalLinkOptions(type), schoolApi.portalLinks()]); setOptions(available); setLinks(current.data || []); setValues({user_id:'',profile_id:''}) } catch (e) { setError(e.message) } }
+  // The account type determines the available link options.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [type])
   async function submit(e) { e.preventDefault(); setError(''); try { const result = await schoolApi.createPortalLink({...values, profile_type:type}); setNotice(result.message); await load() } catch (err) { setError(err.message) } }
   async function revoke(id) { if (!await confirmPopup({title:'Revoke portal link?',message:'The linked account will immediately lose access to this profile.',confirmLabel:'Revoke link'})) return; try { const result=await schoolApi.revokePortalLink(id); setNotice(result.message); await load() } catch (err) { setError(err.message) } }
