@@ -88,6 +88,7 @@ export const schoolApi = {
   superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
   dashboard: () => api('/dashboard/home'),
   featureAccess: () => api('/school/feature-access'),
+  syncCheckpoint: () => api('/sync/checkpoint'),
   people: () => api('/master/people'),
   academics: () => api('/master/academics'),
   settings: () => api('/master/settings'),
