@@ -139,7 +139,7 @@ export const schoolApi = {
   createTeacherClassAssignment: (values) => api('/teacher-class-assignment/create', { method: 'POST', body: JSON.stringify(values) }),
   updateTeacherClassAssignment: (assignmentId, values) => api(`/teacher-class-assignment/${assignmentId}`, { method: 'PUT', body: JSON.stringify(values) }),
   deleteTeacherClassAssignment: (assignmentId) => api(`/teacher-class-assignment/${assignmentId}`, { method: 'DELETE' }),
-  users: (superAdmin = false) => api(superAdmin ? '/super-admin/users' : '/users'),
+  users: (superAdmin = false, filters = {}) => api(superAdmin ? `/super-admin/users?${new URLSearchParams(filters)}` : '/users'),
   updateUser: (userId, values) => api(`/super-admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(values) }),
   updateUserStatus: (userId, values) => api(`/super-admin/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
   createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values) }),
