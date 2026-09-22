@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Logo from '../components/Logo'
 import { schoolApi } from '../lib/api'
+import { translateText } from '../lib/i18n'
 
-export default function LoginPage({ onLogin }) {
+export default function LoginPage({ onLogin, language = 'en' }) {
+  const copy = key => translateText(language, key)
   const navigate = useNavigate()
   const [superAdmin, setSuperAdmin] = useState(false)
   const [mode, setMode] = useState('login')
@@ -52,10 +54,10 @@ export default function LoginPage({ onLogin }) {
     } catch (err) { setError(err.message) } finally { setBusy(false) }
   }
 
-  return <main className="login-page"><section className="login-aside"><Link to="/"><Logo light /></Link><div><span className="eyebrow eyebrow-dark">Built for better school days</span><h1>Welcome back to your school community.</h1><p>One secure place for your people, classes and daily progress.</p></div><small>Simple. Connected. Thoughtful.</small></section><section className="login-panel"><div className="login-box"><Link className="back-link" to="/"><ArrowLeft size={17} /> Back to home</Link><div className="login-heading"><span className="login-icon">{mode === 'login' ? <LockKeyhole /> : <KeyRound />}</span><h2>{mode === 'login' ? 'Sign in to EduFlow' : mode === 'forgot' ? 'Forgot password' : 'Reset password'}</h2><p>{mode === 'login' ? 'Use the details provided by your school.' : mode === 'forgot' ? 'Request a secure, 15-minute reset token.' : 'Enter the token sent to your email.'}</p></div>{mode === 'login' && <><div className="login-tabs"><button className={!superAdmin ? 'active' : ''} onClick={() => setSuperAdmin(false)}>School user</button><button className={superAdmin ? 'active' : ''} onClick={() => setSuperAdmin(true)}>Super admin</button></div><form onSubmit={submitLogin} className="form-stack">{!superAdmin && <DomainField form={form} schools={schools} setForm={setForm} />}<EmailField form={form} change={change} /><PasswordField name="password" label="Password" value={form.password} change={change} show={show} setShow={setShow} />{message && <div className="success-notice login-message">{message}</div>}{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in securely'}</button>{!superAdmin && <button type="button" className="text-action" onClick={() => switchMode('forgot')}>Forgot your password?</button>}</form></>}{mode === 'forgot' && <form onSubmit={requestReset} className="form-stack"><DomainField form={form} schools={schools} setForm={setForm} /><EmailField form={form} change={change} />{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Requesting…' : 'Send reset instructions'}</button><button type="button" className="text-action" onClick={() => switchMode('login')}>Back to sign in</button></form>}{mode === 'reset' && <form onSubmit={resetPassword} className="form-stack">{message && <div className="success-notice login-message">{message}</div>}<label>Reset token<div className="input-wrap"><KeyRound /><input name="token" value={form.token} onChange={change} required autoComplete="one-time-code" /></div></label><PasswordField name="new_password" label="New password" value={form.new_password} change={change} show={show} setShow={setShow} minLength={8} /><PasswordField name="confirm_password" label="Confirm new password" value={form.confirm_password} change={change} show={show} setShow={setShow} minLength={8} />{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Resetting…' : 'Reset password'}</button><button type="button" className="text-action" onClick={() => switchMode('forgot')}>Request another token</button></form>}<p className="login-help">Need access? Contact your school administrator.</p></div></section></main>
+  return <main className="login-page"><section className="login-aside"><Link to="/"><Logo light /></Link><div><span className="eyebrow eyebrow-dark">{copy('builtForBetterDays')}</span><h1>{copy('welcomeBack')}</h1><p>{copy('securePlace')}</p></div><small>Simple. Connected. Thoughtful.</small></section><section className="login-panel"><div className="login-box"><Link className="back-link" to="/"><ArrowLeft size={17} /> {copy('backHome')}</Link><div className="login-heading"><span className="login-icon">{mode === 'login' ? <LockKeyhole /> : <KeyRound />}</span><h2>{mode === 'login' ? copy('signInEduFlow') : mode === 'forgot' ? copy('forgotPassword') : 'Reset password'}</h2><p>{mode === 'login' ? copy('schoolDetails') : mode === 'forgot' ? 'Request a secure, 15-minute reset token.' : 'Enter the token sent to your email.'}</p></div>{mode === 'login' && <><div className="login-tabs"><button className={!superAdmin ? 'active' : ''} onClick={() => setSuperAdmin(false)}>{copy('schoolUser')}</button><button className={superAdmin ? 'active' : ''} onClick={() => setSuperAdmin(true)}>{copy('superAdmin')}</button></div><form onSubmit={submitLogin} className="form-stack">{!superAdmin && <DomainField form={form} schools={schools} setForm={setForm} language={language} />}<EmailField form={form} change={change} language={language} /><PasswordField name="password" label={copy('password')} value={form.password} change={change} show={show} setShow={setShow} />{message && <div className="success-notice login-message">{message}</div>}{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in securely'}</button>{!superAdmin && <button type="button" className="text-action" onClick={() => switchMode('forgot')}>{copy('forgotPassword')}</button>}</form></>}{mode === 'forgot' && <form onSubmit={requestReset} className="form-stack"><DomainField form={form} schools={schools} setForm={setForm} language={language} /><EmailField form={form} change={change} language={language} />{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Requesting…' : 'Send reset instructions'}</button><button type="button" className="text-action" onClick={() => switchMode('login')}>Back to sign in</button></form>}{mode === 'reset' && <form onSubmit={resetPassword} className="form-stack">{message && <div className="success-notice login-message">{message}</div>}<label>Reset token<div className="input-wrap"><KeyRound /><input name="token" value={form.token} onChange={change} required autoComplete="one-time-code" /></div></label><PasswordField name="new_password" label="New password" value={form.new_password} change={change} show={show} setShow={setShow} minLength={8} /><PasswordField name="confirm_password" label="Confirm new password" value={form.confirm_password} change={change} show={show} setShow={setShow} minLength={8} />{error && <div className="form-error">{error}</div>}<button className="button button-full" disabled={busy}>{busy ? 'Resetting…' : 'Reset password'}</button><button type="button" className="text-action" onClick={() => switchMode('forgot')}>Request another token</button></form>}<p className="login-help">{copy('needAccess')}</p></div></section></main>
 }
 
-function DomainField({ form, schools, setForm }) {
+function DomainField({ form, schools, setForm, language = 'en' }) {
   const handleSchoolPick = (value) => {
     const trimmed = value.trim()
     const match = schools.find((school) => {
@@ -73,7 +75,7 @@ function DomainField({ form, schools, setForm }) {
 
   return (
     <label>
-      School name
+      {translateText(language, 'schoolName')}
       <div className="input-wrap">
         <School />
         <input
@@ -81,7 +83,7 @@ function DomainField({ form, schools, setForm }) {
           name="school_domain"
           value={schoolDisplay}
           onChange={(event) => handleSchoolPick(event.target.value)}
-          placeholder="Search school name"
+          placeholder={translateText(language, 'schoolName')}
           required
         />
       </div>
@@ -93,5 +95,5 @@ function DomainField({ form, schools, setForm }) {
     </label>
   )
 }
-function EmailField({ form, change }) { return <label>Email address<div className="input-wrap"><Mail /><input type="email" name="email" value={form.email} onChange={change} placeholder="name@school.com" required /></div></label> }
+function EmailField({ form, change, language = 'en' }) { return <label>{translateText(language, 'emailAddress')}<div className="input-wrap"><Mail /><input type="email" name="email" value={form.email} onChange={change} placeholder="name@school.com" required /></div></label> }
 function PasswordField({ name, label, value, change, show, setShow, minLength }) { return <label>{label}<div className="input-wrap"><LockKeyhole /><input type={show ? 'text' : 'password'} name={name} value={value} onChange={change} required minLength={minLength} autoComplete={name === 'password' ? 'current-password' : 'new-password'} /><button type="button" onClick={() => setShow(!show)}>{show ? <EyeOff /> : <Eye />}</button></div></label> }

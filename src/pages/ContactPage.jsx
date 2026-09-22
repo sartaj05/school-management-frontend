@@ -3,7 +3,7 @@ import { Mail, MapPin, Phone, Clock, Headphones } from 'lucide-react'
 import PublicLayout from '../components/PublicLayout'
 import { api } from '../lib/api'
 
-export default function ContactPage() {
+export default function ContactPage({ language = 'en' }) {
   const [content, setContent] = useState(null)
   const [error, setError] = useState('')
 
@@ -20,7 +20,7 @@ export default function ContactPage() {
   }, [])
 
   return (
-    <PublicLayout>
+    <PublicLayout language={language}>
       <main className="contact-page container">
         <section className="contact-hero">
           <span className="section-kicker">Contact us</span>

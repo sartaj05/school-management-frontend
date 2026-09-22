@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import PublicLayout from '../components/PublicLayout'
 import Logo from '../components/Logo'
 import { api, schoolLogoUrl } from '../lib/api'
+import { translateText } from '../lib/i18n'
 
 const features = [
   { Icon: UsersRound, title: 'Student & staff records', text: 'Keep every profile organized, searchable and available to the right people.', details: 'Create a reliable school directory with student, teacher, parent and staff profiles in one protected workspace.', plans: { Standard: 'Core records and directory access.', Premium: 'Core records plus richer school operations.', Enterprise: 'Core records with enterprise-wide controls.' }, included: ['Standard', 'Premium', 'Enterprise'], related: ['Students', 'Teachers', 'Parents'] },
@@ -34,7 +35,7 @@ const numericValue = value => {
 const countValue = value => numericValue(value).toLocaleString()
 const percentValue = value => `${numericValue(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
 
-export default function LandingPage() {
+export default function LandingPage({ language = 'en' }) {
   const [content, setContent] = useState(null)
   const [selectedFeature, setSelectedFeature] = useState(null)
 
@@ -53,8 +54,9 @@ export default function LandingPage() {
   const apiBase = import.meta.env.VITE_API_BASE_URL || '/api/v1'
   const heroImage = content?.landing_image_path ? `${apiBase}/school/uploads/${encodeURIComponent(content.landing_image_path)}` : ''
   const brandLogo = content?.brand_logo_path ? schoolLogoUrl(content.brand_logo_path) : ''
-  const title = content?.landing_title || 'Where school life flows beautifully.'
-  const subtitle = content?.landing_subtitle || 'Bring students, teachers, attendance and communication together in one friendly space—built to help your school focus on learning.'
+  const copy = key => translateText(language, key)
+  const title = language === 'en' ? (content?.landing_title || copy('heroTitle')) : copy('heroTitle')
+  const subtitle = language === 'en' ? (content?.landing_subtitle || copy('heroSubtitle')) : copy('heroSubtitle')
 
   const chartLabels = ['M', 'T', 'W', 'T', 'F']
   const summary = content?.summary || {}
@@ -64,14 +66,14 @@ export default function LandingPage() {
   const liveAttendance = attendanceValue
   const brandName = content?.school_name || 'EduFlow School Management'
   const platformRows = [
-    { label: 'User logins', value: summary.user_logins, note: 'Active user accounts', icon: UsersRound },
-    { label: 'Student register', value: summary.student_registrations, note: 'Registered students', icon: UserCheck },
-    { label: 'Schools live', value: summary.schools, note: 'Active campuses', icon: BookOpen },
+    { label: 'User logins', value: summary.user_logins, note: copy('activeUserAccounts'), icon: UsersRound },
+    { label: 'Student register', value: summary.student_registrations, note: copy('registeredStudents'), icon: UserCheck },
+    { label: 'Schools live', value: summary.schools, note: copy('activeCampuses'), icon: BookOpen },
   ]
   const summaryRows = [
-    { label: 'Attendance today', value: percentValue(attendanceValue), tone: 'mint', icon: CalendarCheck },
-    { label: 'Classes', value: countValue(summary.classes), tone: 'sky', icon: BookOpen },
-    { label: 'Alerts', value: countValue(alertsToday), tone: 'amber', icon: BellRing },
+    { label: copy('attendanceToday'), value: percentValue(attendanceValue), tone: 'mint', icon: CalendarCheck },
+    { label: copy('classes'), value: countValue(summary.classes), tone: 'sky', icon: BookOpen },
+    { label: copy('alerts'), value: countValue(alertsToday), tone: 'amber', icon: BellRing },
   ]
   const weekRows = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((fallbackDay, index) => {
     const row = Array.isArray(summary.week) ? summary.week[index] || {} : {}
@@ -94,21 +96,21 @@ export default function LandingPage() {
     }
   }, [selectedFeature])
 
-  return <PublicLayout>
+  return <PublicLayout language={language}>
     <main>
       <section className="hero container">
         <div className="hero-copy">
-          <div className="eyebrow"><Sparkles size={15} /> A simpler day for every school</div>
+          <div className="eyebrow"><Sparkles size={15} /> {copy('simplerDay')}</div>
           <h1>{title.split(' ').slice(0, 3).join(' ')}<br /><span>{title.split(' ').slice(3).join(' ') || 'flows beautifully.'}</span></h1>
           <p>{subtitle}</p>
-          <div className="hero-actions"><Link className="button" to="/login">Explore your dashboard <ArrowRight size={18} /></Link><Link className="text-link" to="/admissions/apply">Apply for admission</Link></div>
-          <div className="trust-row"><span><CheckCircle2 /> Easy to use</span><span><CheckCircle2 /> Secure access</span><span><CheckCircle2 /> Works everywhere</span></div>
+          <div className="hero-actions"><Link className="button" to="/login">{copy('exploreDashboard')} <ArrowRight size={18} /></Link><Link className="text-link" to="/admissions/apply">{copy('applyAdmission')}</Link></div>
+          <div className="trust-row"><span><CheckCircle2 /> {copy('easyToUse')}</span><span><CheckCircle2 /> {copy('secureAccess')}</span><span><CheckCircle2 /> {copy('worksEverywhere')}</span></div>
         </div>
         <div className="hero-visual" aria-label="Live school dashboard summary preview">
           <div className="dashboard-preview hero-asset-card">
             <div className="brand-strip">
               <span>{brandLogo ? <img src={brandLogo} alt={`${brandName} logo`} /> : <Logo />}</span>
-              <small>Live summary</small>
+              <small>{copy('liveSummary')}</small>
             </div>
             {heroImage && <img className="landing-school-image" src={heroImage} alt={`${brandName} school`} />}
             <div className="dynamic-preview-shell">
@@ -145,8 +147,8 @@ export default function LandingPage() {
                       <span>{row.attendance}</span>
                       <div className="day-popover">
                         <strong>{row.day}</strong>
-                        <small>{row.classes} classes</small>
-                        <small>{row.alerts} alerts</small>
+                        <small>{row.classes} {copy('classes').toLowerCase()}</small>
+                        <small>{row.alerts} {copy('alerts').toLowerCase()}</small>
                       </div>
                     </div>
                   ))}
@@ -154,7 +156,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="float-card float-two"><span className="mini-icon coral"><BellRing /></span><div><b>{countValue(alertsToday)}</b><small>Alerts today</small></div></div>
+          <div className="float-card float-two"><span className="mini-icon coral"><BellRing /></span><div><b>{countValue(alertsToday)}</b><small>{copy('alertsToday')}</small></div></div>
         </div>
       </section>
 

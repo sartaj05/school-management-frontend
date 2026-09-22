@@ -2,8 +2,9 @@ import { Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Logo from './Logo'
+import { translateText } from '../lib/i18n'
 
-export default function PublicLayout({ children }) {
+export default function PublicLayout({ children, language = (typeof document !== 'undefined' ? document.documentElement.dataset.language || 'en' : 'en') }) {
   const [open, setOpen] = useState(false)
   const location = useLocation()
 
@@ -18,12 +19,12 @@ export default function PublicLayout({ children }) {
       <Link to="/" aria-label="EduFlow home"><Logo /></Link>
       <button className="menu-button" onClick={() => setOpen(!open)} aria-label="Toggle navigation">{open ? <X /> : <Menu />}</button>
       <nav className={open ? 'nav-open' : ''}>
-        <Link to="/#features">Features</Link>
-        <Link to="/#plans">Plans</Link>
-        <Link to="/#about">About</Link>
-        <Link to="/contact">Contact</Link>
-        <Link className="button button-small button-ghost" to="/login">Sign in</Link>
-        <Link className="button button-small" to="/login">Get started</Link>
+        <Link to="/#features">{translateText(language, 'features')}</Link>
+        <Link to="/#plans">{translateText(language, 'plans')}</Link>
+        <Link to="/#about">{translateText(language, 'about')}</Link>
+        <Link to="/contact">{translateText(language, 'contact')}</Link>
+        <Link className="button button-small button-ghost" to="/login">{translateText(language, 'signIn')}</Link>
+        <Link className="button button-small" to="/login">{translateText(language, 'getStarted')}</Link>
       </nav>
     </header>
     {children}
