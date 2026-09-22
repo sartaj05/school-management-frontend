@@ -1,0 +1,14 @@
+# React build/dependency output
+node_modules/
+dist/
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -32,9 +32,8 @@ API methods live in `src/lib/api.js`; menu routing is in
 `src/pages/DashboardPage.jsx`; leave controls are in `src/components/LeaveManagement.jsx`.
 The Payroll menu now renders the existing PayrollManagement component.
 
-See the [root README](../README.md) and
-[leave API handoff](../feature_docs/2026-09-14_leave-management_48thdocx.txt)
-for database setup, payloads and limitations.
+Backend database setup, API contracts, payloads and limitations are maintained
+in the Flask API repository.
 
-Inventory uses `src/components/InventoryManagement.jsx`. Apply the tenant upgrade
-before use. Details are in [feature 49](../feature_docs/2026-09-14_inventory-asset-management_49thdocx.txt).
+Inventory uses `src/components/InventoryManagement.jsx`. Apply the tenant
+upgrade in the Flask API before use.
