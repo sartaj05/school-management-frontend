@@ -26,6 +26,14 @@ const premiumFeatures = ['Hostel management', 'Inventory and assets', 'Scholarsh
 const enterpriseFeatures = ['Everything in Premium', 'Expense management', 'Vendor payments and purchasing controls', 'Smart classroom recording']
 const planHighlights = { Standard: ['Student, teacher and parent records', 'Attendance, academics and communication', 'Role-based school dashboard'], Premium: ['Everything in Standard', 'Leave policy and payroll integration', 'Hostel, inventory and scholarships'], Enterprise: ['Everything in Premium', 'Expense and vendor payment controls', 'Smart classroom recording'] }
 
+const numericValue = value => {
+  const number = Number(value)
+  return Number.isFinite(number) ? number : 0
+}
+
+const countValue = value => numericValue(value).toLocaleString()
+const percentValue = value => `${numericValue(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
+
 export default function LandingPage() {
   const [content, setContent] = useState(null)
   const [selectedFeature, setSelectedFeature] = useState(null)
@@ -48,29 +56,32 @@ export default function LandingPage() {
   const title = content?.landing_title || 'Where school life flows beautifully.'
   const subtitle = content?.landing_subtitle || 'Bring students, teachers, attendance and communication together in one friendly space—built to help your school focus on learning.'
 
-  const previewBars = [64, 83, 76, 87, 84]
   const chartLabels = ['M', 'T', 'W', 'T', 'F']
-  const attendanceValue = 79
-  const reminderText = 'Class update'
-  const connectedLearners = 1505
-  const liveAttendance = 83
+  const summary = content?.summary || {}
+  const attendanceValue = numericValue(summary.attendance_today)
+  const alertsToday = numericValue(summary.alerts_today)
+  const connectedLearners = numericValue(summary.student_registrations)
+  const liveAttendance = attendanceValue
   const brandName = content?.school_name || 'EduFlow School Management'
   const platformRows = [
-    { label: 'User logins', value: 4, note: 'Sample accounts', icon: UsersRound },
-    { label: 'Student register', value: 0, note: 'Sample students', icon: UserCheck },
-    { label: 'Schools live', value: 2, note: 'Sample campuses', icon: BookOpen },
+    { label: 'User logins', value: summary.user_logins, note: 'Active user accounts', icon: UsersRound },
+    { label: 'Student register', value: summary.student_registrations, note: 'Registered students', icon: UserCheck },
+    { label: 'Schools live', value: summary.schools, note: 'Active campuses', icon: BookOpen },
   ]
   const summaryRows = [
-    { label: 'Attendance', value: `${attendanceValue}%`, tone: 'mint', icon: CalendarCheck },
-    { label: 'Classes', value: '24', tone: 'sky', icon: BookOpen },
-    { label: 'Alerts', value: '08', tone: 'amber', icon: BellRing },
+    { label: 'Attendance today', value: percentValue(attendanceValue), tone: 'mint', icon: CalendarCheck },
+    { label: 'Classes', value: countValue(summary.classes), tone: 'sky', icon: BookOpen },
+    { label: 'Alerts', value: countValue(alertsToday), tone: 'amber', icon: BellRing },
   ]
-  const weekRows = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day, index) => ({
-    day,
-    attendance: `${previewBars[index]}%`,
-    classes: 4 + (index % 3),
-    alerts: index === 2 ? 'Fee follow-up' : index === 4 ? 'Weekly report' : 'Routine updates',
-  }))
+  const weekRows = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((fallbackDay, index) => {
+    const row = Array.isArray(summary.week) ? summary.week[index] || {} : {}
+    return {
+      day: row.day || fallbackDay,
+      attendance: percentValue(row.attendance),
+      classes: countValue(row.classes),
+      alerts: countValue(row.alerts),
+    }
+  })
 
   useEffect(() => {
     if (!selectedFeature) return undefined
@@ -93,12 +104,11 @@ export default function LandingPage() {
           <div className="hero-actions"><Link className="button" to="/login">Explore your dashboard <ArrowRight size={18} /></Link><Link className="text-link" to="/admissions/apply">Apply for admission</Link></div>
           <div className="trust-row"><span><CheckCircle2 /> Easy to use</span><span><CheckCircle2 /> Secure access</span><span><CheckCircle2 /> Works everywhere</span></div>
         </div>
-        <div className="hero-visual" aria-label="Static school dashboard product preview">
-          <div className="float-card float-one"><span className="mini-icon mint"><CalendarCheck /></span><div><b>{attendanceValue}%</b><small>Attendance today</small></div></div>
+        <div className="hero-visual" aria-label="Live school dashboard summary preview">
           <div className="dashboard-preview hero-asset-card">
             <div className="brand-strip">
               <span>{brandLogo ? <img src={brandLogo} alt={`${brandName} logo`} /> : <Logo />}</span>
-              <small>Product preview · Sample data</small>
+              <small>Live summary</small>
             </div>
             {heroImage && <img className="landing-school-image" src={heroImage} alt={`${brandName} school`} />}
             <div className="dynamic-preview-shell">
@@ -107,7 +117,7 @@ export default function LandingPage() {
                 {platformRows.map(({ label, value, note, icon: Icon }) => (
                   <div className="landing-summary-row" key={label}>
                     <span><Icon size={16} />{label}</span>
-                    <strong>{Number(value).toLocaleString()}</strong>
+                    <strong>{countValue(value)}</strong>
                     <small>{note}</small>
                   </div>
                 ))}
@@ -136,7 +146,7 @@ export default function LandingPage() {
                       <div className="day-popover">
                         <strong>{row.day}</strong>
                         <small>{row.classes} classes</small>
-                        <small>{row.alerts}</small>
+                        <small>{row.alerts} alerts</small>
                       </div>
                     </div>
                   ))}
@@ -144,7 +154,7 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="float-card float-two"><span className="mini-icon coral"><BellRing /></span><div><b>{reminderText}</b><small>Reminder sent</small></div></div>
+          <div className="float-card float-two"><span className="mini-icon coral"><BellRing /></span><div><b>{countValue(alertsToday)}</b><small>Alerts today</small></div></div>
         </div>
       </section>
 
