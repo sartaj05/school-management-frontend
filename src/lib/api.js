@@ -356,6 +356,10 @@ export const schoolApi = {
   onboardingPreview: (entity, file) => { const body = new FormData(); body.append('entity', entity); body.append('file', file); return api('/onboarding/preview', { method: 'POST', body }) },
   onboardingImport: (entity, file) => { const body = new FormData(); body.append('entity', entity); body.append('file', file); return api('/onboarding/import', { method: 'POST', body }) },
   onboardingTemplate: (entity) => downloadApi(`/onboarding/template?entity=${encodeURIComponent(entity)}`, `${entity}-template.csv`),
+  reportCatalog: () => api('/reports/catalog'),
+  reportSummary: () => api('/reports/summary'),
+  downloadReportCsv: (report, filters = {}) => downloadApi(`/reports/export.csv?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`, `${report}-report.csv`),
+  reportHtml: (report, filters = {}) => blobApi(`/reports/export.html?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`),
 }
 
 function toFormData(values) {
