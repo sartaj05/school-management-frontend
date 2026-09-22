@@ -1,4 +1,4 @@
-import { Menu, X } from 'lucide-react'
+import { ArrowRight, LogIn, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Logo from './Logo'
@@ -15,17 +15,23 @@ export default function PublicLayout({ children, language = (typeof document !==
   }, [location])
 
   return <div className="site-shell">
-    <header className="public-header container">
-      <Link to="/" aria-label="EduFlow home"><Logo /></Link>
-      <button className="menu-button" onClick={() => setOpen(!open)} aria-label="Toggle navigation">{open ? <X /> : <Menu />}</button>
-      <nav className={open ? 'nav-open' : ''}>
-        <Link to="/#features">{translateText(language, 'features')}</Link>
-        <Link to="/#plans">{translateText(language, 'plans')}</Link>
-        <Link to="/#about">{translateText(language, 'about')}</Link>
-        <Link to="/contact">{translateText(language, 'contact')}</Link>
-        <Link className="button button-small button-ghost" to="/login">{translateText(language, 'signIn')}</Link>
-        <Link className="button button-small" to="/login">{translateText(language, 'getStarted')}</Link>
-      </nav>
+    <header className="public-header">
+      <div className="public-header-inner container">
+        <Link className="public-brand" to="/" aria-label="EduFlow home"><Logo /></Link>
+        <button className="menu-button" onClick={() => setOpen(!open)} aria-expanded={open} aria-controls="public-navigation" aria-label="Toggle navigation">{open ? <X /> : <Menu />}</button>
+        <nav id="public-navigation" className={open ? 'nav-open' : ''} aria-label="Main navigation">
+          <div className="public-nav-links">
+            <Link className="public-nav-link" to="/#features">{translateText(language, 'features')}</Link>
+            <Link className="public-nav-link" to="/#plans">{translateText(language, 'plans')}</Link>
+            <Link className="public-nav-link" to="/#about">{translateText(language, 'about')}</Link>
+            <Link className="public-nav-link" to="/contact">{translateText(language, 'contact')}</Link>
+          </div>
+          <div className="public-header-actions">
+            <Link className="button button-small button-ghost public-sign-in" to="/login"><LogIn size={16} />{translateText(language, 'signIn')}</Link>
+            <Link className="button button-small public-get-started" to="/login">{translateText(language, 'getStarted')}<ArrowRight size={16} /></Link>
+          </div>
+        </nav>
+      </div>
     </header>
     {children}
   </div>
