@@ -359,6 +359,8 @@ export const schoolApi = {
   reportCatalog: () => api('/reports/catalog'),
   reportSummary: () => api('/reports/summary'),
   downloadReportCsv: (report, filters = {}) => downloadApi(`/reports/export.csv?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`, `${report}-report.csv`),
+  downloadReportXlsx: (report, filters = {}) => downloadApi(`/reports/export.xlsx?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`, `${report}-report.xlsx`),
+  downloadReportPdf: (report, filters = {}) => downloadApi(`/reports/export.pdf?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`, `${report}-report.pdf`),
   reportHtml: (report, filters = {}) => blobApi(`/reports/export.html?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`),
   scheduledReports: () => api('/scheduled-reports'),
   createScheduledReport: (values) => api('/scheduled-reports', { method: 'POST', body: JSON.stringify(values) }),
