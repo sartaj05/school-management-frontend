@@ -94,6 +94,8 @@ export const schoolApi = {
   schools: () => api('/school/list'),
   superAdminSchools: (filters = {}) => api(`/super-admin/schools?${new URLSearchParams(filters)}`),
   school: (schoolId) => api(`/school/${schoolId}`),
+  schoolSubscription: (schoolId) => api(`/super-admin/schools/${schoolId}/subscription`),
+  updateSchoolSubscription: (schoolId, values) => api(`/super-admin/schools/${schoolId}/subscription`, { method: 'PATCH', body: JSON.stringify(values) }),
   updateSchool: (schoolId, values) => api(`/school/${schoolId}`, { method: 'PUT', body: JSON.stringify(values) }),
   updateSchoolStatus: (schoolId, status) => api(`/school/${schoolId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   createSchool: (values) => api('/school/setup', { method: 'POST', body: toFormData(values) }),

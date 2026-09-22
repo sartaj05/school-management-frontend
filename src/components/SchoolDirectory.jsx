@@ -41,8 +41,11 @@ export default function SchoolDirectory({ rows }) {
   async function open(item, edit = false) {
     setBusy(true); setError(''); setMessage('')
     try {
-      const result = await schoolApi.school(item.id)
-      setSelected(result.school); setEditing(edit)
+      const [result, subscriptionResult] = await Promise.all([
+        schoolApi.school(item.id),
+        schoolApi.schoolSubscription(item.id),
+      ])
+      setSelected({ ...result.school, subscription: subscriptionResult.subscription }); setEditing(edit)
     } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
 
@@ -51,7 +54,14 @@ export default function SchoolDirectory({ rows }) {
     try {
       const values = { schoolName: selected.schoolName, adminEmail: selected.adminEmail, planSetup: selected.planSetup }
       const result = await schoolApi.updateSchool(selected.id, values)
-      setSelected(result.school); setEditing(false); setMessage(result.message); await loadDirectory()
+      const subscription = await schoolApi.updateSchoolSubscription(selected.id, {
+        plan: selected.planSetup,
+        status: selected.subscription?.status || 'active',
+        trial_ends_at: selected.subscription?.trial_ends_at || '',
+        plan_ends_at: selected.subscription?.plan_ends_at || '',
+        reason: selected.subscription?.notes || '',
+      })
+      setSelected({ ...result.school, subscription: subscription.subscription }); setEditing(false); setMessage(result.message); await loadDirectory()
     } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
 
