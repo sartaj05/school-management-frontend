@@ -68,7 +68,7 @@ export default function DashboardPage({ session, onLogout, onProfileUpdated, lan
   const [featureMatrix,setFeatureMatrix]=useState(null)
   const user=session?.user || {}; const isSuper=user.role==='super_admin', isPortalUser=['Parent','Student'].includes(user.role)
   const nav=baseNav.map(([Icon,label,key,scope])=>[Icon,translateNav(language,label),key,scope])
-  const schoolPlan=String(user.school_plan||user.plan_setup||session?.school_plan||session?.plan_setup||resolvedPlan||data?.data?.user?.school_plan||'free').trim().toLowerCase()
+  const schoolPlan=String(user.school_plan||user.plan_setup||session?.school_plan||session?.plan_setup||resolvedPlan||data?.data?.user?.school_plan||'standard').trim().toLowerCase()
   const sessionPlanKnown=isSuper||Boolean(user.school_plan||user.plan_setup||session?.school_plan||session?.plan_setup)
   useEffect(() => {
     if (isSuper) return undefined

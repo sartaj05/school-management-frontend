@@ -75,6 +75,7 @@ async function refreshAccessToken(refreshToken) {
 export const schoolApi = {
   schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values) }),
   publicContent: () => api('/public/content'),
+  publicPlans: () => api('/public/plans'),
   updatePublicContent: (values) => api('/public/content', { method: 'PUT', body: values instanceof FormData ? values : toFormData(values) }),
   changePassword: (values) => api('/auth/change-password', { method: 'POST', body: JSON.stringify(values) }),
   forgotPassword: (values) => api('/auth/forgot-password', { method: 'POST', body: JSON.stringify(values) }),
