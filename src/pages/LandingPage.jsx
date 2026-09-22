@@ -38,6 +38,7 @@ const percentValue = value => `${numericValue(value).toLocaleString(undefined, {
 export default function LandingPage({ language = 'en' }) {
   const [content, setContent] = useState(null)
   const [selectedFeature, setSelectedFeature] = useState(null)
+  const [selectedPlan, setSelectedPlan] = useState(null)
 
   useEffect(() => {
     const load = async () => {
@@ -53,6 +54,7 @@ export default function LandingPage({ language = 'en' }) {
 
   const apiBase = import.meta.env.VITE_API_BASE_URL || '/api/v1'
   const heroImage = content?.landing_image_path ? `${apiBase}/school/uploads/${encodeURIComponent(content.landing_image_path)}` : ''
+  const storyImage = content?.story_image_path ? `${apiBase}/school/uploads/${encodeURIComponent(content.story_image_path)}` : ''
   const brandLogo = content?.brand_logo_path ? schoolLogoUrl(content.brand_logo_path) : ''
   const copy = key => translateText(language, key)
   const title = language === 'en' ? (content?.landing_title || copy('heroTitle')) : copy('heroTitle')
@@ -86,15 +88,15 @@ export default function LandingPage({ language = 'en' }) {
   })
 
   useEffect(() => {
-    if (!selectedFeature) return undefined
-    const closeOnEscape = event => event.key === 'Escape' && setSelectedFeature(null)
+    if (!selectedFeature && !selectedPlan) return undefined
+    const closeOnEscape = event => { if (event.key === 'Escape') { setSelectedFeature(null); setSelectedPlan(null) } }
     document.addEventListener('keydown', closeOnEscape)
     document.body.style.overflow = 'hidden'
     return () => {
       document.removeEventListener('keydown', closeOnEscape)
       document.body.style.overflow = ''
     }
-  }, [selectedFeature])
+  }, [selectedFeature, selectedPlan])
 
   return <PublicLayout language={language}>
     <main>
@@ -162,9 +164,9 @@ export default function LandingPage({ language = 'en' }) {
 
       <section id="features" className="section container"><div className="section-heading"><span>Everything in one place</span><h2>Less administration.<br />More education.</h2><p>Click any feature to see what each plan includes.</p></div><div className="feature-grid">{features.map(feature => { const { Icon, title, text } = feature; return <button className="feature-card feature-card-button" type="button" key={title} onClick={() => setSelectedFeature(feature)} aria-label={`View plan details for ${title}`}><span className="feature-icon"><Icon /></span><h3>{title}</h3><p>{text}</p><span className="feature-card-link">View plan details <ArrowRight size={15} /></span></button> })}</div></section>
 
-      <section id="plans" className="section container plan-section"><div className="section-heading"><span>Plans that grow with you</span><h2>Choose the right operating level.</h2><p>Every plan starts with a calm school workspace. Premium adds policy-aware staff operations, while Enterprise adds private classroom recording.</p></div><div className="plan-showcase">{plans.map(plan => <article className={`plan-showcase-card plan-${plan.name.toLowerCase()}`} key={plan.name}><span className="plan-badge">{plan.version} plan</span><h3>{plan.name}</h3><p>{plan.description}</p><ul>{planHighlights[plan.name].map(item => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul><Link className="text-link" to="/login">Explore {plan.name} <ArrowRight size={15} /></Link></article>)}</div></section>
+      <section id="plans" className="section container plan-section"><div className="section-heading"><span>Plans that grow with you</span><h2>Choose the right operating level.</h2><p>Every plan starts with a calm school workspace. Premium adds policy-aware staff operations, while Enterprise adds private classroom recording.</p></div><div className="plan-showcase">{plans.map(plan => <article className={`plan-showcase-card plan-${plan.name.toLowerCase()}`} key={plan.name}><span className="plan-badge">{plan.version} plan</span><h3>{plan.name}</h3><p>{plan.description}</p><ul>{planHighlights[plan.name].map(item => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul><button className="text-link plan-explore" type="button" onClick={() => setSelectedPlan(plan)}>Explore {plan.name} <ArrowRight size={15} /></button></article>)}</div></section>
 
-      <section id="about" className="story-section"><div className="container story-grid"><div className="story-art" aria-label="A connected digital school campus">{heroImage ? <img className="story-school-photo" src={heroImage} alt={`${brandName} campus`} /> : <><div className="campus-glow"/><div className="campus-cloud cloud-one"/><div className="campus-cloud cloud-two"/><div className="campus-sun"><Sparkles/></div><div className="campus-card campus-card-top"><UsersRound/><span><b>{connectedLearners.toLocaleString()}</b><small>Connected learners</small></span></div><div className="campus-card campus-card-bottom"><CalendarCheck/><span><b>{Math.round(liveAttendance)}% today</b><small>Live attendance</small></span></div><div className="school-building"><div className="building-flag"/><div className="building-roof"/><div className="building-body"><div className="building-title"><Logo/><small>Learning campus</small></div><div className="building-windows"><span/><span/><span/><span/></div><div className="building-door"/></div><div className="campus-tree tree-one"><i/><span/></div><div className="campus-tree tree-two"><i/><span/></div><div className="campus-path"/><div className="ground"/></div></>}</div><div className="story-copy"><span className="section-kicker">Designed around people</span><h2>Technology that feels human.</h2><p>EduFlow is designed to quietly support your team-not get in its way. Clear screens, useful information and fewer repetitive tasks mean more time for what matters.</p><blockquote><Quote/><p>For the first time, our team can see what is happening across the school without chasing spreadsheets.</p><footer>- School Administrator</footer></blockquote></div></div></section>
+      <section id="about" className="story-section"><div className="container story-grid"><div className="story-art" aria-label="A connected digital school campus">{storyImage ? <img className="story-school-photo" src={storyImage} alt={`${brandName} campus`} /> : <><div className="campus-glow"/><div className="campus-cloud cloud-one"/><div className="campus-cloud cloud-two"/><div className="campus-sun"><Sparkles/></div><div className="campus-card campus-card-top"><UsersRound/><span><b>{connectedLearners.toLocaleString()}</b><small>Connected learners</small></span></div><div className="campus-card campus-card-bottom"><CalendarCheck/><span><b>{Math.round(liveAttendance)}% today</b><small>Live attendance</small></span></div><div className="school-building"><div className="building-flag"/><div className="building-roof"/><div className="building-body"><div className="building-title"><Logo/><small>Learning campus</small></div><div className="building-windows"><span/><span/><span/><span/></div><div className="building-door"/></div><div className="campus-tree tree-one"><i/><span/></div><div className="campus-tree tree-two"><i/><span/></div><div className="campus-path"/><div className="ground"/></div></>}</div><div className="story-copy"><span className="section-kicker">Designed around people</span><h2>Technology that feels human.</h2><p>EduFlow is designed to quietly support your team-not get in its way. Clear screens, useful information and fewer repetitive tasks mean more time for what matters.</p><blockquote><Quote/><p>For the first time, our team can see what is happening across the school without chasing spreadsheets.</p><footer>- School Administrator</footer></blockquote></div></div></section>
 
       <section className="cta-section container"><div><span>Ready for a calmer school day?</span><h2>Bring your whole school together.</h2><p>Sign in to connect with your existing school management API.</p></div><Link className="button button-white" to="/login">Open dashboard <ArrowRight size={18} /></Link></section>
     </main>
@@ -172,12 +174,13 @@ export default function LandingPage({ language = 'en' }) {
       {brandLogo ? <span className="footer-logo-img"><img src={brandLogo} alt={`${brandName} logo`} /></span> : <Logo />}
       <p>Helping schools do their best work.</p>
       <div className="footer-contact">
-        <span><Mail size={14} />{content?.contact_email || 'hello@eduflow.com'}</span>
-        <span><Phone size={14} />{content?.contact_phone || '+91 98765 43210'}</span>
+        <span><Mail size={14} />{content?.contact_email || content?.support_email || 'hello@eduflow.com'}</span>
+        <span><Phone size={14} />{content?.contact_phone || content?.support_phone || '+91 98765 43210'}</span>
         <span><Clock size={14} />{content?.support_note || 'Technical support during school hours.'}</span>
       </div>
       <small>© {new Date().getFullYear()} {brandName}</small>
     </footer>
     {selectedFeature && <div className="feature-modal" role="presentation" onMouseDown={() => setSelectedFeature(null)}><div className="feature-modal-card" role="dialog" aria-modal="true" aria-labelledby="feature-modal-title" onMouseDown={event => event.stopPropagation()}><button className="feature-modal-close" type="button" onClick={() => setSelectedFeature(null)} aria-label="Close feature details"><X size={19} /></button><div className="feature-modal-heading"><span className="feature-icon"><selectedFeature.Icon /></span><div><span>Feature and plan details</span><h2 id="feature-modal-title">{selectedFeature.title}</h2><p>{selectedFeature.details}</p></div></div><div className="feature-plan-grid">{plans.map(plan => <article className={`feature-plan-card plan-${plan.name.toLowerCase()}`} key={plan.name}><div><strong>{plan.name}</strong><small>{plan.version} plan</small></div>{selectedFeature.included.includes(plan.name) ? <CheckCircle2 className="plan-included" size={20} /> : <X className="plan-locked" size={20} />}<p>{selectedFeature.plans[plan.name]}</p><span>{plan.description}</span></article>)}</div><div className="feature-modal-section"><span>Related tools</span><div className="feature-related-list">{selectedFeature.related.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</div></div><div className="feature-tier-summary"><article><strong>Premium includes</strong>{premiumFeatures.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</article><article><strong>Enterprise includes</strong>{enterpriseFeatures.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</article></div><Link className="button feature-modal-action" to="/login" onClick={() => setSelectedFeature(null)}>Open dashboard <ArrowRight size={16} /></Link></div></div>}
+    {selectedPlan && <div className="feature-modal" role="presentation" onMouseDown={() => setSelectedPlan(null)}><div className="feature-modal-card plan-details-modal" role="dialog" aria-modal="true" aria-labelledby="plan-modal-title" onMouseDown={event => event.stopPropagation()}><button className="feature-modal-close" type="button" onClick={() => setSelectedPlan(null)} aria-label="Close plan details" title="Close plan details"><X size={19} /></button><div className="feature-modal-heading"><span className="feature-icon"><Sparkles /></span><div><span>Plan details</span><h2 id="plan-modal-title">{selectedPlan.name}</h2><p>{selectedPlan.description}</p></div></div><div className="feature-plan-grid"><article className={`feature-plan-card plan-${selectedPlan.name.toLowerCase()}`}><div><strong>{selectedPlan.name}</strong><small>{selectedPlan.version} plan</small></div><CheckCircle2 className="plan-included" size={20} /><p>Included features</p>{planHighlights[selectedPlan.name].map(item => <span key={item}><CheckCircle2 size={14} /> {item}</span>)}</article></div><Link className="button feature-modal-action" to="/login" onClick={() => setSelectedPlan(null)}>Get started with {selectedPlan.name} <ArrowRight size={16} /></Link></div></div>}
   </PublicLayout>
 }
