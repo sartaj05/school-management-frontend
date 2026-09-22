@@ -92,6 +92,7 @@ export const schoolApi = {
   academics: () => api('/master/academics'),
   settings: () => api('/master/settings'),
   schools: () => api('/school/list'),
+  superAdminSchools: (filters = {}) => api(`/super-admin/schools?${new URLSearchParams(filters)}`),
   school: (schoolId) => api(`/school/${schoolId}`),
   updateSchool: (schoolId, values) => api(`/school/${schoolId}`, { method: 'PUT', body: JSON.stringify(values) }),
   updateSchoolStatus: (schoolId, status) => api(`/school/${schoolId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),

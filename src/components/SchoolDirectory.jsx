@@ -1,14 +1,42 @@
-import { Building2, Edit3, Eye, Power, PowerOff, Save, X } from 'lucide-react'
-import { useState } from 'react'
+import { Building2, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Edit3, Eye, Power, PowerOff, Save, Search, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { schoolApi, schoolLogoUrl } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
 
-export default function SchoolDirectory({ rows, reload }) {
+export default function SchoolDirectory({ rows }) {
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
+  const [directoryRows, setDirectoryRows] = useState(rows || [])
+  const [statusTab, setStatusTab] = useState('active')
+  const [search, setSearch] = useState('')
+  const [plan, setPlan] = useState('all')
+  const [page, setPage] = useState(1)
+  const [pagination, setPagination] = useState({ page: 1, per_page: 10, total: rows?.length || 0, total_pages: 1 })
+
+  async function loadDirectory(nextPage = page) {
+    setBusy(true)
+    try {
+      const result = await schoolApi.superAdminSchools({ status: statusTab, search, plan, page: nextPage, per_page: 10 })
+      setDirectoryRows(result.schools || [])
+      setPagination(result.pagination || { page: nextPage, per_page: 10, total: (result.schools || []).length, total_pages: 1 })
+      setPage(result.pagination?.page || nextPage)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => loadDirectory(1), 180)
+    return () => clearTimeout(timer)
+    // The timer intentionally reloads from the latest filter state without making
+    // the request function itself a dependency that would restart the timer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusTab, search, plan])
 
   async function open(item, edit = false) {
     setBusy(true); setError(''); setMessage('')
@@ -23,7 +51,7 @@ export default function SchoolDirectory({ rows, reload }) {
     try {
       const values = { schoolName: selected.schoolName, adminEmail: selected.adminEmail, planSetup: selected.planSetup }
       const result = await schoolApi.updateSchool(selected.id, values)
-      setSelected(result.school); setEditing(false); setMessage(result.message); await reload()
+      setSelected(result.school); setEditing(false); setMessage(result.message); await loadDirectory()
     } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
 
@@ -34,9 +62,9 @@ export default function SchoolDirectory({ rows, reload }) {
     setBusy(true); setError(''); setMessage('')
     try {
       const result = await schoolApi.updateSchoolStatus(item.id, next)
-      setMessage(result.message); if (selected?.id === item.id) setSelected(result.school); await reload()
+      setMessage(result.message); if (selected?.id === item.id) setSelected(result.school); await loadDirectory()
     } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
 
-  return <><section className="data-panel school-directory"><div className="panel-title"><div><span>Super Admin control</span><h2>School directory</h2></div><b>{rows.length} schools</b></div>{error && <div className="form-error school-crud-message">{error}</div>}{message && <div className="success-notice school-crud-message">{message}</div>}{rows.length === 0 ? <div className="empty-state"><Building2 /><h3>No schools found</h3><p>Onboard a school to begin the network.</p></div> : <div className="table-wrap"><table><thead><tr><th>School</th><th>Plan</th><th>Status</th><th>Actions</th></tr></thead><tbody>{rows.map(item => <tr key={item.id}><td><div className="school-cell"><span className="school-logo">{item.logoPath ? <img src={schoolLogoUrl(item.logoPath)} alt="" /> : <Building2 />}</span><div><b>{item.schoolName}</b><small>{item.domain} · {item.adminEmail}</small></div></div></td><td>{item.planSetup || '—'}</td><td><span className={`status-pill ${item.status === 'inactive' ? 'inactive' : ''}`}>{item.status}</span></td><td><div className="student-row-actions"><button onClick={() => open(item)} disabled={busy}><Eye />View</button><button onClick={() => open(item, true)} disabled={busy}><Edit3 />Edit</button><button className={item.status === 'active' ? 'danger' : 'activate'} onClick={() => toggle(item)} disabled={busy}>{item.status === 'active' ? <PowerOff /> : <Power />}{item.status === 'active' ? 'Deactivate' : 'Activate'}</button></div></td></tr>)}</tbody></table></div>}</section>{selected && <section className="data-panel school-detail-card"><div className="panel-title"><div><span>{editing ? 'Edit school' : 'School details'}</span><h2>{selected.schoolName}</h2></div><button className="refresh-button" onClick={() => setSelected(null)}><X />Close</button></div>{editing ? <form className="student-edit-form" onSubmit={save}><div className="field-grid"><label>School name *<input required value={selected.schoolName || ''} onChange={e => setSelected({ ...selected, schoolName: e.target.value })} /></label><label>Administrator email *<input required type="email" value={selected.adminEmail || ''} onChange={e => setSelected({ ...selected, adminEmail: e.target.value })} /></label><label>Plan *<select value={selected.planSetup || 'Standard'} onChange={e => setSelected({ ...selected, planSetup: e.target.value })}><option>Standard</option><option>Premium</option><option>Enterprise</option><option>Trial</option></select></label><label>Login domain<input value={selected.domain || ''} readOnly /></label></div>{error && <div className="form-error">{error}</div>}<button className="button button-small" disabled={busy}><Save />{busy ? 'Saving…' : 'Save school'}</button></form> : <dl className="student-details-grid"><div><dt>School name</dt><dd>{selected.schoolName}</dd></div><div><dt>Domain</dt><dd>{selected.domain}</dd></div><div><dt>Schema</dt><dd>{selected.schemaName}</dd></div><div><dt>Administrator</dt><dd>{selected.adminEmail || '—'}</dd></div><div><dt>Plan</dt><dd>{selected.planSetup || '—'}</dd></div><div><dt>Status</dt><dd>{selected.status}</dd></div><div><dt>Created</dt><dd>{selected.createdAt ? new Date(selected.createdAt).toLocaleString() : '—'}</dd></div></dl>}</section>}</>
+  return <><section className="data-panel school-directory"><div className="panel-title"><div><span>Super Admin control</span><h2>School directory</h2></div><b>{pagination.total} schools</b></div><div className="school-directory-toolbar"><div className="school-status-tabs"><button className={statusTab === 'active' ? 'active' : ''} onClick={() => { setStatusTab('active'); setPage(1) }}>Active schools</button><button className={statusTab === 'inactive' ? 'active' : ''} onClick={() => { setStatusTab('inactive'); setPage(1) }}>Deactivated schools</button></div><div className="school-directory-filters"><label className="school-search"><Search size={16} /><input value={search} onChange={event => { setSearch(event.target.value); setPage(1) }} placeholder="Search school, domain or email" /></label><label><span>Plan</span><select value={plan} onChange={event => { setPlan(event.target.value); setPage(1) }}><option value="all">All plans</option><option value="standard">Standard</option><option value="premium">Premium</option><option value="enterprise">Enterprise</option><option value="trial">Trial</option></select></label></div></div>{error && <div className="form-error school-crud-message">{error}</div>}{message && <div className="success-notice school-crud-message">{message}</div>}{directoryRows.length === 0 ? <div className="empty-state"><Building2 /><h3>{statusTab === 'active' ? 'No active schools found' : 'No deactivated schools found'}</h3><p>Adjust the search or filters to find a school.</p></div> : <div className="table-wrap"><table><thead><tr><th>School</th><th>Plan</th><th>Status</th><th>Actions</th></tr></thead><tbody>{directoryRows.map(item => <tr key={item.id}><td><div className="school-cell"><span className="school-logo">{item.logoPath ? <img src={schoolLogoUrl(item.logoPath)} alt="" /> : <Building2 />}</span><div><b>{item.schoolName}</b><small>{item.domain} · {item.adminEmail}</small></div></div></td><td>{item.planSetup || '—'}</td><td><span className={`status-pill ${item.status === 'inactive' ? 'inactive' : ''}`}>{item.status}</span></td><td><div className="student-row-actions"><button onClick={() => open(item)} disabled={busy}><Eye />View</button><button onClick={() => open(item, true)} disabled={busy}><Edit3 />Edit</button><button className={item.status === 'active' ? 'danger' : 'activate'} onClick={() => toggle(item)} disabled={busy}>{item.status === 'active' ? <PowerOff /> : <Power />}{item.status === 'active' ? 'Deactivate' : 'Activate'}</button></div></td></tr>)}</tbody></table></div>}<div className="school-pagination"><span>Page {pagination.page} of {pagination.total_pages}</span><div><button onClick={() => loadDirectory(1)} disabled={busy || pagination.page <= 1} aria-label="First page" title="First page"><ChevronFirst /></button><button onClick={() => loadDirectory(pagination.page - 1)} disabled={busy || pagination.page <= 1} aria-label="Previous page" title="Previous page"><ChevronLeft /></button><button onClick={() => loadDirectory(pagination.page + 1)} disabled={busy || pagination.page >= pagination.total_pages} aria-label="Next page" title="Next page"><ChevronRight /></button><button onClick={() => loadDirectory(pagination.total_pages)} disabled={busy || pagination.page >= pagination.total_pages} aria-label="Last page" title="Last page"><ChevronLast /></button></div></div></section>{selected && <section className="data-panel school-detail-card"><div className="panel-title"><div><span>{editing ? 'Edit school' : 'School details'}</span><h2>{selected.schoolName}</h2></div><button className="refresh-button" onClick={() => setSelected(null)}><X />Close</button></div>{editing ? <form className="student-edit-form" onSubmit={save}><div className="field-grid"><label>School name *<input required value={selected.schoolName || ''} onChange={e => setSelected({ ...selected, schoolName: e.target.value })} /></label><label>Administrator email *<input required type="email" value={selected.adminEmail || ''} onChange={e => setSelected({ ...selected, adminEmail: e.target.value })} /></label><label>Plan *<select value={selected.planSetup || 'Standard'} onChange={e => setSelected({ ...selected, planSetup: e.target.value })}><option>Standard</option><option>Premium</option><option>Enterprise</option><option>Trial</option></select></label><label>Login domain<input value={selected.domain || ''} readOnly /></label></div>{error && <div className="form-error">{error}</div>}<button className="button button-small" disabled={busy}><Save />{busy ? 'Saving…' : 'Save school'}</button></form> : <dl className="student-details-grid"><div><dt>School name</dt><dd>{selected.schoolName}</dd></div><div><dt>Domain</dt><dd>{selected.domain}</dd></div><div><dt>Schema</dt><dd>{selected.schemaName}</dd></div><div><dt>Administrator</dt><dd>{selected.adminEmail || '—'}</dd></div><div><dt>Plan</dt><dd>{selected.planSetup || '—'}</dd></div><div><dt>Status</dt><dd>{selected.status}</dd></div><div><dt>Created</dt><dd>{selected.createdAt ? new Date(selected.createdAt).toLocaleString() : '—'}</dd></div></dl>}</section>}</>
 }

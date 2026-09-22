@@ -345,6 +345,29 @@ input,select,textarea{max-width:100%}
 @media(max-width:900px){.login-page{grid-template-columns:1fr}.login-aside{min-height:330px;padding:34px 28px}.login-aside h1{font-size:clamp(38px,8vw,56px)}.login-panel{min-height:calc(100vh - 330px);padding:32px 18px}}
 @media(max-width:600px){.login-aside{min-height:290px;padding:27px 22px}.login-aside .logo{font-size:20px}.login-aside .logo span{width:40px;height:40px}.login-aside h1{margin:20px 0 11px;font-size:35px}.login-aside p{font-size:14px}.login-panel{padding:22px 12px}.login-box{padding:25px 19px;border-radius:21px}.login-heading h2{font-size:27px}.back-link{margin-bottom:22px}}
 
+/* Super Admin school directory controls */
+.school-directory-toolbar{display:grid;gap:16px;padding:20px 27px;border-bottom:1px solid #e2e8f0;background:#fbfdff}
+.school-status-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.school-status-tabs button{border:1px solid #dbe5f0;border-radius:10px;padding:10px 14px;background:#fff;color:#64748b;font-size:11px;font-weight:800;cursor:pointer}
+.school-status-tabs button:hover{border-color:#a5b4fc;color:#3730a3;background:#f5f7ff}
+.school-status-tabs button.active{border-color:#4f46e5;background:#eef2ff;color:#3730a3;box-shadow:0 5px 14px rgba(79,70,229,.1)}
+.school-directory-filters{display:grid;grid-template-columns:minmax(240px,1fr) 180px;gap:12px;align-items:end}
+.school-directory-filters label{display:grid;gap:6px;color:#475569;font-size:10px;font-weight:800}
+.school-directory-filters label>span{text-transform:uppercase;letter-spacing:.08em}
+.school-search{display:flex!important;align-items:center;gap:8px;height:40px;border:1px solid #cbd5e1;border-radius:10px;padding:0 11px;background:#fff}
+.school-search:focus-within{border-color:#4f46e5;box-shadow:0 0 0 3px #eef2ff}
+.school-search svg{flex:0 0 auto;color:#818cf8}
+.school-search input,.school-directory-filters select{width:100%;min-width:0;height:38px;border:0;outline:0;background:transparent;color:#0f172a;font-size:12px}
+.school-directory-filters select{border:1px solid #cbd5e1;border-radius:10px;padding:0 10px;background:#fff}
+.school-directory-filters select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px #eef2ff}
+.school-pagination{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:17px 27px;border-top:1px solid #e2e8f0;color:#64748b;font-size:11px}
+.school-pagination>div{display:flex;gap:7px}
+.school-pagination button{display:grid;place-items:center;width:34px;height:34px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#3730a3;cursor:pointer}
+.school-pagination button:hover:not(:disabled){border-color:#818cf8;background:#eef2ff}
+.school-pagination button:disabled{opacity:.4;cursor:not-allowed}
+.school-pagination svg{width:15px;height:15px}
+@media(max-width:600px){.school-directory-toolbar{padding:16px}.school-directory-filters{grid-template-columns:1fr}.school-pagination{align-items:stretch;flex-direction:column;padding:16px}.school-pagination>div{justify-content:space-between}.school-pagination button{flex:1}}
+
 /* Refined public navigation */
 .public-header{height:92px;width:100%;border-bottom:1px solid rgba(219,229,240,.75);background:rgba(251,253,255,.88);backdrop-filter:blur(16px);position:relative;z-index:20}
 .public-header-inner{height:100%;display:flex;align-items:center;justify-content:space-between;gap:28px}
