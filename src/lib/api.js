@@ -360,6 +360,12 @@ export const schoolApi = {
   reportSummary: () => api('/reports/summary'),
   downloadReportCsv: (report, filters = {}) => downloadApi(`/reports/export.csv?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`, `${report}-report.csv`),
   reportHtml: (report, filters = {}) => blobApi(`/reports/export.html?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`),
+  scheduledReports: () => api('/scheduled-reports'),
+  createScheduledReport: (values) => api('/scheduled-reports', { method: 'POST', body: JSON.stringify(values) }),
+  updateScheduledReport: (id, values) => api(`/scheduled-reports/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
+  pauseScheduledReport: (id) => api(`/scheduled-reports/${id}`, { method: 'DELETE' }),
+  runScheduledReport: (id) => api(`/scheduled-reports/${id}/run`, { method: 'POST' }),
+  scheduledReportRuns: (id) => api(`/scheduled-reports/${id}/runs`),
 }
 
 function toFormData(values) {

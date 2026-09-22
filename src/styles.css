@@ -414,3 +414,21 @@ input,select,textarea{max-width:100%}
   .public-brand .logo span{width:39px;height:39px}
   .public-header-actions{grid-template-columns:1fr}
 }
+.scheduled-reports{display:grid;gap:20px}
+.scheduled-reports-hero{background:linear-gradient(125deg,#0f766e,#0f4c5c);color:#fff;border-color:#0f766e}
+.scheduled-reports-hero span,.scheduled-reports-hero p{color:#ccfbf1}
+.scheduled-reports-hero h2{color:#fff}
+.scheduled-reports-hero>svg{width:90px;height:90px;opacity:.75}
+.scheduled-form{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:24px 27px 27px}
+.scheduled-form label{display:grid;gap:6px;color:#475569;font-size:10px;font-weight:800}
+.scheduled-form label small{color:#94a3b8;font-weight:500}
+.scheduled-form input,.scheduled-form select{min-height:38px;border:1px solid #cbd5e1;border-radius:8px;padding:0 9px;background:#fff;color:#0f172a;font-size:11px}
+.scheduled-form .wide{grid-column:1/-1}
+.scheduled-channel-picker{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:9px 0;color:#475569;font-size:10px;font-weight:800}
+.scheduled-channel-picker>span{width:100%}
+.scheduled-channel-picker label{display:flex;align-items:center;gap:5px;font-weight:700}
+.scheduled-channel-picker input{min-height:auto;accent-color:#4f46e5}
+.scheduled-actions{grid-column:1/-1}
+.scheduled-message{margin:0 27px 20px}
+@media(max-width:1000px){.scheduled-form{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.scheduled-form{grid-template-columns:1fr;padding:18px 16px 20px}.scheduled-form .wide,.scheduled-actions{grid-column:auto}.scheduled-message{margin-left:16px;margin-right:16px}}
