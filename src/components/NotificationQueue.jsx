@@ -11,6 +11,7 @@ export default function NotificationQueue({ user }) {
   const [form, setForm] = useState({ title: '', message: '', phone_number: '', target_role: 'parent', target_user_id: '', scheduled_for: nowLocal(), max_attempts: 3 })
   const [queue, setQueue] = useState({ data: [], counts: {}, pagination: {} })
   const [analytics, setAnalytics] = useState(null)
+  const [runs, setRuns] = useState([])
   const [status, setStatus] = useState('all')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -22,9 +23,11 @@ export default function NotificationQueue({ user }) {
     try {
       const requests = [schoolApi.notificationQueue(selectedStatus, page)]
       if (isAdmin) requests.push(schoolApi.notificationAnalytics(30))
-      const [nextQueue, nextAnalytics] = await Promise.all(requests)
+      if (isAdmin) requests.push(schoolApi.notificationRunHistory())
+      const [nextQueue, nextAnalytics, nextRuns] = await Promise.all(requests)
       setQueue(nextQueue)
       if (isAdmin) setAnalytics(nextAnalytics)
+      if (isAdmin) setRuns(nextRuns?.data || [])
     }
     catch (requestError) { setError(requestError.message) }
     finally { setBusy(false) }
@@ -85,6 +88,7 @@ export default function NotificationQueue({ user }) {
         <article><small>Failed</small><b>{analytics.data.failed || 0}</b><span>available for retry</span></article>
       </div>
     </section>}
+    {isAdmin && <section className="data-panel notification-run-history"><div className="panel-title"><div><span>Worker operations</span><h3>Recent background runs</h3></div><b>{runs.length} runs</b></div><div className="table-wrap"><table><thead><tr><th>Started</th><th>Status</th><th>Selected</th><th>Sent</th><th>Retrying</th><th>Failed</th></tr></thead><tbody>{runs.slice(0, 5).map(run => <tr key={run.id}><td>{run.started_at ? new Date(run.started_at).toLocaleString() : '—'}</td><td><span className={`delivery-status ${run.status}`}>{run.status}</span></td><td>{run.selected || 0}</td><td>{run.sent || 0}</td><td>{run.retrying || 0}</td><td>{run.failed || 0}</td></tr>)}</tbody></table></div>{runs.length === 0 && <div className="empty-state"><Clock3 /><h3>No worker runs yet</h3><p>Use the protected cron endpoint or Process due now.</p></div>}</section>}
     <div className="queue-toolbar"><div>{['all','queued','retrying','sent','failed','cancelled'].map(value => <button key={value} className={status === value ? 'active' : ''} onClick={() => changeStatus(value)}>{value}<span>{value === 'all' ? Object.values(queue.counts || {}).reduce((sum, count) => sum + count, 0) : queue.counts?.[value] || 0}</span></button>)}</div><button className="refresh-button" onClick={() => load()} disabled={busy}><RefreshCw />Refresh</button></div>
     <section className="data-panel queue-table"><div className="table-wrap"><table><thead><tr><th>Message</th><th>Recipient</th><th>Schedule</th><th>Attempts</th><th>Status</th>{isAdmin && <th>Actions</th>}</tr></thead><tbody>{queue.data.map(row => <tr key={row.id}><td><b>{row.title}</b><small>{row.message}</small>{row.last_error && <em>{row.last_error}</em>}</td><td>{row.phone_number}<small>{row.target_role || '—'} · {row.channel}</small>{row.target_user_id && <small>Inbox user #{row.target_user_id}</small>}</td><td>{row.scheduled_for ? new Date(row.scheduled_for).toLocaleString() : 'Now'}{row.next_attempt_at && <small>Next: {new Date(row.next_attempt_at).toLocaleString()}</small>}</td><td>{row.attempt_count}/{row.max_attempts}</td><td><span className={`delivery-status ${row.status}`}>{row.status}</span></td>{isAdmin && <td><div className="student-row-actions">{['failed','retrying'].includes(row.status) && <button onClick={() => retry(row)} disabled={busy}><RotateCcw />Retry</button>}{['queued','retrying'].includes(row.status) && <button className="danger" onClick={() => cancel(row)} disabled={busy}><XCircle />Cancel</button>}</div></td>}</tr>)}</tbody></table></div>{queue.data.length === 0 && <div className="empty-state"><Send /><h3>No queue records</h3><p>Schedule a message or change the status filter.</p></div>}{pages.pages > 1 && <div className="report-pagination"><button disabled={busy || pages.page <= 1} onClick={() => load(pages.page - 1)}>Previous</button><span>Page {pages.page} of {pages.pages}</span><button disabled={busy || pages.page >= pages.pages} onClick={() => load(pages.page + 1)}>Next</button></div>}</section>
   </section>

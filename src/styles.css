@@ -170,6 +170,7 @@ input,select,textarea{max-width:100%}
   .assignment-list article,.assignment-students article{min-width:0}
   .library-book-grid,.report-card-grid,.scholarship-program-grid{min-width:0}
 }
+.notification-run-history{margin-top:18px}.notification-run-history table{min-width:720px}
 
 @media(max-width:900px){
   .dashboard-header{height:76px;padding-inline:clamp(14px,3vw,26px)}
