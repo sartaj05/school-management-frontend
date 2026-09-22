@@ -111,8 +111,18 @@ const heroTranslations = {
 Object.entries(heroTranslations).forEach(([language, values]) => Object.assign(siteTranslations[language], values))
 
 function repairUtf8(value) {
-  if (typeof value !== 'string' || !/[ÃÂà-ÿ]/.test(value)) return value
-  try { return decodeURIComponent(escape(value)) } catch { return value }
+  if (typeof value !== 'string') return value
+  let repaired = value
+  for (let pass = 0; pass < 5 && /[ÃÂà-ÿ]/.test(repaired); pass += 1) {
+    try {
+      const next = decodeURIComponent(escape(repaired))
+      if (next === repaired) break
+      repaired = next
+    } catch {
+      break
+    }
+  }
+  return repaired
 }
 
 function repairDictionary(dictionary) {
