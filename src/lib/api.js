@@ -353,6 +353,9 @@ export const schoolApi = {
   createHrReview: (values) => api('/hr/reviews', { method: 'POST', body: JSON.stringify(values) }),
   hrSalaryHistory: (teacherId = '') => api(`/hr/salary-history${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
+  onboardingPreview: (entity, file) => { const body = new FormData(); body.append('entity', entity); body.append('file', file); return api('/onboarding/preview', { method: 'POST', body }) },
+  onboardingImport: (entity, file) => { const body = new FormData(); body.append('entity', entity); body.append('file', file); return api('/onboarding/import', { method: 'POST', body }) },
+  onboardingTemplate: (entity) => downloadApi(`/onboarding/template?entity=${encodeURIComponent(entity)}`, `${entity}-template.csv`),
 }
 
 function toFormData(values) {
