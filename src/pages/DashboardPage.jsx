@@ -134,7 +134,7 @@ function MaintenanceHub() { const [confirmation,setConfirmation]=useState(''),[b
 function UserDirectory({rows,reload}) {
   const [editing,setEditing]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[message,setMessage]=useState('')
   let isSuper
-  try { isSuper = JSON.parse(localStorage.getItem('school_session') || '{}')?.user?.role === 'super_admin' } catch { isSuper = false }
+  try { isSuper = JSON.parse(sessionStorage.getItem('school_session') || '{}')?.user?.role === 'super_admin' } catch { isSuper = false }
   if (isSuper) return <SuperAdminUserDirectory initialRows={rows} />
   const field=(name,value)=>setEditing(current=>({...current,[name]:value}))
   async function save(event){

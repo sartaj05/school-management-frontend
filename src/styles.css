@@ -396,6 +396,11 @@ input,select,textarea{max-width:100%}
 .public-get-started svg{transition:transform .2s ease}
 .public-get-started:hover svg{transform:translateX(3px)}
 
+/* Reserve room for the fixed language/accessibility control on desktop. */
+@media(min-width:901px){
+  .public-header-actions{margin-right:92px}
+}
+
 @media(max-width:900px){
   .public-header{height:78px}
   .public-header-inner{width:min(100% - 30px,1160px)}
