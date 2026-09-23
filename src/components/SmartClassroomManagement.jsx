@@ -64,7 +64,28 @@ export default function SmartClassroomManagement({ user }) {
   async function uploadRecording() {
     if (!recordingBlob) return
     setSaving(true); setError(''); setNotice('')
-    try { const body = new FormData(); body.append('recording', recordingBlob.blob, `smart-class-${recordingBlob.sessionId}.webm`); body.append('duration_seconds', String(recordingBlob.duration)); const result = await schoolApi.uploadSmartClassroomRecording(recordingBlob.sessionId, body); setNotice(result.message); setRecordingBlob(null); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); await load() }
+    try {
+      const fileName = `smart-class-${recordingBlob.sessionId}.webm`
+      const mimeType = recordingBlob.blob.type || 'video/webm'
+      const chunkSize = 7 * 1024 * 1024
+      const totalChunks = Math.max(1, Math.ceil(recordingBlob.blob.size / chunkSize))
+      const uploadId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`
+      let result
+      for (let index = 0; index < totalChunks; index += 1) {
+        const body = new FormData()
+        body.append('chunk', recordingBlob.blob.slice(index * chunkSize, Math.min(recordingBlob.blob.size, (index + 1) * chunkSize), mimeType), fileName)
+        body.append('upload_id', uploadId)
+        body.append('chunk_index', String(index))
+        body.append('total_chunks', String(totalChunks))
+        body.append('file_name', fileName)
+        body.append('mime_type', mimeType)
+        body.append('duration_seconds', String(recordingBlob.duration))
+        result = await schoolApi.uploadSmartClassroomChunk(recordingBlob.sessionId, body)
+        setNotice(`Uploading classroom recording: ${index + 1}/${totalChunks}`)
+      }
+      setNotice(result?.message || 'Classroom recording uploaded securely.')
+      setRecordingBlob(null); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); await load()
+    }
     catch (err) { setError(err.message) } finally { setSaving(false) }
   }
 
