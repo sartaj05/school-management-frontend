@@ -186,7 +186,23 @@ export const uiTranslations = {
   },
 }
 
+const reportUiTranslations = {
+  hi: {
+    'Reports & exports': 'रिपोर्ट और निर्यात',
+    'See the whole school clearly.': 'पूरे स्कूल को स्पष्ट रूप से देखें।',
+    'Run live reports from your current school data and download native CSV, XLSX or PDF files.': 'अपने वर्तमान स्कूल डेटा से लाइव रिपोर्ट चलाएँ और CSV, XLSX या PDF फ़ाइलें डाउनलोड करें।',
+    'Attendance records': 'उपस्थिति रिकॉर्ड', 'Fee invoices': 'शुल्क चालान', 'Ledger entries': 'लेजर प्रविष्टियाँ', 'live records': 'लाइव रिकॉर्ड',
+    'Live report builder': 'लाइव रिपोर्ट बिल्डर', 'Choose a report': 'रिपोर्ट चुनें', available: 'उपलब्ध',
+    'From date': 'दिनांक से', 'To date': 'दिनांक तक', 'All classes': 'सभी कक्षाएँ', 'All sections': 'सभी अनुभाग', 'All statuses': 'सभी स्थितियाँ',
+    Active: 'सक्रिय', Inactive: 'निष्क्रिय', Present: 'उपस्थित', Absent: 'अनुपस्थित', Pending: 'लंबित', Partial: 'आंशिक', Paid: 'भुगतान किया गया', Overdue: 'अतिदेय',
+    'Academic year': 'शैक्षणिक वर्ष', 'Entry type': 'प्रविष्टि प्रकार', 'All entries': 'सभी प्रविष्टियाँ', Income: 'आय', 'Fee payment': 'शुल्क भुगतान', Expense: 'व्यय', Payroll: 'पेरोल', Refund: 'वापसी',
+    Role: 'भूमिका', 'All roles': 'सभी भूमिकाएँ', 'Hostel Staff': 'छात्रावास कर्मचारी', 'Accounts Staff': 'लेखा कर्मचारी',
+    'Preparing...': 'तैयार किया जा रहा है…', 'Download CSV': 'CSV डाउनलोड करें', 'Download XLSX': 'XLSX डाउनलोड करें', 'Download PDF': 'PDF डाउनलोड करें', 'Print HTML': 'HTML प्रिंट करें', 'Clear filters': 'फ़िल्टर साफ़ करें',
+    'downloaded.': 'डाउनलोड हो गई।', 'Print report generated. Allow pop-ups to open it.': 'प्रिंट रिपोर्ट तैयार है। इसे खोलने के लिए पॉप-अप की अनुमति दें।', 'Print-ready report opened. Use Print -> Save as PDF.': 'प्रिंट के लिए रिपोर्ट खुल गई है। Print -> Save as PDF का उपयोग करें।', Report: 'रिपोर्ट',
+  },
+}
+
 export function translateUi(language, text) {
   const selected = getLanguage(language)
-  return uiTranslations[selected]?.[text] || uiTranslations.en[text] || text
+  return reportUiTranslations[selected]?.[text] || uiTranslations[selected]?.[text] || uiTranslations.en[text] || text
 }
