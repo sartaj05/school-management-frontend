@@ -403,6 +403,8 @@ input,select,textarea{max-width:100%}
 .public-get-started:hover svg{transform:translateX(3px)}
 
 /* Reserve room for the fixed language/accessibility control on desktop. */
+.dashboard-header .header-user{margin-right:92px}
+@media(max-width:600px){.dashboard-header .header-user{margin-right:70px}}
 @media(min-width:901px){
   .public-header-actions{margin-right:92px}
 }
