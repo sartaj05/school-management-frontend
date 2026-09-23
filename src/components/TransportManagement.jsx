@@ -64,6 +64,18 @@ export default function TransportManagement({ user }) {
   }
 
   useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [])
+  useEffect(() => {
+    const timer = setInterval(async () => {
+      try {
+        const [locationData, summaryData] = await Promise.all([schoolApi.transportLocations(), schoolApi.transportSummary()])
+        setLocations(locationData.data || [])
+        setSummary(summaryData.summary || {})
+      } catch (err) {
+        setError(err.message)
+      }
+    }, 15000)
+    return () => clearInterval(timer)
+  }, [])
 
   const changeVehicle = (name, value) => setVehicleForm(current => ({ ...current, [name]: value }))
   const changeRoute = (name, value) => setRouteForm(current => ({ ...current, [name]: value }))
