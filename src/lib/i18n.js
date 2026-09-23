@@ -150,3 +150,43 @@ export function translateText(language, key) {
   const selected = getLanguage(language)
   return siteTranslations[selected][key] || siteTranslations.en[key] || key
 }
+
+export const uiTranslations = {
+  en: {},
+  hi: {
+    'School Admin dashboard': 'स्कूल एडमिन डैशबोर्ड',
+    'Teacher dashboard': 'शिक्षक डैशबोर्ड',
+    'Your school, clearly organized.': 'आपका स्कूल, स्पष्ट रूप से व्यवस्थित।',
+    'Your school network, clearly organized.': 'आपका स्कूल नेटवर्क, स्पष्ट रूप से व्यवस्थित।',
+    'Your teaching day, clearly organized.': 'आपका शिक्षण दिवस, स्पष्ट रूप से व्यवस्थित।',
+    'Live information from your Flask API appears here as your school grows.': 'आपके स्कूल के बढ़ने के साथ Flask API की लाइव जानकारी यहाँ दिखाई देगी।',
+    'System-wide information from every registered school.': 'हर पंजीकृत स्कूल की सिस्टम-व्यापी जानकारी।',
+    'Review your upcoming classes and daily school information.': 'अपनी आगामी कक्षाओं और दैनिक स्कूल जानकारी की समीक्षा करें।',
+    'Total Schools': 'कुल स्कूल', 'Active Schools': 'सक्रिय स्कूल', 'Total Users': 'कुल उपयोगकर्ता', 'School Admins': 'स्कूल प्रशासक',
+    'Total Students': 'कुल छात्र', 'Total Employees': 'कुल कर्मचारी', 'Total Classes': 'कुल कक्षाएँ', Attendance: 'उपस्थिति',
+    'registered schools': 'पंजीकृत स्कूल', 'currently active': 'वर्तमान में सक्रिय', 'across all schools': 'सभी स्कूलों में', administrators: 'प्रशासक',
+    'enrolled learners': 'नामांकित छात्र', 'teaching team': 'शिक्षक दल', 'active classes': 'सक्रिय कक्षाएँ', today: 'आज', 'school records': 'स्कूल रिकॉर्ड', 'assigned classes': 'निर्धारित कक्षाएँ',
+    Administrations: 'प्रशासन', 'Quick access': 'त्वरित पहुँच', Students: 'छात्र', 'Manage student records': 'छात्र रिकॉर्ड प्रबंधित करें',
+    Employees: 'कर्मचारी', 'Manage teachers and staff': 'शिक्षकों और कर्मचारियों का प्रबंधन करें', 'Class and Section': 'कक्षा और अनुभाग',
+    'Manage academic structure': 'शैक्षणिक संरचना प्रबंधित करें', 'Manage Fees': 'शुल्क प्रबंधित करें', 'Review fee collection': 'शुल्क संग्रह की समीक्षा करें',
+    'Manage Exam': 'परीक्षा प्रबंधित करें', 'Manage exams and results': 'परीक्षा और परिणाम प्रबंधित करें', 'Mark daily attendance': 'दैनिक उपस्थिति दर्ज करें',
+    'Everything starts here': 'सब कुछ यहाँ से शुरू होता है', 'Use the navigation to view live students, classes and attendance records.': 'लाइव छात्रों, कक्षाओं और उपस्थिति रिकॉर्ड देखने के लिए नेविगेशन का उपयोग करें।',
+    Schools: 'स्कूल', Users: 'उपयोगकर्ता', Maintenance: 'रखरखाव', 'Manage schools': 'स्कूल प्रबंधित करें', 'Manage accounts': 'खाते प्रबंधित करें', 'Upgrade school data': 'स्कूल डेटा अपग्रेड करें',
+    'My schedule': 'मेरी समय-सारणी', 'View assigned classes': 'निर्धारित कक्षाएँ देखें', 'View student records': 'छात्र रिकॉर्ड देखें', 'View attendance': 'उपस्थिति देखें',
+    'Network report': 'नेटवर्क रिपोर्ट', 'Schools and colleges': 'स्कूल और कॉलेज', records: 'रिकॉर्ड', 'School / college': 'स्कूल / कॉलेज', Plan: 'प्लान', Admins: 'प्रशासक', Teachers: 'शिक्षक', Parents: 'अभिभावक', 'Total users': 'कुल उपयोगकर्ता', Status: 'स्थिति',
+    'Teaching schedule': 'शिक्षण समय-सारणी', 'Upcoming classes': 'आगामी कक्षाएँ', 'No upcoming classes': 'कोई आगामी कक्षा नहीं', 'Ask the School Admin to connect your login email to a Teacher profile and timetable.': 'अपने लॉगिन ईमेल को शिक्षक प्रोफ़ाइल और समय-सारणी से जोड़ने के लिए स्कूल एडमिन से संपर्क करें।', Day: 'दिन', Time: 'समय', Class: 'कक्षा', Subject: 'विषय', Room: 'कमरा', Monday: 'सोमवार', Tuesday: 'मंगलवार', Wednesday: 'बुधवार', Thursday: 'गुरुवार', Friday: 'शुक्रवार', Saturday: 'शनिवार', Sunday: 'रविवार',
+    'People directory': 'लोग निर्देशिका', 'Everyone in your school, together.': 'आपके स्कूल के सभी लोग, एक साथ।', 'Live account totals and recently joined members from the People API.': 'People API से लाइव खाता संख्या और हाल ही में जुड़े सदस्य।', 'Open directory': 'निर्देशिका खोलें', 'Latest accounts': 'नवीनतम खाते', 'Recently joined': 'हाल ही में जुड़े', people: 'लोग', 'No recent users': 'हाल के कोई उपयोगकर्ता नहीं', 'New user accounts will appear here.': 'नए उपयोगकर्ता खाते यहाँ दिखाई देंगे।',
+    'Academic workspace': 'शैक्षणिक कार्यक्षेत्र', 'Teaching and learning, at a glance.': 'शिक्षण और सीखना, एक नज़र में।', "Live academic totals and today's timetable from this school workspace.": 'इस स्कूल कार्यक्षेत्र की लाइव शैक्षणिक संख्या और आज की समय-सारणी।', Schedule: 'समय-सारणी', "Today's classes": 'आज की कक्षाएँ', classes: 'कक्षाएँ', 'No classes today': 'आज कोई कक्षा नहीं', Shortcuts: 'शॉर्टकट', 'Quick actions': 'त्वरित कार्य', 'Open module': 'मॉड्यूल खोलें', Unavailable: 'उपलब्ध नहीं',
+    'Feature unavailable': 'फीचर उपलब्ध नहीं', "isn't included in the plan.": 'इस प्लान में शामिल नहीं है।', 'Ask your super administrator to upgrade this school to unlock the module.': 'मॉड्यूल अनलॉक करने के लिए अपने सुपर एडमिन से स्कूल अपग्रेड करने को कहें।',
+    'Could not load this page.': 'यह पृष्ठ लोड नहीं हो सका।', 'Try again': 'पुनः प्रयास करें', 'EduFlow workspace': 'EduFlow कार्यक्षेत्र', 'School user': 'स्कूल उपयोगकर्ता', Member: 'सदस्य', 'Log out': 'लॉग आउट', 'Super Admin dashboard': 'सुपर एडमिन डैशबोर्ड',
+    'School Admin': 'स्कूल एडमिन', Teacher: 'शिक्षक', Parent: 'अभिभावक', super_admin: 'सुपर एडमिन',
+    'Contact us': 'संपर्क करें', "We're here to help your school grow.": 'हम आपके स्कूल को आगे बढ़ाने में मदद करने के लिए यहाँ हैं।', 'We would love to hear from you and help your school grow.': 'हम आपके स्कूल के बारे में सुनना और उसे आगे बढ़ाने में मदद करना चाहेंगे।', 'Get in touch': 'संपर्क में रहें', 'Contact details': 'संपर्क विवरण', Email: 'ईमेल', Phone: 'फ़ोन', Address: 'पता', Hours: 'समय', 'Technical support': 'तकनीकी सहायता', 'Questions?': 'कोई प्रश्न?', 'Send us a note': 'हमें संदेश भेजें', 'Tell us about your school and the support you need. Our team will get back to you quickly.': 'अपने स्कूल और आवश्यक सहायता के बारे में बताएं। हमारी टीम जल्द आपसे संपर्क करेगी।', 'Email now': 'अभी ईमेल करें',
+    'Online admissions': 'ऑनलाइन प्रवेश', "Start your child's school journey.": 'अपने बच्चे की स्कूल यात्रा शुरू करें।', 'Submit an application directly to your selected school. The school will review it and contact you.': 'अपने चुने हुए स्कूल में सीधे आवेदन जमा करें। स्कूल इसकी समीक्षा करके आपसे संपर्क करेगा।', 'Application received': 'आवेदन प्राप्त हुआ', 'Application number:': 'आवेदन संख्या:', 'Admission application': 'प्रवेश आवेदन', 'Fields marked with * are required.': '* से चिह्नित फ़ील्ड आवश्यक हैं।', School: 'स्कूल', 'Select school': 'स्कूल चुनें', 'Applying class': 'आवेदन की कक्षा', 'Student first name': 'छात्र का पहला नाम', 'Student last name': 'छात्र का अंतिम नाम', Gender: 'लिंग', Select: 'चुनें', Male: 'पुरुष', Female: 'महिला', Other: 'अन्य', 'Date of birth': 'जन्म तिथि', 'Guardian name': 'अभिभावक का नाम', Relationship: 'संबंध', Father: 'पिता', Mother: 'माता', Guardian: 'अभिभावक', 'Guardian mobile': 'अभिभावक का मोबाइल', 'Guardian email': 'अभिभावक का ईमेल', 'Previous school': 'पिछला स्कूल', 'Enter a valid Indian mobile number.': 'मान्य भारतीय मोबाइल नंबर दर्ज करें।', 'Enter a valid email address.': 'मान्य ईमेल पता दर्ज करें।', 'Submit application': 'आवेदन जमा करें',
+    'Simple. Connected. Thoughtful.': 'सरल। जुड़ा हुआ। विचारशील।', 'New password and confirmation do not match.': 'नया पासवर्ड और उसकी पुष्टि समान नहीं है।', 'Signing in...': 'साइन इन हो रहा है…', 'Sign in securely': 'सुरक्षित रूप से साइन इन करें', 'Reset password': 'पासवर्ड रीसेट करें', 'Request a secure, 15-minute reset token.': '15 मिनट के सुरक्षित रीसेट टोकन का अनुरोध करें।', 'Enter the token sent to your email.': 'अपने ईमेल पर भेजा गया टोकन दर्ज करें।', 'Requesting...': 'अनुरोध किया जा रहा है…', 'Send reset instructions': 'रीसेट निर्देश भेजें', 'Back to sign in': 'साइन इन पर वापस जाएँ', 'Reset token': 'रीसेट टोकन', 'New password': 'नया पासवर्ड', 'Confirm new password': 'नए पासवर्ड की पुष्टि करें', 'Resetting...': 'रीसेट किया जा रहा है…', 'Request another token': 'एक और टोकन का अनुरोध करें', 'Submitting...': 'जमा किया जा रहा है…',
+  },
+}
+
+export function translateUi(language, text) {
+  const selected = getLanguage(language)
+  return uiTranslations[selected]?.[text] || uiTranslations.en[text] || text
+}
