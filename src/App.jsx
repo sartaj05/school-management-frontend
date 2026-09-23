@@ -6,7 +6,7 @@ import DashboardPage from './pages/DashboardPage'
 import AdmissionPage from './pages/AdmissionPage'
 import ContactPage from './pages/ContactPage'
 import { schoolApi } from './lib/api'
-import { Contrast, Languages, Minus, Plus, RotateCcw } from 'lucide-react'
+import { CheckCircle2, Contrast, Languages, Minus, Plus, RotateCcw, X } from 'lucide-react'
 import { accessibilityTranslations, getLanguage, languageOptions } from './lib/i18n'
 
 const AUTH_STORAGE_KEYS = ['school_access_token', 'school_refresh_token', 'school_session']
@@ -25,7 +25,7 @@ export default function App() {
   useEffect(()=>{ const expired=()=>setSession(null); window.addEventListener('school-session-expired',expired); return()=>window.removeEventListener('school-session-expired',expired) },[])
   useEffect(()=>{ const language=getLanguage(preferences.language); const nextPreferences={...preferences,language}; localStorage.setItem('school_accessibility_preferences',JSON.stringify(nextPreferences)); document.documentElement.lang=language; document.documentElement.dataset.language=language; document.documentElement.dataset.highContrast=preferences.highContrast?'true':'false'; document.documentElement.dataset.reduceMotion=preferences.reduceMotion?'true':'false'; document.documentElement.style.setProperty('--a11y-scale',String(preferences.fontScale||1)) },[preferences])
   const updatePreferences=change=>setPreferences(current=>({...current,...change}))
-  return <><AccessibilityTools preferences={preferences} update={updatePreferences}/>{flash&&<div className="app-toast success">{flash}</div>}<Routes><Route path="/" element={<LandingPage language={preferences.language}/>}/><Route path="/contact" element={<ContactPage language={preferences.language}/>}/><Route path="/admissions/apply" element={<AdmissionPage language={preferences.language}/>}/><Route path="/login" element={session?<Navigate to="/dashboard" replace/>:<LoginPage onLogin={login} language={preferences.language}/>}/><Route path="/dashboard" element={session?<DashboardPage session={session} onLogout={logout} onProfileUpdated={updateProfile} language={preferences.language}/>:<Navigate to="/login" replace/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Routes></>
+  return <><AccessibilityTools preferences={preferences} update={updatePreferences}/>{flash&&<div className="session-feedback-backdrop" role="presentation"><div className="session-feedback-modal" role="status" aria-live="polite"><CheckCircle2 className="session-feedback-icon" size={28}/><strong>{flash}</strong><button type="button" className="session-feedback-close" onClick={()=>setFlash('')} aria-label="Close message" title="Close message"><X size={17}/></button></div></div>}<Routes><Route path="/" element={<LandingPage language={preferences.language}/>}/><Route path="/contact" element={<ContactPage language={preferences.language}/>}/><Route path="/admissions/apply" element={<AdmissionPage language={preferences.language}/>}/><Route path="/login" element={session?<Navigate to="/dashboard" replace/>:<LoginPage onLogin={login} language={preferences.language}/>}/><Route path="/dashboard" element={session?<DashboardPage session={session} onLogout={logout} onProfileUpdated={updateProfile} language={preferences.language}/>:<Navigate to="/login" replace/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Routes></>
 }
 
 function AccessibilityTools({ preferences, update }) {
