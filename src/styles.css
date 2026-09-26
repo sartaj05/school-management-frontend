@@ -280,6 +280,14 @@ input,select,textarea{max-width:100%}
 .feature-plan-card>svg{color:#16a34a}
 .feature-plan-card p{grid-column:1/-1;margin:4px 0 0;color:#334155;font-size:12px;font-weight:700;line-height:1.45}
 .feature-plan-card>span{grid-column:1/-1;color:#64748b;font-size:11px;line-height:1.5}
+.plan-feature-list{grid-column:1/-1;display:grid;gap:8px;margin-top:2px}
+.plan-feature-list span{display:flex;align-items:flex-start;gap:6px;color:#64748b;font-size:11px;line-height:1.45}
+.plan-feature-list svg{flex:0 0 14px;margin-top:1px;color:#16a34a}
+.plan-details-modal .feature-plan-card{min-height:255px}
+.plan-feature-box-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.plan-section-actions{display:flex;justify-content:center;margin-top:26px}
+.plan-compare-button{background:#fff !important;color:#3730a3 !important;border:1px solid #c7d2fe;box-shadow:0 8px 20px rgba(79,70,229,.12)}
+.plan-compare-button:hover{background:#eef2ff !important;color:#312e81 !important}
 .feature-plan-card.plan-premium{border-color:#c7d2fe;background:linear-gradient(145deg,#eef2ff,#fff)}
 .feature-plan-card.plan-premium>svg{color:#4f46e5}
 .feature-plan-card.plan-enterprise{border-color:#bae6fd;background:linear-gradient(145deg,#ecfeff,#fff)}
