@@ -226,8 +226,15 @@ export const schoolApi = {
   updateCalendarEvent: (eventId, values) => api(`/calendar/events/${eventId}`, { method: 'PUT', body: JSON.stringify(values) }),
   cancelCalendarEvent: (eventId) => api(`/calendar/events/${eventId}/cancel`, { method: 'POST' }),
   submitAdmission: (values) => api('/admissions/apply', { method: 'POST', body: JSON.stringify(values) }),
-  admissionApplications: (status = 'all') => api(`/admissions/applications?status=${encodeURIComponent(status)}`),
+  admissionApplications: (status = 'all', filters = {}) => {
+    const params = new URLSearchParams({ status, ...filters })
+    Object.keys(filters).forEach(key => { if (!filters[key]) params.delete(key) })
+    return api(`/admissions/applications?${params.toString()}`)
+  },
+  admissionSummary: () => api('/admissions/summary'),
   updateAdmissionApplication: (applicationId, values) => api(`/admissions/applications/${applicationId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  admissionFollowUps: (applicationId) => api(`/admissions/applications/${applicationId}/follow-ups`),
+  addAdmissionFollowUp: (applicationId, values) => api(`/admissions/applications/${applicationId}/follow-ups`, { method: 'POST', body: JSON.stringify(values) }),
   documents: () => api('/documents/history'),
   downloadAttendanceCsv: (attendanceDate) => downloadApi(`/documents/attendance.csv?attendance_date=${encodeURIComponent(attendanceDate)}`, `attendance-${attendanceDate}.csv`),
   openReportCard: (examId, studentId) => downloadApi(`/documents/report-cards/${examId}/students/${studentId}`, `report-card-${examId}-${studentId}.html`),
