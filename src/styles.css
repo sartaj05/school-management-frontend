@@ -448,3 +448,7 @@ input,select,textarea{max-width:100%}
 .scheduled-message{margin:0 27px 20px}
 @media(max-width:1000px){.scheduled-form{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.scheduled-form{grid-template-columns:1fr;padding:18px 16px 20px}.scheduled-form .wide,.scheduled-actions{grid-column:auto}.scheduled-message{margin-left:16px;margin-right:16px}}
+
+.demo-only-banner{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding:12px 15px;border:1px solid #fbbf24;border-radius:12px;background:#fffbeb;color:#92400e;font-size:11px;line-height:1.4}
+.demo-only-banner b{font-weight:800;white-space:nowrap}
+@media(max-width:600px){.demo-only-banner{align-items:flex-start;flex-direction:column;gap:3px}}

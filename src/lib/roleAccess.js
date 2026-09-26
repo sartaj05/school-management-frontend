@@ -6,7 +6,7 @@ const ROLE_PAGE_ACCESS = {
   Teacher: ['overview', 'academics', 'analytics', 'calendar', 'meetings', 'messages', 'reports', 'smartClassroom', 'documents', 'exams', 'assignments', 'library', 'timetable', 'subjects', 'students', 'classes', 'attendance', 'attendanceReports', 'notifications', 'settings', 'leave'],
   Parent: ['overview', 'portal', 'calendar', 'meetings', 'messages', 'documents', 'notifications', 'settings'],
   Student: ['overview', 'portal', 'calendar', 'messages', 'documents', 'notifications', 'leave', 'settings'],
-  'Accounts Staff': ['overview', 'reports', 'scheduledReports', 'finance', 'scholarships', 'expenses', 'settings'],
+  'Accounts Staff': ['overview', 'reports', 'scheduledReports', 'fees', 'finance', 'scholarships', 'expenses', 'settings'],
   'Hostel Staff': ['overview', 'hostel', 'settings'],
 }
 
