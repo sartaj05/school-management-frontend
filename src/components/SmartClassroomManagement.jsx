@@ -10,6 +10,7 @@ export default function SmartClassroomManagement({ user }) {
   const admin = user.role === 'School Admin'
   const [options, setOptions] = useState({ classes: [], subjects: [], teachers: [] })
   const [sessions, setSessions] = useState([])
+  const [capabilities, setCapabilities] = useState(null)
   const [form, setForm] = useState(emptySession)
   const [recordingSession, setRecordingSession] = useState(null)
   const [recordingBlob, setRecordingBlob] = useState(null)
@@ -26,9 +27,10 @@ export default function SmartClassroomManagement({ user }) {
   async function load() {
     setBusy(true); setError('')
     try {
-      const [optionResult, sessionResult] = await Promise.all([schoolApi.smartClassroomOptions(), schoolApi.smartClassroomSessions()])
+      const [optionResult, sessionResult, capabilityResult] = await Promise.all([schoolApi.smartClassroomOptions(), schoolApi.smartClassroomSessions(), schoolApi.smartClassroomCapabilities()])
       setOptions(optionResult.data || { classes: [], subjects: [], teachers: [] })
       setSessions(sessionResult.data || [])
+      setCapabilities(capabilityResult.data || {})
     } catch (err) { setError(err.message) } finally { setBusy(false) }
   }
 
@@ -104,6 +106,7 @@ export default function SmartClassroomManagement({ user }) {
   return <div className="smart-classroom-management">
     <section className="people-hero smart-classroom-hero"><div><span>Enterprise classroom innovation</span><h2>Smart classroom recording</h2><p>Create a class session, record a lesson or screen demonstration, and keep the private recording in your school workspace.</p></div><Video /></section>
     {error && <div className="form-error" role="alert">{error}</div>}{notice && <div className="success-notice" role="status">{notice}</div>}
+    {capabilities && !capabilities.production_ready && <div className="maintenance-warning" role="status"><b>Production readiness check: </b>private chunked upload and playback are available, but transcoding and/or WebRTC infrastructure is not configured. Do not present live classroom streaming as production-ready yet.</div>}
     {recordingSession && <div className="recording-status"><span className="recording-dot" />Recording in progress. Share your screen or class, then stop when the lesson is complete.<button className="button button-small" onClick={stopRecording}><Square size={14} />Stop recording</button></div>}
     {recordingBlob && <section className="data-panel recording-preview"><div className="panel-title"><div><span>Ready to save</span><h2>Review your classroom recording</h2></div><button className="button button-small" disabled={saving} onClick={uploadRecording}><Upload size={14} />Upload recording</button></div>{previewUrl && <video controls src={previewUrl} />}</section>}
     <form className="editor-card smart-classroom-form" onSubmit={createSession}><div className="editor-heading"><MonitorUp /><div><h3>Create a smart class session</h3><p>Recordings are private to Enterprise staff accounts and are stored outside the public uploads route.</p></div></div><div className="field-grid"><label>Class<select required value={form.class_id} onChange={event => field('class_id', event.target.value)}><option value="">Select class</option>{options.classes.map(item => <option key={item.id} value={item.id}>{classLabel(item)}</option>)}</select></label><label>Subject<select value={form.subject_id} onChange={event => field('subject_id', event.target.value)}><option value="">No subject selected</option>{options.subjects.map(item => <option key={item.id} value={item.id}>{item.name}{item.code ? ` · ${item.code}` : ''}</option>)}</select></label>{admin && <label>Teacher<select required value={form.teacher_id} onChange={event => field('teacher_id', event.target.value)}><option value="">Select teacher</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.full_name}{item.department ? ` · ${item.department}` : ''}</option>)}</select></label>}<label>Session title<input required maxLength="180" value={form.title} onChange={event => field('title', event.target.value)} placeholder="e.g. Fractions with visual examples" /></label><label>Start<input type="datetime-local" value={form.scheduled_start} onChange={event => field('scheduled_start', event.target.value)} /></label><label>End<input type="datetime-local" value={form.scheduled_end} onChange={event => field('scheduled_end', event.target.value)} /></label><label className="wide">Description<textarea maxLength="2000" value={form.description} onChange={event => field('description', event.target.value)} placeholder="Add a short lesson note for staff." /></label></div><button className="button button-small" disabled={saving || busy}><Video size={15} />Create session</button></form>

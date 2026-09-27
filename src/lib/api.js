@@ -353,6 +353,7 @@ export const schoolApi = {
   createLeaveHoliday: (values) => api('/leave/holidays', { method: 'POST', body: JSON.stringify(values) }),
   deleteLeaveHoliday: (id) => api(`/leave/holidays/${id}`, { method: 'DELETE' }),
   smartClassroomOptions: () => api('/smart-classroom/options'),
+  smartClassroomCapabilities: () => api('/smart-classroom/capabilities'),
   smartClassroomSessions: (filters = {}) => api(`/smart-classroom/sessions?${new URLSearchParams(filters)}`),
   createSmartClassroomSession: (values) => api('/smart-classroom/sessions', { method: 'POST', body: JSON.stringify(values) }),
   updateSmartClassroomSession: (id, values) => api(`/smart-classroom/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
