@@ -29,3 +29,23 @@ test('super admin navigation is limited to platform administration', () => {
     'overview', 'publicWebsite', 'schools', 'users', 'maintenance',
   ]))
 })
+
+test('school admin navigation covers every client demo workflow', () => {
+  const pages = new Set(localRolePages('School Admin'))
+  for (const featurePages of [
+    ['students', 'teachers', 'parents', 'classes'],
+    ['attendance', 'exams', 'assignments', 'timetable'],
+    ['fees', 'finance'],
+    ['admissions'],
+    ['leave', 'payroll', 'inventory', 'hostel'],
+  ]) {
+    for (const page of featurePages) assert.ok(pages.has(page), page)
+  }
+})
+
+test('demo roles cannot receive another role\'s sensitive workflows', () => {
+  const staffAdministration = new Set(['admissions', 'finance', 'fees', 'payroll', 'inventory', 'hostel'])
+  for (const role of ['Teacher', 'Parent', 'Student']) {
+    assert.equal(localRolePages(role).some(page => staffAdministration.has(page)), false, role)
+  }
+})
