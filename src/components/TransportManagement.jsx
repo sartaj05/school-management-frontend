@@ -24,6 +24,15 @@ const etaLabel = location => {
   if (location.eta_status === 'no_stop') return 'No active stop'
   return 'Unavailable'
 }
+const geofenceLabel = location => {
+  if (location.geofence_status === 'inside') return 'At next stop'
+  if (location.geofence_status === 'outside' && location.geofence_distance_m !== null && location.geofence_distance_m !== undefined) {
+    return `${Math.round(location.geofence_distance_m)} m from stop`
+  }
+  if (location.geofence_status === 'awaiting_location') return 'Waiting for location'
+  if (location.geofence_status === 'no_stop') return 'No active stop'
+  return 'Unavailable'
+}
 
 export default function TransportManagement({ user }) {
   const canManage = user?.role === 'School Admin'
@@ -336,7 +345,7 @@ export default function TransportManagement({ user }) {
         <label>Heading<input value={locationForm.heading} onChange={e => changeLocation('heading', e.target.value)} placeholder="North"/></label>
         <button className="button button-small" disabled={busy}><Navigation size={16}/>Update location</button>
       </form>}
-      <div className="table-wrap transport-table"><table><thead><tr><th>Vehicle</th><th>Route</th><th>Driver</th><th>Coordinates</th><th>Speed</th><th>Next stop / ETA</th><th>Reported</th></tr></thead><tbody>{locations.map(item => <tr key={`${item.vehicle_id}-${item.route_name || 'route'}`}><td><b>{item.vehicle_no}</b></td><td>{item.route_name || '-'}</td><td>{item.driver_name}<small>{item.driver_mobile}</small></td><td>{item.latitude && item.longitude ? `${item.latitude}, ${item.longitude}` : 'No ping yet'}</td><td>{item.speed_kmph ? `${item.speed_kmph} km/h` : '-'}</td><td><b>{item.next_stop || '-'}</b><small>{etaLabel(item)}</small></td><td>{item.reported_at ? new Date(item.reported_at).toLocaleString() : '-'}</td></tr>)}</tbody></table></div>
+      <div className="table-wrap transport-table"><table><thead><tr><th>Vehicle</th><th>Route</th><th>Driver</th><th>Coordinates</th><th>Speed</th><th>Next stop / ETA</th><th>Geofence</th><th>Reported</th></tr></thead><tbody>{locations.map(item => <tr key={`${item.vehicle_id}-${item.route_name || 'route'}`}><td><b>{item.vehicle_no}</b></td><td>{item.route_name || '-'}</td><td>{item.driver_name}<small>{item.driver_mobile}</small></td><td>{item.latitude && item.longitude ? `${item.latitude}, ${item.longitude}` : 'No ping yet'}</td><td>{item.speed_kmph ? `${item.speed_kmph} km/h` : '-'}</td><td><b>{item.next_stop || '-'}</b><small>{etaLabel(item)}</small></td><td><span className={`delivery-status ${item.geofence_status || ''}`}>{geofenceLabel(item)}</span></td><td>{item.reported_at ? new Date(item.reported_at).toLocaleString() : '-'}</td></tr>)}</tbody></table></div>
     </section>
   </div>
 }
