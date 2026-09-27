@@ -16,6 +16,9 @@ const emptyStop = { route_id: '', stop_name: '', stop_order: 1, pickup_time: '',
 const emptyAssignment = { student_id: '', route_id: '', stop_id: '', pickup_required: true, drop_required: true, start_date: today, end_date: '', notes: '' }
 const emptyLocation = { vehicle_id: '', latitude: '', longitude: '', speed_kmph: '', heading: '' }
 const etaLabel = location => {
+  if (location.eta_status === 'road_route_estimate' && location.eta_minutes !== null && location.eta_minutes !== undefined) {
+    return `~${location.eta_minutes} min road estimate${location.route_provider ? ` · ${location.route_provider}` : ''}`
+  }
   if (location.eta_status === 'straight_line_estimate' && location.eta_minutes !== null && location.eta_minutes !== undefined) {
     return `~${location.eta_minutes} min estimate`
   }
@@ -33,6 +36,9 @@ const geofenceLabel = location => {
   if (location.geofence_status === 'no_stop') return 'No active stop'
   return 'Unavailable'
 }
+const mapLink = location => location.latitude !== null && location.latitude !== undefined && location.longitude !== null && location.longitude !== undefined
+  ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${location.latitude},${location.longitude}`)}`
+  : ''
 
 export default function TransportManagement({ user }) {
   const canManage = user?.role === 'School Admin'
@@ -337,6 +343,7 @@ export default function TransportManagement({ user }) {
 
     <section className="data-panel">
       <div className="panel-title"><div><span>Live tracking</span><h2>Latest vehicle locations</h2></div><b>{locations.length} vehicles</b></div>
+      <div className="transport-readiness-note">Road ETA uses a configured routing provider when available. Until then, the API labels the result as a local straight-line estimate.</div>
       {canManage && <form className="transport-location-form" onSubmit={saveLocation}>
         <label>Vehicle *<select required value={locationForm.vehicle_id} onChange={e => changeLocation('vehicle_id', e.target.value)}><option value="">Select vehicle</option>{vehicles.map(item => <option key={item.id} value={item.id}>{item.vehicle_no}</option>)}</select></label>
         <label>Latitude *<input required type="number" step="0.0000001" value={locationForm.latitude} onChange={e => changeLocation('latitude', e.target.value)}/></label>
@@ -345,7 +352,7 @@ export default function TransportManagement({ user }) {
         <label>Heading<input value={locationForm.heading} onChange={e => changeLocation('heading', e.target.value)} placeholder="North"/></label>
         <button className="button button-small" disabled={busy}><Navigation size={16}/>Update location</button>
       </form>}
-      <div className="table-wrap transport-table"><table><thead><tr><th>Vehicle</th><th>Route</th><th>Driver</th><th>Coordinates</th><th>Speed</th><th>Next stop / ETA</th><th>Geofence</th><th>Reported</th></tr></thead><tbody>{locations.map(item => <tr key={`${item.vehicle_id}-${item.route_name || 'route'}`}><td><b>{item.vehicle_no}</b></td><td>{item.route_name || '-'}</td><td>{item.driver_name}<small>{item.driver_mobile}</small></td><td>{item.latitude && item.longitude ? `${item.latitude}, ${item.longitude}` : 'No ping yet'}</td><td>{item.speed_kmph ? `${item.speed_kmph} km/h` : '-'}</td><td><b>{item.next_stop || '-'}</b><small>{etaLabel(item)}</small></td><td><span className={`delivery-status ${item.geofence_status || ''}`}>{geofenceLabel(item)}</span></td><td>{item.reported_at ? new Date(item.reported_at).toLocaleString() : '-'}</td></tr>)}</tbody></table></div>
+      <div className="table-wrap transport-table"><table><thead><tr><th>Vehicle</th><th>Route</th><th>Driver</th><th>Coordinates</th><th>Speed</th><th>Next stop / ETA</th><th>Geofence</th><th>Reported</th></tr></thead><tbody>{locations.map(item => <tr key={`${item.vehicle_id}-${item.route_name || 'route'}`}><td><b>{item.vehicle_no}</b></td><td>{item.route_name || '-'}</td><td>{item.driver_name}<small>{item.driver_mobile}</small></td><td>{item.latitude !== null && item.latitude !== undefined && item.longitude !== null && item.longitude !== undefined ? <><span>{item.latitude}, {item.longitude}</span>{mapLink(item) && <a className="transport-map-link" href={mapLink(item)} target="_blank" rel="noreferrer">Open map</a>}</> : 'No ping yet'}</td><td>{item.speed_kmph ? `${item.speed_kmph} km/h` : '-'}</td><td><b>{item.next_stop || '-'}</b><small>{etaLabel(item)}</small></td><td><span className={`delivery-status ${item.geofence_status || ''}`}>{geofenceLabel(item)}</span></td><td>{item.reported_at ? new Date(item.reported_at).toLocaleString() : '-'}</td></tr>)}</tbody></table></div>
     </section>
   </div>
 }
