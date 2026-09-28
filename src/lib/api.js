@@ -155,6 +155,8 @@ export const schoolApi = {
   notificationsByUser: (userId) => api(`/notifications/user?user_id=${encodeURIComponent(userId)}`),
   notificationQueue: (status = 'all', page = 1) => api(`/notifications/queue?status=${encodeURIComponent(status)}&page=${page}&per_page=25`),
   notificationAnalytics: (days = 30) => api(`/notifications/analytics?days=${encodeURIComponent(days)}`),
+  notificationTemplates: () => api('/notifications/templates'),
+  saveNotificationTemplate: (values) => api('/notifications/templates', { method: 'POST', body: JSON.stringify(values) }),
   queueNotification: (values) => api('/notifications/queue', { method: 'POST', body: JSON.stringify(values) }),
   retryNotification: (notificationId) => api(`/notifications/queue/${notificationId}/retry`, { method: 'POST' }),
   cancelNotification: (notificationId) => api(`/notifications/queue/${notificationId}/cancel`, { method: 'POST' }),
