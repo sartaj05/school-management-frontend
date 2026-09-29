@@ -11,6 +11,8 @@ export default function NotificationQueue({ user }) {
   const [form, setForm] = useState({ template_key: '', title: '', message: '', channel: 'portal', phone_number: '', email_address: '', target_role: 'parent', target_user_id: '', scheduled_for: nowLocal(), max_attempts: 3 })
   const [templates, setTemplates] = useState([])
   const [recipients, setRecipients] = useState([])
+  const [providerHealth, setProviderHealth] = useState(null)
+  const [providerTest, setProviderTest] = useState({ channel: 'push', target_user_id: '', email_address: '', phone_number: '' })
   const [queue, setQueue] = useState({ data: [], counts: {}, pagination: {} })
   const [analytics, setAnalytics] = useState(null)
   const [runs, setRuns] = useState([])
@@ -26,12 +28,14 @@ export default function NotificationQueue({ user }) {
       const requests = [schoolApi.notificationQueue(selectedStatus, page), schoolApi.notificationTemplates(), schoolApi.notificationRecipients()]
       if (isAdmin) requests.push(schoolApi.notificationAnalytics(30))
       if (isAdmin) requests.push(schoolApi.notificationRunHistory())
-      const [nextQueue, nextTemplates, nextRecipients, nextAnalytics, nextRuns] = await Promise.all(requests)
+      if (isAdmin) requests.push(schoolApi.notificationProviderHealth())
+      const [nextQueue, nextTemplates, nextRecipients, nextAnalytics, nextRuns, nextHealth] = await Promise.all(requests)
       setQueue(nextQueue)
       setTemplates(nextTemplates?.data || [])
       setRecipients(nextRecipients?.data || [])
       if (isAdmin) setAnalytics(nextAnalytics)
       if (isAdmin) setRuns(nextRuns?.data || [])
+      if (isAdmin) setProviderHealth(nextHealth)
     }
     catch (requestError) { setError(requestError.message) }
     finally { setBusy(false) }
@@ -85,12 +89,27 @@ export default function NotificationQueue({ user }) {
   }
 
   function changeStatus(value) { setStatus(value); load(1, value) }
+  const testRecipients = recipients.filter(item => ['parent', 'student', 'teacher'].includes(`${item.role || ''}`.toLowerCase()))
+  const testField = (name, value) => setProviderTest(current => ({ ...current, [name]: value }))
+  async function testProvider(event) {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('')
+    try {
+      const payload = { ...providerTest, target_user_id: providerTest.target_user_id ? Number(providerTest.target_user_id) : undefined }
+      if (payload.channel !== 'push') delete payload.target_user_id
+      if (payload.channel !== 'email') delete payload.email_address
+      if (payload.channel !== 'whatsapp') delete payload.phone_number
+      const result = await schoolApi.notificationProviderTest(payload)
+      setMessage(result.message || 'Provider test completed.')
+      await load()
+    } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
+  }
   const pages = queue.pagination || {}
 
   return <section className="notification-queue-section">
     <div className="queue-heading"><div><span>Reliable delivery</span><h2>Schedule and retry queue</h2><p>Use templates to send a tracked school alert through the right channel.</p></div>{isAdmin && <div className="queue-heading-actions"><button className="button button-small button-ghost" onClick={generateAlerts} disabled={busy}><BellRing />Generate alerts</button><button className="button button-small" onClick={processDue} disabled={busy}><Play />Process due now</button></div>}</div>
     <form className="editor-card queue-form" onSubmit={submit}><div className="field-grid three"><label>Template<select value={form.template_key} onChange={e => { const key = e.target.value; const selected = templates.find(item => item.template_key === key); setForm(current => ({ ...current, template_key: key, title: selected?.title || current.title, message: selected?.message || current.message, channel: selected?.channel || current.channel })) }}><option value="">Custom message</option>{templates.map(template => <option key={template.template_key} value={template.template_key}>{template.name}</option>)}</select><small className="field-help">Templates support variables such as {'{{student_name}}'}.</small></label><label>Channel<select value={form.channel} onChange={e => field('channel', e.target.value)}><option value="portal">Portal inbox</option><option value="push">Firebase push</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option></select></label><label>Target role<select value={form.target_role} onChange={e => setForm(current => ({ ...current, target_role: e.target.value, target_user_id: '' }))}><option value="parent">Parent</option><option value="student">Student</option><option value="teacher">Teacher</option></select></label><label className="wide">Recipient user<select value={`${form.target_user_id || ''}`} onChange={e => selectRecipient(e.target.value)} required={form.channel === 'portal' || form.channel === 'push'}><option value="">Choose a school user</option>{matchingRecipients.map(item => <option key={item.id} value={item.id}>{item.name} · {item.role} · {item.email}</option>)}</select><small className="field-help">Search results are limited to active users in this school.</small></label><label>Title *<input required maxLength="150" value={form.title} onChange={e => field('title', e.target.value)} /></label>{form.channel === 'whatsapp' && <label>Recipient phone *<input required value={form.phone_number} onChange={e => field('phone_number', e.target.value.replace(/[^0-9+]/g, ''))} placeholder="919876543210" /></label>}{form.channel === 'email' && <label>Recipient email *<input required type="email" value={form.email_address} onChange={e => field('email_address', e.target.value)} placeholder="parent@example.com" /></label>}<label>Schedule date and time *<input required type="datetime-local" value={form.scheduled_for} onChange={e => field('scheduled_for', e.target.value)} /></label><label>Maximum attempts<input type="number" min="1" max="10" value={form.max_attempts} onChange={e => field('max_attempts', e.target.value)} /></label><label className="wide">Message *<textarea required rows="3" value={form.message} onChange={e => field('message', e.target.value)} /></label></div><button className="button button-small" disabled={busy}><Clock3 />{busy ? 'Saving…' : 'Schedule notification'}</button></form>
     {error && <div className="form-error queue-message">{error}</div>}{message && <div className="success-notice queue-message">{message}</div>}
+    {isAdmin && providerHealth?.data && <section className="data-panel notification-provider-health"><div className="panel-title"><div><span>Provider setup</span><h3>Delivery health</h3></div><b>{providerHealth.data.status}</b></div><div className="stat-grid compact">{Object.entries(providerHealth.data.providers || {}).map(([provider, item]) => <article key={provider}><small>{provider}</small><b>{item.status}</b><span>{item.configured ? 'Configuration present' : `Missing: ${(item.missing || []).join(', ')}`}</span></article>)}</div><form className="field-grid three" onSubmit={testProvider}><label>Test channel<select value={providerTest.channel} onChange={e => testField('channel', e.target.value)}><option value="push">Firebase push</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option></select></label>{providerTest.channel === 'push' && <label>Test recipient<select required value={providerTest.target_user_id} onChange={e => testField('target_user_id', e.target.value)}><option value="">Choose a school user</option>{testRecipients.map(item => <option key={item.id} value={item.id}>{item.name} · {item.role}</option>)}</select></label>}{providerTest.channel === 'email' && <label>Test email<input required type="email" value={providerTest.email_address} onChange={e => testField('email_address', e.target.value)} placeholder="admin@example.com" /></label>}{providerTest.channel === 'whatsapp' && <label>Test phone<input required value={providerTest.phone_number} onChange={e => testField('phone_number', e.target.value.replace(/[^0-9+]/g, ''))} placeholder="919876543210" /></label>}<div><button className="button button-small" disabled={busy}>Send provider test</button><small className="field-help">The result is recorded in the delivery queue.</small></div></form>{(providerHealth.data.worker_runs || []).length > 0 && <div className="table-wrap"><table><thead><tr><th>Worker run</th><th>Status</th><th>Sent</th><th>Failed</th></tr></thead><tbody>{providerHealth.data.worker_runs.slice(0, 5).map(run => <tr key={run.id}><td>{run.started_at ? new Date(run.started_at).toLocaleString() : '—'}</td><td>{run.status}</td><td>{run.sent || 0}</td><td>{run.failed || 0}</td></tr>)}</tbody></table></div>}</section>}
     {isAdmin && analytics?.data && <section className="notification-analytics">
       <div className="queue-heading"><div><span>Campaign delivery</span><h3>Last {analytics.data.window_days || 30} days</h3></div><BarChart3 /></div>
       <div className="stat-grid compact">

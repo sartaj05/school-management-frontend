@@ -157,6 +157,8 @@ export const schoolApi = {
   notificationAnalytics: (days = 30) => api(`/notifications/analytics?days=${encodeURIComponent(days)}`),
   notificationTemplates: () => api('/notifications/templates'),
   notificationRecipients: (query = '', role = '') => api(`/notifications/recipients?limit=100&query=${encodeURIComponent(query)}&role=${encodeURIComponent(role)}`),
+  notificationProviderHealth: () => api('/notifications/providers/health'),
+  notificationProviderTest: (values) => api('/notifications/providers/test', { method: 'POST', body: JSON.stringify(values) }),
   saveNotificationTemplate: (values) => api('/notifications/templates', { method: 'POST', body: JSON.stringify(values) }),
   queueNotification: (values) => api('/notifications/queue', { method: 'POST', body: JSON.stringify(values) }),
   retryNotification: (notificationId) => api(`/notifications/queue/${notificationId}/retry`, { method: 'POST' }),
