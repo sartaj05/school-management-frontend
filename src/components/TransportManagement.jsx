@@ -71,14 +71,11 @@ export default function TransportManagement({ user }) {
     setError('')
     try {
       if (isDriver) {
-        const [driverData, alertData] = await Promise.all([
-          schoolApi.driverTransportStatus(),
-          schoolApi.transportAlerts(),
-        ])
+        const driverData = await schoolApi.driverTransportStatus()
         const assigned = driverData.data || []
         setVehicles(assigned)
         setLocations(assigned)
-        setAlerts(alertData.data || [])
+        setAlerts([])
         return
       }
       const [vehicleData, routeData, assignmentData, summaryData, locationData, studentData] = await Promise.all([
@@ -113,10 +110,10 @@ export default function TransportManagement({ user }) {
     const timer = setInterval(async () => {
       try {
         if (isDriver) {
-          const [driverData, alertData] = await Promise.all([schoolApi.driverTransportStatus(), schoolApi.transportAlerts()])
+          const driverData = await schoolApi.driverTransportStatus()
           setVehicles(driverData.data || [])
           setLocations(driverData.data || [])
-          setAlerts(alertData.data || [])
+          setAlerts([])
           return
         }
         const [locationData, summaryData, alertData] = await Promise.all([schoolApi.transportLocations(), schoolApi.transportSummary(), schoolApi.transportAlerts()])
