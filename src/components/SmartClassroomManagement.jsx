@@ -1,6 +1,6 @@
 /* MediaRecorder timestamps are created in user-triggered callbacks. */
 /* eslint-disable react-hooks/purity, react-hooks/set-state-in-effect */
-import { MonitorUp, Play, RefreshCw, Square, Trash2, Upload, Video } from 'lucide-react'
+import { Clock3, MonitorUp, Play, RefreshCw, Square, Trash2, Upload, Video } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { blobApi, schoolApi } from '../lib/api'
 
@@ -27,7 +27,9 @@ export default function SmartClassroomManagement({ user }) {
   async function load() {
     setBusy(true); setError('')
     try {
-      const [optionResult, sessionResult, capabilityResult] = await Promise.all([schoolApi.smartClassroomOptions(), schoolApi.smartClassroomSessions(), schoolApi.smartClassroomCapabilities()])
+      const [optionResult, sessionResult, capabilityResult] = await Promise.all([
+        schoolApi.smartClassroomOptions(), schoolApi.smartClassroomSessions(), schoolApi.smartClassroomCapabilities(),
+      ])
       setOptions(optionResult.data || { classes: [], subjects: [], teachers: [] })
       setSessions(sessionResult.data || [])
       setCapabilities(capabilityResult.data || {})
@@ -35,15 +37,25 @@ export default function SmartClassroomManagement({ user }) {
   }
 
   useEffect(() => { load() }, [])
-  useEffect(() => () => { streamRef.current?.getTracks().forEach(track => track.stop()); if (previewUrl) URL.revokeObjectURL(previewUrl) }, [previewUrl])
+  useEffect(() => () => {
+    streamRef.current?.getTracks().forEach(track => track.stop())
+    if (previewUrl) URL.revokeObjectURL(previewUrl)
+  }, [previewUrl])
 
   const field = (name, value) => setForm(current => ({ ...current, [name]: value }))
   const classLabel = item => `${item.class_name}${item.section ? ` · ${item.section}` : ''}`
+  const recordingStatus = session => session.recording_status || (session.recording_id ? 'ready' : 'none')
+  const recordingReady = session => Boolean(session.recording_id) && recordingStatus(session) === 'ready'
+  const recordingStatusLabel = status => ({
+    queued: 'Queued for processing', processing: 'Processing video', ready: 'Ready for playback', failed: 'Processing failed',
+  }[status] || 'No recording yet')
 
   async function createSession(event) {
     event.preventDefault(); setSaving(true); setError(''); setNotice('')
-    try { const result = await schoolApi.createSmartClassroomSession({ ...form, class_id: Number(form.class_id), subject_id: form.subject_id ? Number(form.subject_id) : null, teacher_id: form.teacher_id ? Number(form.teacher_id) : null }); setNotice(result.message); setForm(emptySession); await load() }
-    catch (err) { setError(err.message) } finally { setSaving(false) }
+    try {
+      const result = await schoolApi.createSmartClassroomSession({ ...form, class_id: Number(form.class_id), subject_id: form.subject_id ? Number(form.subject_id) : null, teacher_id: form.teacher_id ? Number(form.teacher_id) : null })
+      setNotice(result.message); setForm(emptySession); await load()
+    } catch (err) { setError(err.message) } finally { setSaving(false) }
   }
 
   async function startRecording(session) {
@@ -67,49 +79,34 @@ export default function SmartClassroomManagement({ user }) {
     if (!recordingBlob) return
     setSaving(true); setError(''); setNotice('')
     try {
-      const fileName = `smart-class-${recordingBlob.sessionId}.webm`
-      const mimeType = recordingBlob.blob.type || 'video/webm'
-      const chunkSize = 7 * 1024 * 1024
-      const totalChunks = Math.max(1, Math.ceil(recordingBlob.blob.size / chunkSize))
-      const uploadId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`
+      const fileName = `smart-class-${recordingBlob.sessionId}.webm`; const mimeType = recordingBlob.blob.type || 'video/webm'; const chunkSize = 7 * 1024 * 1024
+      const totalChunks = Math.max(1, Math.ceil(recordingBlob.blob.size / chunkSize)); const uploadId = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`
       let result
       for (let index = 0; index < totalChunks; index += 1) {
-        const body = new FormData()
-        body.append('chunk', recordingBlob.blob.slice(index * chunkSize, Math.min(recordingBlob.blob.size, (index + 1) * chunkSize), mimeType), fileName)
-        body.append('upload_id', uploadId)
-        body.append('chunk_index', String(index))
-        body.append('total_chunks', String(totalChunks))
-        body.append('file_name', fileName)
-        body.append('mime_type', mimeType)
-        body.append('duration_seconds', String(recordingBlob.duration))
-        result = await schoolApi.uploadSmartClassroomChunk(recordingBlob.sessionId, body)
-        setNotice(`Uploading classroom recording: ${index + 1}/${totalChunks}`)
+        const body = new FormData(); body.append('chunk', recordingBlob.blob.slice(index * chunkSize, Math.min(recordingBlob.blob.size, (index + 1) * chunkSize), mimeType), fileName); body.append('upload_id', uploadId); body.append('chunk_index', String(index)); body.append('total_chunks', String(totalChunks)); body.append('file_name', fileName); body.append('mime_type', mimeType); body.append('duration_seconds', String(recordingBlob.duration))
+        result = await schoolApi.uploadSmartClassroomChunk(recordingBlob.sessionId, body); setNotice(`Uploading classroom recording: ${index + 1}/${totalChunks}`)
       }
-      setNotice(result?.message || 'Classroom recording uploaded securely.')
-      setRecordingBlob(null); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); await load()
-    }
-    catch (err) { setError(err.message) } finally { setSaving(false) }
+      setNotice(result?.message || 'Classroom recording uploaded securely.'); setRecordingBlob(null); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(''); await load()
+    } catch (err) { setError(err.message) } finally { setSaving(false) }
   }
 
   async function previewRecording(id) {
     setError('')
-    try { const blob = await blobApi(`/smart-classroom/recordings/${id}/stream`); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(URL.createObjectURL(blob)); setRecordingBlob(null) }
-    catch (err) { setError(err.message) }
+    try { const blob = await blobApi(`/smart-classroom/recordings/${id}/stream`); if (previewUrl) URL.revokeObjectURL(previewUrl); setPreviewUrl(URL.createObjectURL(blob)); setRecordingBlob(null) } catch (err) { setError(err.message) }
   }
 
   async function deleteRecording(id) {
     setSaving(true); setError(''); setNotice('')
-    try { const result = await schoolApi.deleteSmartClassroomRecording(id); setNotice(result.message); await load() }
-    catch (err) { setError(err.message) } finally { setSaving(false) }
+    try { const result = await schoolApi.deleteSmartClassroomRecording(id); setNotice(result.message); await load() } catch (err) { setError(err.message) } finally { setSaving(false) }
   }
 
   return <div className="smart-classroom-management">
     <section className="people-hero smart-classroom-hero"><div><span>Enterprise classroom innovation</span><h2>Smart classroom recording</h2><p>Create a class session, record a lesson or screen demonstration, and keep the private recording in your school workspace.</p></div><Video /></section>
     {error && <div className="form-error" role="alert">{error}</div>}{notice && <div className="success-notice" role="status">{notice}</div>}
-    {capabilities && <div className={capabilities.production_ready ? 'success-notice smart-capability-strip' : 'maintenance-warning smart-capability-strip'} role="status"><b>Production readiness: </b>{capabilities.production_ready ? 'media services are configured.' : 'private chunked upload and playback are available, but live media infrastructure is still pending.'} <span>FFmpeg/HLS: {capabilities.transcoding_configured && capabilities.hls_enabled ? 'ready' : 'pending'} · WebRTC/TURN: {capabilities.webrtc_configured ? 'ready' : 'pending'} · Retention: {capabilities.retention_days || 365} days</span></div>}
+    {capabilities && <div className={capabilities.production_ready ? 'success-notice smart-capability-strip' : 'maintenance-warning smart-capability-strip'} role="status"><b>Production readiness: </b>{capabilities.production_ready ? 'media services are configured.' : 'private chunked upload and playback are available, but live media infrastructure is still pending.'} <span>FFmpeg/HLS: {capabilities.transcoding_configured && capabilities.hls_enabled ? 'ready' : 'pending'} · WebRTC/TURN: {capabilities.webrtc_configured ? 'ready' : 'pending'} · Storage: {capabilities.object_storage_configured ? capabilities.storage_backend : 'pending'} · Retention: {capabilities.retention_days || 365} days</span></div>}
     {recordingSession && <div className="recording-status"><span className="recording-dot" />Recording in progress. Share your screen or class, then stop when the lesson is complete.<button className="button button-small" onClick={stopRecording}><Square size={14} />Stop recording</button></div>}
     {recordingBlob && <section className="data-panel recording-preview"><div className="panel-title"><div><span>Ready to save</span><h2>Review your classroom recording</h2></div><button className="button button-small" disabled={saving} onClick={uploadRecording}><Upload size={14} />Upload recording</button></div>{previewUrl && <video controls src={previewUrl} />}</section>}
     <form className="editor-card smart-classroom-form" onSubmit={createSession}><div className="editor-heading"><MonitorUp /><div><h3>Create a smart class session</h3><p>Recordings are private to Enterprise staff accounts and are stored outside the public uploads route.</p></div></div><div className="field-grid"><label>Class<select required value={form.class_id} onChange={event => field('class_id', event.target.value)}><option value="">Select class</option>{options.classes.map(item => <option key={item.id} value={item.id}>{classLabel(item)}</option>)}</select></label><label>Subject<select value={form.subject_id} onChange={event => field('subject_id', event.target.value)}><option value="">No subject selected</option>{options.subjects.map(item => <option key={item.id} value={item.id}>{item.name}{item.code ? ` · ${item.code}` : ''}</option>)}</select></label>{admin && <label>Teacher<select required value={form.teacher_id} onChange={event => field('teacher_id', event.target.value)}><option value="">Select teacher</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.full_name}{item.department ? ` · ${item.department}` : ''}</option>)}</select></label>}<label>Session title<input required maxLength="180" value={form.title} onChange={event => field('title', event.target.value)} placeholder="e.g. Fractions with visual examples" /></label><label>Start<input type="datetime-local" value={form.scheduled_start} onChange={event => field('scheduled_start', event.target.value)} /></label><label>End<input type="datetime-local" value={form.scheduled_end} onChange={event => field('scheduled_end', event.target.value)} /></label><label className="wide">Description<textarea maxLength="2000" value={form.description} onChange={event => field('description', event.target.value)} placeholder="Add a short lesson note for staff." /></label></div><button className="button button-small" disabled={saving || busy}><Video size={15} />Create session</button></form>
-    <section className="data-panel recording-list"><div className="panel-title"><div><span>Private lesson library</span><h2>Class sessions and recordings</h2></div><div className="panel-title-actions"><b>{sessions.length} sessions</b><button className="button button-small button-ghost" onClick={load} disabled={busy}><RefreshCw size={14} />Refresh</button></div></div>{busy ? <p>Loading classroom sessions…</p> : !sessions.length ? <div className="empty-state"><Video /><h3>No smart class sessions yet</h3><p>Create a session above to start your first Enterprise recording.</p></div> : <div className="recording-card-grid">{sessions.map(session => <article className="recording-card" key={session.id}><div className="recording-card-icon"><Video /></div><div className="recording-card-copy"><span>{classLabel(session)}{session.subject_name ? ` · ${session.subject_name}` : ''}</span><h3>{session.title}</h3><p>{session.description || 'No session description.'}</p><small>{session.teacher_name} · {session.scheduled_start ? new Date(session.scheduled_start).toLocaleString() : 'Unscheduled'}</small></div><span className={`recording-pill ${session.status}`}>{session.status}</span><div className="recording-controls">{session.recording_id ? <><button className="button button-small button-ghost" disabled={saving} onClick={() => previewRecording(session.recording_id)}><Play size={14} />Preview</button><button className="button button-small button-ghost" disabled={saving} onClick={() => deleteRecording(session.recording_id)}><Trash2 size={14} />Delete</button></> : <button className="button button-small" disabled={Boolean(recordingSession) || saving} onClick={() => startRecording(session)}><MonitorUp size={14} />Record lesson</button>}</div></article>)}</div>}</section>
+    <section className="data-panel recording-list"><div className="panel-title"><div><span>Private lesson library</span><h2>Class sessions and recordings</h2></div><div className="panel-title-actions"><b>{sessions.length} sessions</b><button className="button button-small button-ghost" onClick={load} disabled={busy}><RefreshCw size={14} />Refresh</button></div></div>{busy ? <p>Loading classroom sessions...</p> : !sessions.length ? <div className="empty-state"><Video /><h3>No smart class sessions yet</h3><p>Create a session above to start your first Enterprise recording.</p></div> : <div className="recording-card-grid">{sessions.map(session => { const status = recordingStatus(session); const ready = recordingReady(session); return <article className="recording-card" key={session.id}><div className="recording-card-icon"><Video /></div><div className="recording-card-copy"><span>{classLabel(session)}{session.subject_name ? ` · ${session.subject_name}` : ''}</span><h3>{session.title}</h3><p>{session.description || 'No session description.'}</p><small>{session.teacher_name} · {session.scheduled_start ? new Date(session.scheduled_start).toLocaleString() : 'Unscheduled'}</small>{session.recording_id && <small className="recording-status-note"><Clock3 size={13} /> {recordingStatusLabel(status)}{session.processing_error ? `: ${session.processing_error}` : ''}</small>}</div><span className={`recording-pill ${session.status}`}>{session.status}</span><div className="recording-controls">{session.recording_id ? <><button className="button button-small button-ghost" disabled={!ready || saving} onClick={() => previewRecording(session.recording_id)}><Play size={14} />{ready ? 'Preview' : 'Not ready'}</button><button className="button button-small button-ghost" disabled={saving} onClick={() => deleteRecording(session.recording_id)}><Trash2 size={14} />Delete</button></> : <button className="button button-small" disabled={Boolean(recordingSession) || saving} onClick={() => startRecording(session)}><MonitorUp size={14} />Record lesson</button>}</div></article> })}</div>}</section>
   </div>
 }
