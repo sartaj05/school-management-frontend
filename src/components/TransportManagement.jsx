@@ -1,4 +1,4 @@
-import { Bus, MapPin, Navigation, Plus, RefreshCw, Route, Save, Trash2, UsersRound } from 'lucide-react'
+import { AlertTriangle, Bus, CheckCircle2, MapPin, Navigation, Plus, RefreshCw, Route, Save, Trash2, UsersRound } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
@@ -10,7 +10,7 @@ const phoneValue = value => {
   return normalized.length <= 2 ? '+91' : `+${normalized}`
 }
 const phoneOk = value => /^\+91[6-9]\d{9}$/.test(value || '')
-const emptyVehicle = { vehicle_no: '', registration_no: '', vehicle_type: 'bus', capacity: 40, driver_name: '', driver_mobile: '+91', driver_license: '', helper_name: '', helper_mobile: '+91', status: 'active' }
+const emptyVehicle = { vehicle_no: '', registration_no: '', vehicle_type: 'bus', capacity: 40, driver_name: '', driver_user_id: '', driver_mobile: '+91', driver_license: '', helper_name: '', helper_mobile: '+91', status: 'active' }
 const emptyRoute = { name: '', route_code: '', vehicle_id: '', direction: 'both', start_time: '', end_time: '', status: 'active' }
 const emptyStop = { route_id: '', stop_name: '', stop_order: 1, pickup_time: '', drop_time: '', latitude: '', longitude: '' }
 const emptyAssignment = { student_id: '', route_id: '', stop_id: '', pickup_required: true, drop_required: true, start_date: today, end_date: '', notes: '' }
@@ -42,11 +42,15 @@ const mapLink = location => location.latitude !== null && location.latitude !== 
 
 export default function TransportManagement({ user }) {
   const canManage = user?.role === 'School Admin'
+  const isDriver = user?.role === 'Driver'
   const [vehicles, setVehicles] = useState([])
   const [routes, setRoutes] = useState([])
   const [assignments, setAssignments] = useState([])
   const [students, setStudents] = useState([])
+  const [drivers, setDrivers] = useState([])
   const [locations, setLocations] = useState([])
+  const [alerts, setAlerts] = useState([])
+  const [selectedMapLocation, setSelectedMapLocation] = useState(null)
   const [summary, setSummary] = useState({})
   const [vehicleForm, setVehicleForm] = useState(emptyVehicle)
   const [routeForm, setRouteForm] = useState(emptyRoute)
@@ -66,6 +70,17 @@ export default function TransportManagement({ user }) {
     setBusy(true)
     setError('')
     try {
+      if (isDriver) {
+        const [driverData, alertData] = await Promise.all([
+          schoolApi.driverTransportStatus(),
+          schoolApi.transportAlerts(),
+        ])
+        const assigned = driverData.data || []
+        setVehicles(assigned)
+        setLocations(assigned)
+        setAlerts(alertData.data || [])
+        return
+      }
       const [vehicleData, routeData, assignmentData, summaryData, locationData, studentData] = await Promise.all([
         schoolApi.transportVehicles(),
         schoolApi.transportRoutes(),
@@ -74,11 +89,17 @@ export default function TransportManagement({ user }) {
         schoolApi.transportLocations(),
         schoolApi.students(),
       ])
+      const [userData, alertData] = await Promise.all([
+        canManage ? schoolApi.users(false) : Promise.resolve({ users: [] }),
+        schoolApi.transportAlerts(),
+      ])
       setVehicles(vehicleData.data || [])
       setRoutes(routeData.data || [])
       setAssignments(assignmentData.data || [])
       setSummary(summaryData.summary || {})
       setLocations(locationData.data || [])
+      setDrivers((userData.users || []).filter(item => item.role === 'Driver' && item.status === 'active'))
+      setAlerts(alertData.data || [])
       setStudents((studentData.students || studentData.data || []).filter(item => item.status === 'active'))
     } catch (err) {
       setError(err.message)
@@ -87,19 +108,27 @@ export default function TransportManagement({ user }) {
     }
   }
 
-  useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [])
+  useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [isDriver])
   useEffect(() => {
     const timer = setInterval(async () => {
       try {
-        const [locationData, summaryData] = await Promise.all([schoolApi.transportLocations(), schoolApi.transportSummary()])
+        if (isDriver) {
+          const [driverData, alertData] = await Promise.all([schoolApi.driverTransportStatus(), schoolApi.transportAlerts()])
+          setVehicles(driverData.data || [])
+          setLocations(driverData.data || [])
+          setAlerts(alertData.data || [])
+          return
+        }
+        const [locationData, summaryData, alertData] = await Promise.all([schoolApi.transportLocations(), schoolApi.transportSummary(), schoolApi.transportAlerts()])
         setLocations(locationData.data || [])
         setSummary(summaryData.summary || {})
+        setAlerts(alertData.data || [])
       } catch (err) {
         setError(err.message)
       }
     }, 15000)
     return () => clearInterval(timer)
-  }, [])
+  }, [isDriver])
 
   const changeVehicle = (name, value) => setVehicleForm(current => ({ ...current, [name]: value }))
   const changeRoute = (name, value) => setRouteForm(current => ({ ...current, [name]: value }))
@@ -123,7 +152,7 @@ export default function TransportManagement({ user }) {
     setError('')
     setMessage('')
     try {
-      const payload = { ...vehicleForm, capacity: Number(vehicleForm.capacity) }
+      const payload = { ...vehicleForm, capacity: Number(vehicleForm.capacity), driver_user_id: vehicleForm.driver_user_id ? Number(vehicleForm.driver_user_id) : null }
       const result = editingVehicle ? await schoolApi.updateTransportVehicle(editingVehicle, payload) : await schoolApi.createTransportVehicle(payload)
       setMessage(result.message)
       setVehicleForm(emptyVehicle)
@@ -241,6 +270,32 @@ export default function TransportManagement({ user }) {
     }
   }
 
+  async function shareDriverLocation() {
+    const vehicle = vehicles[0]
+    if (!vehicle) {
+      setError('No vehicle is assigned to this Driver account.')
+      return
+    }
+    if (!navigator.geolocation) {
+      setError('This browser does not provide location access.')
+      return
+    }
+    setBusy(true)
+    setError('')
+    try {
+      const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }))
+      await schoolApi.driverTransportLocationsBatch({ locations: [{ vehicle_id: vehicle.vehicle_id || vehicle.id, latitude: position.coords.latitude, longitude: position.coords.longitude, speed_kmph: position.coords.speed ? position.coords.speed * 3.6 : null, heading: position.coords.heading, device_id: 'react-driver-browser', reported_at: new Date(position.timestamp).toISOString() }] })
+      setMessage('Driver location shared securely.')
+      await load()
+    } catch (err) {
+      setError(err.message || 'Location sharing failed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (isDriver) return <DriverTransportPanel vehicles={vehicles} alerts={alerts} busy={busy} error={error} message={message} onRefresh={load} onShare={shareDriverLocation}/>
+
   return <div className="transport-management">
     <div className="stat-grid compact">{[
       ['Vehicles', summary.active_vehicles || 0],
@@ -261,6 +316,7 @@ export default function TransportManagement({ user }) {
           <label>Capacity *<input required type="number" min="1" value={vehicleForm.capacity} onChange={e => changeVehicle('capacity', e.target.value)}/></label>
           <label>Vehicle type<select value={vehicleForm.vehicle_type} onChange={e => changeVehicle('vehicle_type', e.target.value)}><option value="bus">Bus</option><option value="van">Van</option><option value="auto">Auto</option></select></label>
           <label>Driver name *<input required value={vehicleForm.driver_name} onChange={e => changeVehicle('driver_name', e.target.value)}/></label>
+          <label>Driver login<select value={vehicleForm.driver_user_id || ''} onChange={e => changeVehicle('driver_user_id', e.target.value)}><option value="">No Driver login</option>{drivers.map(item => <option key={item.id} value={item.id}>{item.name} / {item.email}</option>)}</select></label>
           <label>Driver mobile *<input required value={vehicleForm.driver_mobile} onChange={e => changeVehicle('driver_mobile', phoneValue(e.target.value))}/></label>
           <label>Driver license<input value={vehicleForm.driver_license || ''} onChange={e => changeVehicle('driver_license', e.target.value)}/></label>
           <label>Helper name<input value={vehicleForm.helper_name || ''} onChange={e => changeVehicle('helper_name', e.target.value)}/></label>
@@ -342,6 +398,11 @@ export default function TransportManagement({ user }) {
     </section>
 
     <section className="data-panel">
+      <div className="panel-title"><div><span>Safety notifications</span><h2>Recent geofence alerts</h2></div><b>{alerts.length} alerts</b></div>
+      {alerts.length === 0 ? <div className="empty-state"><CheckCircle2/><h3>No geofence transitions</h3><p>Parents will receive an alert when an assigned vehicle enters or leaves a configured stop radius.</p></div> : <div className="transport-alert-list">{alerts.map(alert => <article key={alert.id}><AlertTriangle/><div><b>{alert.title}</b><p>{alert.message}</p><small>{alert.created_at ? new Date(alert.created_at).toLocaleString() : 'Recent'}</small></div><span className={`delivery-status ${alert.status}`}>{alert.status}</span></article>)}</div>}
+    </section>
+
+    <section className="data-panel">
       <div className="panel-title"><div><span>Live tracking</span><h2>Latest vehicle locations</h2></div><b>{locations.length} vehicles</b></div>
       <div className="transport-readiness-note">Road ETA uses a configured routing provider when available. Until then, the API labels the result as a local straight-line estimate.</div>
       {canManage && <form className="transport-location-form" onSubmit={saveLocation}>
@@ -352,7 +413,26 @@ export default function TransportManagement({ user }) {
         <label>Heading<input value={locationForm.heading} onChange={e => changeLocation('heading', e.target.value)} placeholder="North"/></label>
         <button className="button button-small" disabled={busy}><Navigation size={16}/>Update location</button>
       </form>}
-      <div className="table-wrap transport-table"><table><thead><tr><th>Vehicle</th><th>Route</th><th>Driver</th><th>Coordinates</th><th>Speed</th><th>Next stop / ETA</th><th>Geofence</th><th>Reported</th></tr></thead><tbody>{locations.map(item => <tr key={`${item.vehicle_id}-${item.route_name || 'route'}`}><td><b>{item.vehicle_no}</b></td><td>{item.route_name || '-'}</td><td>{item.driver_name}<small>{item.driver_mobile}</small></td><td>{item.latitude !== null && item.latitude !== undefined && item.longitude !== null && item.longitude !== undefined ? <><span>{item.latitude}, {item.longitude}</span>{mapLink(item) && <a className="transport-map-link" href={mapLink(item)} target="_blank" rel="noreferrer">Open map</a>}</> : 'No ping yet'}</td><td>{item.speed_kmph ? `${item.speed_kmph} km/h` : '-'}</td><td><b>{item.next_stop || '-'}</b><small>{etaLabel(item)}</small></td><td><span className={`delivery-status ${item.geofence_status || ''}`}>{geofenceLabel(item)}</span></td><td>{item.reported_at ? new Date(item.reported_at).toLocaleString() : '-'}</td></tr>)}</tbody></table></div>
+      <div className="table-wrap transport-table"><table><thead><tr><th>Vehicle</th><th>Route</th><th>Driver</th><th>Coordinates</th><th>Speed</th><th>Next stop / ETA</th><th>Geofence</th><th>Reported</th></tr></thead><tbody>{locations.map(item => <tr key={`${item.vehicle_id}-${item.route_name || 'route'}`}><td><b>{item.vehicle_no}</b></td><td>{item.route_name || '-'}</td><td>{item.driver_name}<small>{item.driver_mobile}</small></td><td>{item.latitude !== null && item.latitude !== undefined && item.longitude !== null && item.longitude !== undefined ? <><span>{item.latitude}, {item.longitude}</span><div className="transport-inline-actions">{mapLink(item) && <a className="transport-map-link" href={mapLink(item)} target="_blank" rel="noreferrer">Open map</a>}<button className="text-action" onClick={() => setSelectedMapLocation(item)}>Show live map</button></div></> : 'No ping yet'}</td><td>{item.speed_kmph ? `${item.speed_kmph} km/h` : '-'}</td><td><b>{item.next_stop || '-'}</b><small>{etaLabel(item)}</small></td><td><span className={`delivery-status ${item.geofence_status || ''}`}>{geofenceLabel(item)}</span></td><td>{item.reported_at ? new Date(item.reported_at).toLocaleString() : '-'}</td></tr>)}</tbody></table></div>
+      {selectedMapLocation && <section className="transport-map-preview"><div className="panel-title"><div><span>Live map</span><h3>{selectedMapLocation.vehicle_no} · {selectedMapLocation.route_name || 'Vehicle location'}</h3></div><button className="refresh-button" onClick={() => setSelectedMapLocation(null)}>Close</button></div><iframe title="Live transport vehicle map" src={mapEmbed(selectedMapLocation)} loading="lazy"/></section>}
     </section>
+  </div>
+}
+
+function mapEmbed(location) {
+  const latitude = Number(location.latitude)
+  const longitude = Number(location.longitude)
+  const delta = 0.015
+  const bbox = `${longitude - delta},${latitude - delta},${longitude + delta},${latitude + delta}`
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${encodeURIComponent(bbox)}&layer=mapnik&marker=${encodeURIComponent(`${latitude},${longitude}`)}`
+}
+
+function DriverTransportPanel({ vehicles, alerts, busy, error, message, onRefresh, onShare }) {
+  return <div className="transport-management driver-transport-panel">
+    <div className="transport-driver-hero"><Navigation/><div><span>Driver mode</span><h2>Share your route location safely</h2><p>Only the vehicle assigned to your login can publish GPS points.</p></div><button className="button button-small" onClick={onShare} disabled={busy}><Navigation size={16}/>{busy ? 'Sharing...' : 'Share current location'}</button></div>
+    {error && <div className="form-error">{error}</div>}
+    {message && <div className="success-notice">{message}</div>}
+    <section className="data-panel"><div className="panel-title"><div><span>Assigned vehicle</span><h2>Live route status</h2></div><button className="refresh-button" onClick={onRefresh} disabled={busy}><RefreshCw/>Refresh</button></div>{vehicles.length === 0 ? <div className="empty-state"><Bus/><h3>No assigned vehicle</h3><p>Ask the School Admin to assign a vehicle to this Driver account.</p></div> : <div className="transport-card-grid">{vehicles.map(item => <article key={`${item.vehicle_id}-${item.route_id || 'route'}`}><Bus/><div><b>{item.vehicle_no}</b><small>{item.route_name || 'No active route'}</small><p>{item.latitude && item.longitude ? `${item.latitude}, ${item.longitude}` : 'No location shared yet'}</p><p>{item.reported_at ? `Last update ${new Date(item.reported_at).toLocaleString()}` : 'Awaiting first GPS update'}</p></div><span className="delivery-status active">Assigned</span></article>)}</div>}</section>
+    <section className="data-panel"><div className="panel-title"><div><span>Safety events</span><h2>Recent geofence alerts</h2></div><b>{alerts.length}</b></div>{alerts.length === 0 ? <div className="empty-state"><CheckCircle2/><h3>No recent alerts</h3></div> : <div className="transport-alert-list">{alerts.map(alert => <article key={alert.id}><AlertTriangle/><div><b>{alert.title}</b><p>{alert.message}</p><small>{alert.created_at ? new Date(alert.created_at).toLocaleString() : 'Recent'}</small></div></article>)}</div>}</section>
   </div>
 }

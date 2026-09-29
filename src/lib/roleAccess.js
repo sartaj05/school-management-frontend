@@ -8,6 +8,7 @@ export const ROLE_PAGE_ACCESS = {
   Student: ['overview', 'portal', 'calendar', 'messages', 'documents', 'notifications', 'leave', 'settings'],
   'Accounts Staff': ['overview', 'reports', 'scheduledReports', 'fees', 'finance', 'scholarships', 'expenses', 'settings'],
   'Hostel Staff': ['overview', 'hostel', 'settings'],
+  Driver: ['overview', 'transport', 'settings'],
 }
 
 export function localRolePages(role) {
