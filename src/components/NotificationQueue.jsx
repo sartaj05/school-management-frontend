@@ -1,4 +1,4 @@
-import { BarChart3, BellRing, Clock3, Play, RefreshCw, RotateCcw, Send, XCircle } from 'lucide-react'
+import { BarChart3, BellRing, Clock3, Download, FileText, Play, RefreshCw, RotateCcw, Search, Send, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
@@ -17,15 +17,19 @@ export default function NotificationQueue({ user }) {
   const [analytics, setAnalytics] = useState(null)
   const [runs, setRuns] = useState([])
   const [status, setStatus] = useState('all')
+  const [channel, setChannel] = useState('all')
+  const [search, setSearch] = useState('')
+  const [deliveryAudit, setDeliveryAudit] = useState(null)
+  const [auditTargetId, setAuditTargetId] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const isAdmin = user.role === 'School Admin'
 
-  async function load(page = 1, selectedStatus = status) {
+  async function load(page = 1, selectedStatus = status, selectedChannel = channel, selectedSearch = search) {
     setBusy(true); setError('')
     try {
-      const requests = [schoolApi.notificationQueue(selectedStatus, page), schoolApi.notificationTemplates(), schoolApi.notificationRecipients()]
+      const requests = [schoolApi.notificationQueue(selectedStatus, page, 25, selectedChannel, selectedSearch), schoolApi.notificationTemplates(), schoolApi.notificationRecipients()]
       if (isAdmin) requests.push(schoolApi.notificationAnalytics(30))
       if (isAdmin) requests.push(schoolApi.notificationRunHistory())
       if (isAdmin) requests.push(schoolApi.notificationProviderHealth())
@@ -41,7 +45,7 @@ export default function NotificationQueue({ user }) {
     finally { setBusy(false) }
   }
 
-  useEffect(() => { const timer = setTimeout(() => load(1, 'all'), 0); return () => clearTimeout(timer) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const timer = setTimeout(() => load(1, 'all', 'all', ''), 0); return () => clearTimeout(timer) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const field = (name, value) => setForm(current => ({ ...current, [name]: value }))
   const matchingRecipients = recipients.filter(item => !form.target_role || `${item.role || ''}`.toLowerCase() === form.target_role.toLowerCase())
   function selectRecipient(value) {
@@ -88,7 +92,28 @@ export default function NotificationQueue({ user }) {
     setBusy(true); setError(''); try { const result = await schoolApi.cancelNotification(row.id); setMessage(result.message); await load() } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
 
-  function changeStatus(value) { setStatus(value); load(1, value) }
+  function changeStatus(value) { setStatus(value); load(1, value, channel, search) }
+  function changeChannel(value) { setChannel(value); load(1, status, value, search) }
+  function submitSearch(event) { event.preventDefault(); load(1, status, channel, search) }
+  async function showDeliveryAudit(row) {
+    if (deliveryAudit?.notificationId === row.id) { setDeliveryAudit(null); return }
+    setBusy(true); setError('')
+    try {
+      const result = await schoolApi.notificationDeliveryAttempts(row.id)
+      setDeliveryAudit({ notificationId: row.id, title: row.title, rows: result.data || [] })
+    } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
+  }
+  function openSelectedAudit() {
+    const row = queue.data.find(item => `${item.id}` === auditTargetId)
+    if (row) showDeliveryAudit(row)
+  }
+  function exportQueue() {
+    const header = ['id', 'title', 'channel', 'status', 'attempt_count', 'max_attempts', 'scheduled_for', 'last_error']
+    const csv = [header, ...queue.data.map(row => header.map(key => `${row[key] ?? ''}`.replaceAll('"', '""')))]
+      .map(row => row.map(value => `"${value}"`).join(',')).join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }))
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'notification-delivery-audit.csv'; anchor.click(); URL.revokeObjectURL(url)
+  }
   const testRecipients = recipients.filter(item => ['parent', 'student', 'teacher'].includes(`${item.role || ''}`.toLowerCase()))
   const testField = (name, value) => setProviderTest(current => ({ ...current, [name]: value }))
   async function testProvider(event) {
@@ -122,6 +147,9 @@ export default function NotificationQueue({ user }) {
     </section>}
     {isAdmin && <section className="data-panel notification-run-history"><div className="panel-title"><div><span>Worker operations</span><h3>Recent background runs</h3></div><b>{runs.length} runs</b></div><div className="table-wrap"><table><thead><tr><th>Started</th><th>Status</th><th>Selected</th><th>Sent</th><th>Retrying</th><th>Failed</th></tr></thead><tbody>{runs.slice(0, 5).map(run => <tr key={run.id}><td>{run.started_at ? new Date(run.started_at).toLocaleString() : '—'}</td><td><span className={`delivery-status ${run.status}`}>{run.status}</span></td><td>{run.selected || 0}</td><td>{run.sent || 0}</td><td>{run.retrying || 0}</td><td>{run.failed || 0}</td></tr>)}</tbody></table></div>{runs.length === 0 && <div className="empty-state"><Clock3 /><h3>No worker runs yet</h3><p>Use the protected cron endpoint or Process due now.</p></div>}</section>}
     <div className="queue-toolbar"><div>{['all','queued','retrying','sent','failed','cancelled'].map(value => <button key={value} className={status === value ? 'active' : ''} onClick={() => changeStatus(value)}>{value}<span>{value === 'all' ? Object.values(queue.counts || {}).reduce((sum, count) => sum + count, 0) : queue.counts?.[value] || 0}</span></button>)}</div><button className="refresh-button" onClick={() => load()} disabled={busy}><RefreshCw />Refresh</button></div>
+    <div className="queue-audit-filters"><form onSubmit={submitSearch}><Search size={16}/><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search title, message or failure reason"/><button className="button button-small" disabled={busy}>Search</button></form><label>Channel<select value={channel} onChange={event => changeChannel(event.target.value)}><option value="all">All channels</option><option value="portal">Portal</option><option value="push">Push</option><option value="email">Email</option><option value="whatsapp">WhatsApp</option></select></label>{isAdmin && <button className="button button-small button-ghost" onClick={exportQueue} disabled={busy || queue.data.length === 0}><Download size={15}/>Export current page</button>}</div>
+    {isAdmin && <div className="queue-audit-filters"><label>Inspect delivery attempts<select value={auditTargetId} onChange={event => setAuditTargetId(event.target.value)}><option value="">Choose a notification</option>{queue.data.map(row => <option key={row.id} value={row.id}>#{row.id} · {row.title}</option>)}</select></label><button className="button button-small" onClick={openSelectedAudit} disabled={busy || !auditTargetId}><FileText size={15}/>View audit</button></div>}
     <section className="data-panel queue-table"><div className="table-wrap"><table><thead><tr><th>Message</th><th>Recipient</th><th>Schedule</th><th>Attempts</th><th>Status</th>{isAdmin && <th>Actions</th>}</tr></thead><tbody>{queue.data.map(row => <tr key={row.id}><td><b>{row.title}</b><small>{row.message}</small>{row.last_error && <em>{row.last_error}</em>}</td><td>{row.phone_number}<small>{row.target_role || '—'} · {row.channel}</small>{row.target_user_id && <small>Inbox user #{row.target_user_id}</small>}</td><td>{row.scheduled_for ? new Date(row.scheduled_for).toLocaleString() : 'Now'}{row.next_attempt_at && <small>Next: {new Date(row.next_attempt_at).toLocaleString()}</small>}</td><td>{row.attempt_count}/{row.max_attempts}</td><td><span className={`delivery-status ${row.status}`}>{row.status}</span></td>{isAdmin && <td><div className="student-row-actions">{['failed','retrying'].includes(row.status) && <button onClick={() => retry(row)} disabled={busy}><RotateCcw />Retry</button>}{['queued','retrying'].includes(row.status) && <button className="danger" onClick={() => cancel(row)} disabled={busy}><XCircle />Cancel</button>}</div></td>}</tr>)}</tbody></table></div>{queue.data.length === 0 && <div className="empty-state"><Send /><h3>No queue records</h3><p>Schedule a message or change the status filter.</p></div>}{pages.pages > 1 && <div className="report-pagination"><button disabled={busy || pages.page <= 1} onClick={() => load(pages.page - 1)}>Previous</button><span>Page {pages.page} of {pages.pages}</span><button disabled={busy || pages.page >= pages.pages} onClick={() => load(pages.page + 1)}>Next</button></div>}</section>
+    {deliveryAudit && <section className="data-panel notification-delivery-audit"><div className="panel-title"><div><span>Delivery audit</span><h3>{deliveryAudit.title}</h3></div><button className="refresh-button" onClick={() => setDeliveryAudit(null)}>Close</button></div>{deliveryAudit.rows.length === 0 ? <div className="empty-state"><FileText/><p>No delivery attempts recorded yet.</p></div> : <div className="table-wrap"><table><thead><tr><th>Attempt</th><th>Channel</th><th>Status</th><th>Provider message</th><th>Failure reason</th><th>Started</th></tr></thead><tbody>{deliveryAudit.rows.map(attempt => <tr key={attempt.id}><td>{attempt.attempt_number}</td><td>{attempt.channel}</td><td><span className={`delivery-status ${attempt.status}`}>{attempt.status}</span></td><td>{attempt.provider_message_id || '—'}</td><td>{attempt.error || '—'}</td><td>{attempt.started_at ? new Date(attempt.started_at).toLocaleString() : '—'}</td></tr>)}</tbody></table></div>}</section>}
   </section>
 }
