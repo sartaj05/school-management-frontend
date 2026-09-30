@@ -260,6 +260,7 @@ export const schoolApi = {
   runPayroll: (values) => api('/payroll/runs', { method:'POST', body:JSON.stringify(values) }),
   payslips: (month) => api(`/payroll/payslips?payroll_month=${encodeURIComponent(month)}`),
   transportSummary: () => api('/transport/summary'),
+  transportReadiness: () => api('/transport/readiness'),
   transportVehicles: () => api('/transport/vehicles'),
   createTransportVehicle: (values) => api('/transport/vehicles', { method: 'POST', body: JSON.stringify(values) }),
   updateTransportVehicle: (vehicleId, values) => api(`/transport/vehicles/${vehicleId}`, { method: 'PUT', body: JSON.stringify(values) }),

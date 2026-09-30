@@ -52,6 +52,7 @@ export default function TransportManagement({ user }) {
   const [alerts, setAlerts] = useState([])
   const [selectedMapLocation, setSelectedMapLocation] = useState(null)
   const [summary, setSummary] = useState({})
+  const [readiness, setReadiness] = useState({})
   const [vehicleForm, setVehicleForm] = useState(emptyVehicle)
   const [routeForm, setRouteForm] = useState(emptyRoute)
   const [stopForm, setStopForm] = useState(emptyStop)
@@ -71,20 +72,22 @@ export default function TransportManagement({ user }) {
     setError('')
     try {
       if (isDriver) {
-        const driverData = await schoolApi.driverTransportStatus()
+        const [driverData, readinessData] = await Promise.all([schoolApi.driverTransportStatus(), schoolApi.transportReadiness()])
         const assigned = driverData.data || []
         setVehicles(assigned)
         setLocations(assigned)
+        setReadiness(readinessData.data || {})
         setAlerts([])
         return
       }
-      const [vehicleData, routeData, assignmentData, summaryData, locationData, studentData] = await Promise.all([
+      const [vehicleData, routeData, assignmentData, summaryData, locationData, studentData, readinessData] = await Promise.all([
         schoolApi.transportVehicles(),
         schoolApi.transportRoutes(),
         schoolApi.transportAssignments(),
         schoolApi.transportSummary(),
         schoolApi.transportLocations(),
         schoolApi.students(),
+        schoolApi.transportReadiness(),
       ])
       const [userData, alertData] = await Promise.all([
         canManage ? schoolApi.users(false) : Promise.resolve({ users: [] }),
@@ -94,6 +97,7 @@ export default function TransportManagement({ user }) {
       setRoutes(routeData.data || [])
       setAssignments(assignmentData.data || [])
       setSummary(summaryData.summary || {})
+      setReadiness(readinessData.data || {})
       setLocations(locationData.data || [])
       setDrivers((userData.users || []).filter(item => item.role === 'Driver' && item.status === 'active'))
       setAlerts(alertData.data || [])
@@ -401,7 +405,7 @@ export default function TransportManagement({ user }) {
 
     <section className="data-panel">
       <div className="panel-title"><div><span>Live tracking</span><h2>Latest vehicle locations</h2></div><b>{locations.length} vehicles</b></div>
-      <div className="transport-readiness-note">Road ETA uses a configured routing provider when available. Until then, the API labels the result as a local straight-line estimate.</div>
+      <div className="transport-readiness-note">{readiness.road_eta_configured ? `Road ETA is active through ${readiness.routing_provider}.` : 'Road ETA is not configured; locations use a clearly labeled straight-line fallback.'} Geofence radius: {readiness.geofence_radius_meters || 100} m. Background publishing requires mobile platform permission and driver authentication.</div>
       {canManage && <form className="transport-location-form" onSubmit={saveLocation}>
         <label>Vehicle *<select required value={locationForm.vehicle_id} onChange={e => changeLocation('vehicle_id', e.target.value)}><option value="">Select vehicle</option>{vehicles.map(item => <option key={item.id} value={item.id}>{item.vehicle_no}</option>)}</select></label>
         <label>Latitude *<input required type="number" step="0.0000001" value={locationForm.latitude} onChange={e => changeLocation('latitude', e.target.value)}/></label>

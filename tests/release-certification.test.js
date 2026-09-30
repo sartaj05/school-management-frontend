@@ -27,3 +27,11 @@ test('release certification includes tenant isolation and mobile handoff evidenc
   assert.match(guide, /tenant-isolation/)
   assert.match(guide, /Flutter widget and API contract tests/)
 })
+
+test('transport UI exposes provider readiness instead of hiding ETA fallback', () => {
+  const api = source('src/lib/api.js')
+  const transport = source('src/components/TransportManagement.jsx')
+  assert.match(api, /transportReadiness/)
+  assert.match(transport, /road_eta_configured/)
+  assert.match(transport, /straight-line fallback/)
+})
