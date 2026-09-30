@@ -1,10 +1,11 @@
-import { GraduationCap, History, Save } from 'lucide-react'
+import { Archive, GraduationCap, History, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 
 export default function AcademicYearPromotion() {
   const [years, setYears] = useState([])
   const [form, setForm] = useState({ from_year: '', to_year: '', promotions: [] })
+  const [newYear, setNewYear] = useState({ year_label: '', starts_on: '', ends_on: '' })
   const [historyStudentId, setHistoryStudentId] = useState('')
   const [historyRows, setHistoryRows] = useState([])
   const [busy, setBusy] = useState(false)
@@ -33,6 +34,28 @@ export default function AcademicYearPromotion() {
     finally { setBusy(false) }
   }
 
+  async function createYear(event) {
+    event.preventDefault(); setBusy(true); setError(''); setMessage('')
+    try {
+      const result = await schoolApi.createAcademicYear(newYear)
+      setMessage(`${result.academic_year?.year_label || newYear.year_label} created.`)
+      setNewYear({ year_label: '', starts_on: '', ends_on: '' })
+      await load()
+    } catch (requestError) { setError(requestError.message) }
+    finally { setBusy(false) }
+  }
+
+  async function archiveYear(year) {
+    if (!window.confirm(`Archive academic year ${year.year_label}? Its history will remain available.`)) return
+    setBusy(true); setError(''); setMessage('')
+    try {
+      await schoolApi.archiveAcademicYear(year.year_label)
+      setMessage(`${year.year_label} archived.`)
+      await load()
+    } catch (requestError) { setError(requestError.message) }
+    finally { setBusy(false) }
+  }
+
   async function loadHistory(event) {
     event.preventDefault(); setBusy(true); setError('')
     try {
@@ -44,7 +67,14 @@ export default function AcademicYearPromotion() {
 
   return <section className="data-panel academic-year-promotion">
     <div className="panel-title"><div><span>Academic year control</span><h2>Promote students</h2></div><GraduationCap /></div>
-    <p className="field-help">Promotion keeps the previous-year enrollment available for reports.</p>
+    <p className="field-help">Create academic years, promote students, and archive old years without deleting history.</p>
+    <form className="field-grid three academic-year-create" onSubmit={createYear}>
+      <label>New academic year *<input required value={newYear.year_label} onChange={event => setNewYear({ ...newYear, year_label: event.target.value })} placeholder="2026-2027" /></label>
+      <label>Starts on<input type="date" value={newYear.starts_on} onChange={event => setNewYear({ ...newYear, starts_on: event.target.value })} /></label>
+      <label>Ends on<input type="date" value={newYear.ends_on} onChange={event => setNewYear({ ...newYear, ends_on: event.target.value })} /></label>
+      <button className="button button-small" disabled={busy}><Save size={16} />Create year</button>
+    </form>
+    {years.length > 0 && <div className="table-wrap academic-year-table"><table><thead><tr><th>Academic year</th><th>Dates</th><th>Status</th><th>Action</th></tr></thead><tbody>{years.map(year => <tr key={year.id}><td><b>{year.year_label}</b></td><td>{year.starts_on || '-'} to {year.ends_on || '-'}</td><td>{year.status}</td><td>{year.status === 'active' && <button className="button button-small secondary" disabled={busy} onClick={() => archiveYear(year)}><Archive size={14} />Archive</button>}</td></tr>)}</tbody></table></div>}
     <form className="field-grid" onSubmit={submit}>
       <label>From academic year *<input required value={form.from_year} onChange={event => setForm({ ...form, from_year: event.target.value })} placeholder="2025-2026" /></label>
       <label>To academic year *<input required value={form.to_year} onChange={event => setForm({ ...form, to_year: event.target.value })} placeholder="2026-2027" /></label>

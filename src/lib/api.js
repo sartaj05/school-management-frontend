@@ -91,6 +91,7 @@ export const schoolApi = {
   syncCheckpoint: () => api('/sync/checkpoint'),
   academicYears: () => api('/academic-years'),
   createAcademicYear: (values) => api('/academic-years', { method: 'POST', body: JSON.stringify(values) }),
+  archiveAcademicYear: (year) => api(`/academic-years/${encodeURIComponent(year)}/archive`, { method: 'PATCH' }),
   promoteStudents: (values) => api('/academic-years/promote', { method: 'POST', body: JSON.stringify(values) }),
   academicEnrollments: (year) => api(`/academic-years/${encodeURIComponent(year)}/enrollments`),
   people: () => api('/master/people'),
