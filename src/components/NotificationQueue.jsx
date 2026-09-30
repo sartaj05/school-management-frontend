@@ -144,6 +144,12 @@ export default function NotificationQueue({ user }) {
         <article><small>Fees</small><b>{analytics.data.fee_alerts || 0}</b><span>due and overdue</span></article>
         <article><small>Failed</small><b>{analytics.data.failed || 0}</b><span>available for retry</span></article>
       </div>
+      {(analytics.by_channel || []).length > 0 && <div className="notification-channel-breakdown">
+        <h4>Delivery by channel</h4>
+        <div className="table-wrap"><table><thead><tr><th>Channel</th><th>Total</th><th>Sent</th><th>Pending</th><th>Failed</th></tr></thead><tbody>
+          {analytics.by_channel.map(row => <tr key={row.channel}><td>{row.channel}</td><td>{row.total || 0}</td><td>{row.sent || 0}</td><td>{row.pending || 0}</td><td>{row.failed || 0}</td></tr>)}
+        </tbody></table></div>
+      </div>}
     </section>}
     {isAdmin && <section className="data-panel notification-run-history"><div className="panel-title"><div><span>Worker operations</span><h3>Recent background runs</h3></div><b>{runs.length} runs</b></div><div className="table-wrap"><table><thead><tr><th>Started</th><th>Status</th><th>Selected</th><th>Sent</th><th>Retrying</th><th>Failed</th></tr></thead><tbody>{runs.slice(0, 5).map(run => <tr key={run.id}><td>{run.started_at ? new Date(run.started_at).toLocaleString() : '—'}</td><td><span className={`delivery-status ${run.status}`}>{run.status}</span></td><td>{run.selected || 0}</td><td>{run.sent || 0}</td><td>{run.retrying || 0}</td><td>{run.failed || 0}</td></tr>)}</tbody></table></div>{runs.length === 0 && <div className="empty-state"><Clock3 /><h3>No worker runs yet</h3><p>Use the protected cron endpoint or Process due now.</p></div>}</section>}
     <div className="queue-toolbar"><div>{['all','queued','retrying','sent','failed','cancelled'].map(value => <button key={value} className={status === value ? 'active' : ''} onClick={() => changeStatus(value)}>{value}<span>{value === 'all' ? Object.values(queue.counts || {}).reduce((sum, count) => sum + count, 0) : queue.counts?.[value] || 0}</span></button>)}</div><button className="refresh-button" onClick={() => load()} disabled={busy}><RefreshCw />Refresh</button></div>
