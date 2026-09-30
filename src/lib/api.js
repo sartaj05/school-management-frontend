@@ -110,6 +110,7 @@ export const schoolApi = {
   branchAccess: (branchId) => api('/branches/' + branchId + '/access'),
   saveBranchAccess: (branchId, values) => api('/branches/' + branchId + '/access', { method: 'POST', body: JSON.stringify(values) }),
   revokeBranchAccess: (branchId, accessId) => api('/branches/' + branchId + '/access/' + accessId, { method: 'DELETE' }),
+  branchScope: () => api('/branches/my-scope'),
   consolidatedBranches: (groupName) => api('/branches/consolidated?group_name=' + encodeURIComponent(groupName)),
   students: (filters = {}) => api(`/student/all?${new URLSearchParams(filters)}`),
   studentDirectoryPage: ({ q = '', search = '', status = '', page = 1, per_page = 100 } = {}) => api(`/student/all?${new URLSearchParams({ q: q || search, status, page, per_page })}`),
