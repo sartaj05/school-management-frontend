@@ -454,6 +454,9 @@ input,select,textarea{max-width:100%}
 .scheduled-channel-picker input{min-height:auto;accent-color:#4f46e5}
 .scheduled-actions{grid-column:1/-1}
 .scheduled-message{margin:0 27px 20px}
+.scheduled-run-history{margin:18px 27px 24px;padding:14px 16px;border:1px solid #dbe5ef;border-radius:10px;background:#f8fafc;color:#475569}
+.scheduled-run-history h3{margin:0 0 8px;color:#172033;font-size:13px}
+.scheduled-run-history ul{margin:0;padding-left:18px;font-size:11px;line-height:1.8}
 @media(max-width:1000px){.scheduled-form{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.scheduled-form{grid-template-columns:1fr;padding:18px 16px 20px}.scheduled-form .wide,.scheduled-actions{grid-column:auto}.scheduled-message{margin-left:16px;margin-right:16px}}
 
