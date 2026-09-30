@@ -235,6 +235,7 @@ export const schoolApi = {
   updateCalendarEvent: (eventId, values) => api(`/calendar/events/${eventId}`, { method: 'PUT', body: JSON.stringify(values) }),
   cancelCalendarEvent: (eventId) => api(`/calendar/events/${eventId}/cancel`, { method: 'POST' }),
   submitAdmission: (values) => api('/admissions/apply', { method: 'POST', body: JSON.stringify(values) }),
+  admissionPublicStatus: (values) => api('/admissions/public-status', { method: 'POST', body: JSON.stringify(values) }),
   admissionApplications: (status = 'all', filters = {}) => {
     const params = new URLSearchParams({ status, ...filters })
     Object.keys(filters).forEach(key => { if (!filters[key]) params.delete(key) })

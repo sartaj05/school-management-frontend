@@ -457,6 +457,10 @@ input,select,textarea{max-width:100%}
 .scheduled-run-history{margin:18px 27px 24px;padding:14px 16px;border:1px solid #dbe5ef;border-radius:10px;background:#f8fafc;color:#475569}
 .scheduled-run-history h3{margin:0 0 8px;color:#172033;font-size:13px}
 .scheduled-run-history ul{margin:0;padding-left:18px;font-size:11px;line-height:1.8}
+.admission-status-tracker{margin-top:20px}
+.admission-status-result{display:grid;gap:5px;margin-top:18px;padding:16px;border:1px solid #c7d2fe;border-radius:10px;background:#eef2ff;color:#172033}
+.admission-status-result span,.admission-status-result small{color:#64748b}
+.admission-status-result strong{text-transform:capitalize;color:#3730a3}
 @media(max-width:1000px){.scheduled-form{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:600px){.scheduled-form{grid-template-columns:1fr;padding:18px 16px 20px}.scheduled-form .wide,.scheduled-actions{grid-column:auto}.scheduled-message{margin-left:16px;margin-right:16px}}
 
