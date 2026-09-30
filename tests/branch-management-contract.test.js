@@ -15,4 +15,7 @@ test('super admin branch management is connected to the API and navigation', () 
   for (const contract of ['School group branches', 'Register a branch', 'Tenant isolation remains enforced']) {
     assert.match(screen, new RegExp(contract))
   }
+  for (const field of ['summary.income', 'summary.expenses', 'summary.net', 'summary.unreconciled']) {
+    assert.match(screen, new RegExp(field.replace('.', '\\.'), 'u'))
+  }
 })
