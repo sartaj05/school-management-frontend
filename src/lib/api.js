@@ -278,6 +278,7 @@ export const schoolApi = {
   transportAlerts: (limit = 20) => api(`/transport/alerts?limit=${encodeURIComponent(limit)}`),
   driverTransportStatus: () => api('/transport/driver/status'),
   driverTransportLocationsBatch: (values) => api('/transport/driver/locations/batch', { method: 'POST', body: JSON.stringify(values) }),
+  driverTransportHeartbeat: (values) => api('/transport/driver/heartbeat', { method: 'POST', body: JSON.stringify(values) }),
   pruneTransportLocations: (days = 90) => api(`/transport/locations/prune?days=${encodeURIComponent(days)}`, { method: 'POST' }),
   updateTransportLocation: (vehicleId, values) => api(`/transport/vehicles/${vehicleId}/location`, { method: 'POST', body: JSON.stringify(values) }),
   inventoryOptions: () => api('/inventory/options'),

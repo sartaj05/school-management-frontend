@@ -285,7 +285,7 @@ export default function TransportManagement({ user }) {
     setError('')
     try {
       const position = await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }))
-      await schoolApi.driverTransportLocationsBatch({ locations: [{ vehicle_id: vehicle.vehicle_id || vehicle.id, latitude: position.coords.latitude, longitude: position.coords.longitude, speed_kmph: position.coords.speed ? position.coords.speed * 3.6 : null, heading: position.coords.heading, device_id: 'react-driver-browser', reported_at: new Date(position.timestamp).toISOString() }] })
+      await schoolApi.driverTransportHeartbeat({ locations: [{ vehicle_id: vehicle.vehicle_id || vehicle.id, latitude: position.coords.latitude, longitude: position.coords.longitude, speed_kmph: position.coords.speed ? position.coords.speed * 3.6 : null, heading: position.coords.heading, device_id: 'react-driver-browser', reported_at: new Date(position.timestamp).toISOString() }] })
       setMessage('Driver location shared securely.')
       await load()
     } catch (err) {
