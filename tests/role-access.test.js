@@ -26,7 +26,7 @@ test('tenant roles cannot navigate platform administration pages', () => {
 
 test('super admin navigation is limited to platform administration', () => {
   assert.deepEqual(new Set(localRolePages('super_admin')), new Set([
-    'overview', 'publicWebsite', 'schools', 'users', 'maintenance',
+    'overview', 'publicWebsite', 'schools', 'branches', 'users', 'maintenance',
   ]))
 })
 
