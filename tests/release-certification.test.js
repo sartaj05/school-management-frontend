@@ -35,3 +35,9 @@ test('transport UI exposes provider readiness instead of hiding ETA fallback', (
   assert.match(transport, /road_eta_configured/)
   assert.match(transport, /straight-line fallback/)
 })
+
+test('smart classroom UI exposes every production gate', () => {
+  const classroom = source('src/components/SmartClassroomManagement.jsx')
+  assert.match(classroom, /production_gates/)
+  assert.match(classroom, /Object\.entries/)
+})
