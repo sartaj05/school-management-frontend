@@ -6,6 +6,8 @@ export default function AcademicYearPromotion() {
   const [years, setYears] = useState([])
   const [form, setForm] = useState({ from_year: '', to_year: '', promotions: [] })
   const [newYear, setNewYear] = useState({ year_label: '', starts_on: '', ends_on: '' })
+  const [enrollmentYear, setEnrollmentYear] = useState('')
+  const [enrollments, setEnrollments] = useState([])
   const [historyStudentId, setHistoryStudentId] = useState('')
   const [historyRows, setHistoryRows] = useState([])
   const [busy, setBusy] = useState(false)
@@ -15,7 +17,19 @@ export default function AcademicYearPromotion() {
   async function load() {
     try {
       const result = await schoolApi.academicYears()
-      setYears(result.data || [])
+      const nextYears = result.data || []
+      setYears(nextYears)
+      setEnrollmentYear(current => current && nextYears.some(year => year.year_label === current)
+        ? current
+        : nextYears.find(year => year.status === 'active')?.year_label || nextYears[0]?.year_label || '')
+    } catch (requestError) { setError(requestError.message) }
+  }
+
+  async function loadEnrollments(year) {
+    if (!year) { setEnrollments([]); return }
+    try {
+      const result = await schoolApi.academicYearEnrollments(year)
+      setEnrollments(result.data || [])
     } catch (requestError) { setError(requestError.message) }
   }
 
@@ -23,6 +37,11 @@ export default function AcademicYearPromotion() {
     const timer = setTimeout(load, 0)
     return () => clearTimeout(timer)
   }, [])
+
+  useEffect(() => {
+    const timer = setTimeout(() => loadEnrollments(enrollmentYear), 0)
+    return () => clearTimeout(timer)
+  }, [enrollmentYear])
 
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError(''); setMessage('')
@@ -75,6 +94,7 @@ export default function AcademicYearPromotion() {
       <button className="button button-small" disabled={busy}><Save size={16} />Create year</button>
     </form>
     {years.length > 0 && <div className="table-wrap academic-year-table"><table><thead><tr><th>Academic year</th><th>Dates</th><th>Status</th><th>Action</th></tr></thead><tbody>{years.map(year => <tr key={year.id}><td><b>{year.year_label}</b></td><td>{year.starts_on || '-'} to {year.ends_on || '-'}</td><td>{year.status}</td><td>{year.status === 'active' && <button className="button button-small secondary" disabled={busy} onClick={() => archiveYear(year)}><Archive size={14} />Archive</button>}</td></tr>)}</tbody></table></div>}
+    {years.length > 0 && <section className="academic-history academic-enrollment-roster"><div className="panel-title"><div><span>Current-year roster</span><h3>Student enrollments</h3></div><History /></div><div className="field-grid three"><label>Academic year<select value={enrollmentYear} onChange={event => setEnrollmentYear(event.target.value)}>{years.map(year => <option key={year.id} value={year.year_label}>{year.year_label} · {year.status}</option>)}</select></label><button className="button button-small" type="button" disabled={busy || !enrollmentYear} onClick={() => loadEnrollments(enrollmentYear)}>Refresh roster</button></div>{enrollments.length > 0 ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>Admission no.</th><th>Class</th><th>Section</th><th>Status</th></tr></thead><tbody>{enrollments.map(row => <tr key={row.id}><td><b>{row.student_name || '-'}</b></td><td>{row.admission_no || '-'}</td><td>{row.class_name || '-'}</td><td>{row.section || '-'}</td><td>{row.status || '-'}</td></tr>)}</tbody></table></div> : <p className="field-help">No enrollments found for this academic year.</p>}</section>}
     <form className="field-grid" onSubmit={submit}>
       <label>From academic year *<input required value={form.from_year} onChange={event => setForm({ ...form, from_year: event.target.value })} placeholder="2025-2026" /></label>
       <label>To academic year *<input required value={form.to_year} onChange={event => setForm({ ...form, to_year: event.target.value })} placeholder="2026-2027" /></label>

@@ -90,6 +90,7 @@ export const schoolApi = {
   featureAccess: () => api('/school/feature-access'),
   syncCheckpoint: () => api('/sync/checkpoint'),
   academicYears: () => api('/academic-years'),
+  academicYearEnrollments: year => api(`/academic-years/${encodeURIComponent(year)}/enrollments`),
   createAcademicYear: (values) => api('/academic-years', { method: 'POST', body: JSON.stringify(values) }),
   archiveAcademicYear: (year) => api(`/academic-years/${encodeURIComponent(year)}/archive`, { method: 'PATCH' }),
   promoteStudents: (values) => api('/academic-years/promote', { method: 'POST', body: JSON.stringify(values) }),
