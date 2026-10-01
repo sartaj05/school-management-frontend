@@ -3,7 +3,7 @@
 export const ROLE_PAGE_ACCESS = {
   super_admin: ['overview', 'publicWebsite', 'schools', 'branches', 'users', 'maintenance'],
   'School Admin': ['overview', 'onboarding', 'reports', 'scheduledReports', 'people', 'academics', 'academicYears', 'analytics', 'calendar', 'meetings', 'messages', 'hostel', 'audit', 'admissions', 'inventory', 'staffHr', 'payroll', 'scholarships', 'expenses', 'finance', 'transport', 'leave', 'smartClassroom', 'documents', 'exams', 'fees', 'assignments', 'library', 'teacherAssignments', 'timetable', 'subjects', 'students', 'teachers', 'parents', 'classes', 'attendance', 'attendanceReports', 'portalLinks', 'notifications', 'settings'],
-  Teacher: ['overview', 'academics', 'analytics', 'calendar', 'meetings', 'messages', 'reports', 'smartClassroom', 'documents', 'exams', 'assignments', 'library', 'timetable', 'subjects', 'students', 'classes', 'attendance', 'attendanceReports', 'notifications', 'settings', 'leave'],
+  Teacher: ['overview', 'academics', 'analytics', 'calendar', 'meetings', 'messages', 'reports', 'smartClassroom', 'documents', 'exams', 'assignments', 'library', 'timetable', 'subjects', 'students', 'classes', 'attendance', 'attendanceReports', 'notifications', 'settings', 'leave', 'feeCollection'],
   Parent: ['overview', 'portal', 'calendar', 'meetings', 'messages', 'documents', 'notifications', 'settings'],
   Student: ['overview', 'portal', 'calendar', 'messages', 'documents', 'notifications', 'leave', 'settings'],
   'Accounts Staff': ['overview', 'reports', 'scheduledReports', 'fees', 'finance', 'scholarships', 'expenses', 'settings'],
