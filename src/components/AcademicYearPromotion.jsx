@@ -4,7 +4,10 @@ import { schoolApi } from '../lib/api'
 
 export default function AcademicYearPromotion({ canManage: explicitCanManage }) {
   const sessionRole = (() => {
-    try { return JSON.parse(sessionStorage.getItem('school_session') || '{}').role } catch { return '' }
+    try {
+      const session = JSON.parse(sessionStorage.getItem('school_session') || '{}')
+      return session?.user?.role || session?.role || ''
+    } catch { return '' }
   })()
   const canManage = explicitCanManage ?? sessionRole === 'School Admin'
   const [years, setYears] = useState([])
