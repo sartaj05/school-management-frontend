@@ -19,10 +19,14 @@ test('role fallback does not expose tenant management pages', () => {
 })
 
 test('tenant roles cannot navigate platform administration pages', () => {
-  const platformPages = new Set(['publicWebsite', 'schools', 'users', 'maintenance'])
+  const platformPages = new Set(['publicWebsite', 'schools', 'maintenance'])
   for (const role of ['School Admin', 'Teacher', 'Parent', 'Student', 'Accounts Staff', 'Hostel Staff']) {
     assert.equal(localRolePages(role).some(page => platformPages.has(page)), false, role)
   }
+})
+
+test('school admin can navigate the tenant user directory', () => {
+  assert.ok(localRolePages('School Admin').includes('users'))
 })
 
 test('super admin navigation is limited to platform administration', () => {

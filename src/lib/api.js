@@ -155,6 +155,8 @@ export const schoolApi = {
   users: (superAdmin = false, filters = {}) => api(superAdmin ? `/super-admin/users?${new URLSearchParams(filters)}` : '/users'),
   updateUser: (userId, values) => api(`/super-admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(values) }),
   updateUserStatus: (userId, values) => api(`/super-admin/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
+  updateTenantUser: (userId, values) => api(`/users/${userId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  updateTenantUserStatus: (userId, values) => api(`/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
   createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values) }),
   createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values) }),
   createTeacher: (values) => api('/teacher/create', { method: 'POST', body: toFormData(values) }),

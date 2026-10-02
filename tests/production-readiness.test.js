@@ -4,7 +4,7 @@ import { languageOptions, translateNav, translateUi } from '../src/lib/i18n.js'
 import { localRolePages, ROLE_PAGE_ACCESS } from '../src/lib/roleAccess.js'
 
 const mojibake = /[ÃÂâ�]/
-const platformPages = new Set(['publicWebsite', 'schools', 'users', 'maintenance'])
+const platformPages = new Set(['publicWebsite', 'schools', 'maintenance'])
 
 test('every supported language has readable high-traffic navigation labels', () => {
   for (const language of languageOptions) {
