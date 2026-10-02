@@ -2,7 +2,11 @@ import { Archive, GraduationCap, History, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 
-export default function AcademicYearPromotion() {
+export default function AcademicYearPromotion({ canManage: explicitCanManage }) {
+  const sessionRole = (() => {
+    try { return JSON.parse(sessionStorage.getItem('school_session') || '{}').role } catch { return '' }
+  })()
+  const canManage = explicitCanManage ?? sessionRole === 'School Admin'
   const [years, setYears] = useState([])
   const [form, setForm] = useState({ from_year: '', to_year: '', promotions: [] })
   const [newYear, setNewYear] = useState({ year_label: '', starts_on: '', ends_on: '' })
@@ -86,23 +90,23 @@ export default function AcademicYearPromotion() {
 
   return <section className="data-panel academic-year-promotion">
     <div className="panel-title"><div><span>Academic year control</span><h2>Promote students</h2></div><GraduationCap /></div>
-    <p className="field-help">Create academic years, promote students, and archive old years without deleting history.</p>
-    <form className="field-grid three academic-year-create" onSubmit={createYear}>
+    <p className="field-help">{canManage ? 'Create academic years, promote students, and archive old years without deleting history.' : 'View academic years, enrollments, and student history. Only School Admins can change academic-year data.'}</p>
+    {canManage && <form className="field-grid three academic-year-create" onSubmit={createYear}>
       <label>New academic year *<input required value={newYear.year_label} onChange={event => setNewYear({ ...newYear, year_label: event.target.value })} placeholder="2026-2027" /></label>
       <label>Starts on<input type="date" value={newYear.starts_on} onChange={event => setNewYear({ ...newYear, starts_on: event.target.value })} /></label>
       <label>Ends on<input type="date" value={newYear.ends_on} onChange={event => setNewYear({ ...newYear, ends_on: event.target.value })} /></label>
       <button className="button button-small" disabled={busy}><Save size={16} />Create year</button>
-    </form>
-    {years.length > 0 && <div className="table-wrap academic-year-table"><table><thead><tr><th>Academic year</th><th>Dates</th><th>Status</th><th>Action</th></tr></thead><tbody>{years.map(year => <tr key={year.id}><td><b>{year.year_label}</b></td><td>{year.starts_on || '-'} to {year.ends_on || '-'}</td><td>{year.status}</td><td>{year.status === 'active' && <button className="button button-small secondary" disabled={busy} onClick={() => archiveYear(year)}><Archive size={14} />Archive</button>}</td></tr>)}</tbody></table></div>}
+    </form>}
+    {years.length > 0 && <div className="table-wrap academic-year-table"><table><thead><tr><th>Academic year</th><th>Dates</th><th>Status</th>{canManage && <th>Action</th>}</tr></thead><tbody>{years.map(year => <tr key={year.id}><td><b>{year.year_label}</b></td><td>{year.starts_on || '-'} to {year.ends_on || '-'}</td><td>{year.status}</td>{canManage && <td>{year.status === 'active' && <button className="button button-small secondary" disabled={busy} onClick={() => archiveYear(year)}><Archive size={14} />Archive</button>}</td>}</tr>)}</tbody></table></div>}
     {years.length > 0 && <section className="academic-history academic-enrollment-roster"><div className="panel-title"><div><span>Current-year roster</span><h3>Student enrollments</h3></div><History /></div><div className="field-grid three"><label>Academic year<select value={enrollmentYear} onChange={event => setEnrollmentYear(event.target.value)}>{years.map(year => <option key={year.id} value={year.year_label}>{year.year_label} · {year.status}</option>)}</select></label><button className="button button-small" type="button" disabled={busy || !enrollmentYear} onClick={() => loadEnrollments(enrollmentYear)}>Refresh roster</button></div>{enrollments.length > 0 ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>Admission no.</th><th>Class</th><th>Section</th><th>Status</th></tr></thead><tbody>{enrollments.map(row => <tr key={row.id}><td><b>{row.student_name || '-'}</b></td><td>{row.admission_no || '-'}</td><td>{row.class_name || '-'}</td><td>{row.section || '-'}</td><td>{row.status || '-'}</td></tr>)}</tbody></table></div> : <p className="field-help">No enrollments found for this academic year.</p>}</section>}
-    <form className="field-grid" onSubmit={submit}>
+    {canManage && <form className="field-grid" onSubmit={submit}>
       <label>From academic year *<input required value={form.from_year} onChange={event => setForm({ ...form, from_year: event.target.value })} placeholder="2025-2026" /></label>
       <label>To academic year *<input required value={form.to_year} onChange={event => setForm({ ...form, to_year: event.target.value })} placeholder="2026-2027" /></label>
       <label className="wide">Promotion JSON *<textarea required rows="6" value={JSON.stringify(form.promotions, null, 2)} onChange={event => { try { setForm({ ...form, promotions: JSON.parse(event.target.value) }) } catch { /* keep the current valid value */ } }} placeholder={'[{"student_id":1,"next_class_name":"Grade 9","next_section":"A"}'} /></label>
       <div className="wide field-help">Example: [{'{'}"student_id": 1, "next_class_name": "Grade 9", "next_section": "A"{'}'}]</div>
       {error && <div className="form-error wide">{error}</div>}{message && <div className="success-notice wide">{message}</div>}
       <button className="button button-small" disabled={busy}><Save size={16} />{busy ? 'Promoting…' : 'Promote students'}</button>
-    </form>
+    </form>}
     <div className="field-help">Known academic years: {years.map(year => year.year_label).join(', ') || 'None yet'}</div>
     <section className="academic-history">
       <div className="panel-title"><div><span>Archive-safe history</span><h3>Student enrollment history</h3></div><History /></div>

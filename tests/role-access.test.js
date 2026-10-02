@@ -12,6 +12,7 @@ test('every supported role has an overview and no duplicate pages', () => {
 test('role fallback does not expose tenant management pages', () => {
   assert.deepEqual(localRolePages('unknown-role'), ['overview'])
   assert.ok(localRolePages('Teacher').includes('students'))
+  assert.ok(localRolePages('Teacher').includes('academicYears'))
   assert.ok(!localRolePages('Teacher').includes('users'))
   assert.ok(localRolePages('Accounts Staff').includes('finance'))
   assert.ok(!localRolePages('Parent').includes('finance'))
