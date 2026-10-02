@@ -1,5 +1,5 @@
 import { Activity, AlertTriangle, CheckCircle2, Clock3, Database, HardDrive, RefreshCw, Server, ShieldCheck } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 
 const statusClass = status => status === 'ok' || status === 'ready' ? 'ready' : status === 'failed' || status === 'degraded' ? 'failed' : 'pending'
@@ -14,12 +14,15 @@ export default function OperationsDashboard() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  async function load() {
+  const load = useCallback(async () => {
     setBusy(true); setError('')
     try { setReport(await schoolApi.operationsStatus()) } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
-  }
+  }, [])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const timer = setTimeout(() => { void load() }, 0)
+    return () => clearTimeout(timer)
+  }, [load])
 
   const data = report?.data || {}
   const tenants = data.tenants || {}

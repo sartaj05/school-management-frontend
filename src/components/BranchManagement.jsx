@@ -1,5 +1,5 @@
 import { Building2, CheckCircle2, Power, PowerOff, RefreshCw, Save } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import BranchAccessManagement from './BranchAccessManagement'
 
@@ -16,7 +16,7 @@ export default function BranchManagement() {
   const [message, setMessage] = useState('')
   const groups = useMemo(() => [...new Set(rows.map(row => row.group_name).filter(Boolean))], [rows])
 
-  async function load() {
+  const load = useCallback(async () => {
     setBusy(true); setError('')
     try {
       const [branchResult, schoolResult] = await Promise.all([schoolApi.branches(), schoolApi.schools()])
@@ -30,9 +30,12 @@ export default function BranchManagement() {
       } else { setRows(branchRows); setSummary(null) }
     } catch (requestError) { setError(requestError.message) }
     finally { setBusy(false) }
-  }
+  }, [groupName])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    const timer = setTimeout(() => { void load() }, 0)
+    return () => clearTimeout(timer)
+  }, [load])
 
   async function chooseGroup(value) {
     setGroupName(value)

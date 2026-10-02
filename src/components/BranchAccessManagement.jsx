@@ -1,5 +1,5 @@
 import { KeyRound, RefreshCw, UserMinus, UserPlus } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 
 const roles = ['School Admin', 'Teacher', 'Accounts Staff', 'Driver', 'Hostel Staff']
@@ -12,13 +12,22 @@ export default function BranchAccessManagement({ branches = [] }) {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
-  useEffect(() => { if (!branchId && branches[0]?.id) setBranchId(String(branches[0].id)) }, [branchId, branches])
-  async function load() {
+  useEffect(() => {
+    if (!branchId && branches[0]?.id) {
+      const timer = setTimeout(() => setBranchId(String(branches[0].id)), 0)
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [branchId, branches])
+  const load = useCallback(async () => {
     if (!branchId) return
     setBusy(true); setError('')
     try { const result = await schoolApi.branchAccess(branchId); setRows(result.data || []) } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
-  }
-  useEffect(() => { load() }, [branchId])
+  }, [branchId])
+  useEffect(() => {
+    const timer = setTimeout(() => { void load() }, 0)
+    return () => clearTimeout(timer)
+  }, [load])
   async function save(event) {
     event.preventDefault(); setBusy(true); setError(''); setMessage('')
     try { const result = await schoolApi.saveBranchAccess(branchId, { tenant_user_id: Number(form.tenant_user_id), access_role: form.access_role }); setRows(result.data || []); setForm(current => ({ ...current, tenant_user_id: '' })); setMessage(result.message || 'Branch access saved.') } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }

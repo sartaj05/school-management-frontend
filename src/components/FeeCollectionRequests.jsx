@@ -1,5 +1,5 @@
 import { CheckCircle2, ClipboardCheck, Receipt, Send, XCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 
 const today = new Date().toISOString().slice(0, 10)
@@ -14,7 +14,7 @@ export default function FeeCollectionRequests({ admin = false }) {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
-  async function load() {
+  const load = useCallback(async () => {
     setBusy(true); setError('')
     try {
       const responses = admin
@@ -24,9 +24,9 @@ export default function FeeCollectionRequests({ admin = false }) {
       else { setOptions(responses[0].data || []); setRequests(responses[1].data || []) }
     } catch (requestError) { setError(requestError.message) }
     finally { setBusy(false) }
-  }
+  }, [admin])
 
-  useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [admin])
+  useEffect(() => { const timer = setTimeout(() => { void load() }, 0); return () => clearTimeout(timer) }, [load])
 
   function chooseInvoice(value) {
     const item = options.find(row => String(row.invoice_id) === value)

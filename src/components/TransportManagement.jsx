@@ -1,5 +1,5 @@
 import { AlertTriangle, Bus, CheckCircle2, MapPin, Navigation, Plus, RefreshCw, Route, Save, Trash2, UsersRound } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
 
@@ -73,7 +73,7 @@ export default function TransportManagement({ user }) {
   const selectedRoute = useMemo(() => routes.find(routeItem => String(routeItem.id) === String(assignmentForm.route_id)), [routes, assignmentForm.route_id])
   const routeStops = selectedRoute?.stops || []
 
-  async function load() {
+  const load = useCallback(async () => {
     setBusy(true)
     setError('')
     try {
@@ -113,9 +113,9 @@ export default function TransportManagement({ user }) {
     } finally {
       setBusy(false)
     }
-  }
+  }, [canManage, isDriver])
 
-  useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [isDriver])
+  useEffect(() => { const timer = setTimeout(() => { void load() }, 0); return () => clearTimeout(timer) }, [load])
   useEffect(() => {
     const timer = setInterval(async () => {
       try {

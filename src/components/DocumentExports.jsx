@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import DocumentTemplateManager from './DocumentTemplateManager'
 
-export default function DocumentExports({ user }) {
+export default function DocumentExports() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [rows, setRows] = useState([])
   const [error, setError] = useState('')
