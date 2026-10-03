@@ -11,6 +11,21 @@ export const ROLE_PAGE_ACCESS = {
   Driver: ['overview', 'transport', 'settings'],
 }
 
+// The six roles below are the cross-platform release contract. Operational
+// roles such as Hostel Staff and Driver remain supported separately.
+export const CORE_RELEASE_ROLES = [
+  'super_admin',
+  'School Admin',
+  'Teacher',
+  'Accounts Staff',
+  'Parent',
+  'Student',
+]
+
+export function coreRolePageMatrix() {
+  return Object.fromEntries(CORE_RELEASE_ROLES.map(role => [role, [...ROLE_PAGE_ACCESS[role]]]))
+}
+
 export function localRolePages(role) {
   return ROLE_PAGE_ACCESS[role] || ['overview']
 }

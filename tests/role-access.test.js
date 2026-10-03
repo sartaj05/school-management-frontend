@@ -1,6 +1,24 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { localRolePages, ROLE_PAGE_ACCESS } from '../src/lib/roleAccess.js'
+import { CORE_RELEASE_ROLES, coreRolePageMatrix, localRolePages, ROLE_PAGE_ACCESS } from '../src/lib/roleAccess.js'
+
+const CORE_ROLE_EXPECTATIONS = {
+  super_admin: ['overview', 'publicWebsite', 'schools', 'branches', 'users', 'maintenance'],
+  'School Admin': ['overview', 'onboarding', 'reports', 'scheduledReports', 'people', 'academics', 'academicYears', 'analytics', 'calendar', 'meetings', 'messages', 'hostel', 'audit', 'admissions', 'inventory', 'staffHr', 'payroll', 'scholarships', 'expenses', 'finance', 'transport', 'leave', 'smartClassroom', 'documents', 'exams', 'fees', 'assignments', 'library', 'teacherAssignments', 'timetable', 'subjects', 'students', 'teachers', 'parents', 'classes', 'attendance', 'attendanceReports', 'portalLinks', 'notifications', 'users', 'settings'],
+  Teacher: ['overview', 'academics', 'academicYears', 'analytics', 'calendar', 'meetings', 'messages', 'reports', 'smartClassroom', 'documents', 'exams', 'assignments', 'library', 'timetable', 'subjects', 'students', 'classes', 'attendance', 'attendanceReports', 'notifications', 'settings', 'leave', 'feeCollection'],
+  'Accounts Staff': ['overview', 'reports', 'scheduledReports', 'fees', 'finance', 'scholarships', 'expenses', 'settings'],
+  Parent: ['overview', 'portal', 'calendar', 'meetings', 'messages', 'documents', 'notifications', 'settings'],
+  Student: ['overview', 'portal', 'calendar', 'messages', 'documents', 'notifications', 'leave', 'settings'],
+}
+
+test('core release matrix contains the complete six-role contract', () => {
+  assert.deepEqual(new Set(CORE_RELEASE_ROLES), new Set(Object.keys(CORE_ROLE_EXPECTATIONS)))
+  assert.deepEqual(coreRolePageMatrix(), CORE_ROLE_EXPECTATIONS)
+  for (const pages of Object.values(coreRolePageMatrix())) {
+    assert.equal(new Set(pages).size, pages.length)
+    assert.ok(pages.includes('overview'))
+  }
+})
 
 test('every supported role has an overview and no duplicate pages', () => {
   for (const [role, pages] of Object.entries(ROLE_PAGE_ACCESS)) {
