@@ -1,15 +1,22 @@
-import { CalendarCheck, Clock, Send, UserRound } from 'lucide-react'
+import { BellRing, CalendarCheck, Clock, Send, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 
-const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10)
+function dateInputValue(value) {
+  const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 10)
+}
+
+const tomorrow = dateInputValue(new Date(Date.now() + 86400000))
 
 function localInput(day, time) {
-  return `${day}T${time}`
+  return new Date(`${day}T${time}:00`).toISOString()
 }
 
 function display(value) {
-  return value ? new Date(value).toLocaleString() : ''
+  if (!value) return ''
+  const normalized = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`
+  return new Date(normalized).toLocaleString()
 }
 
 export default function ParentTeacherMeetings({ user }) {
@@ -93,7 +100,7 @@ export default function ParentTeacherMeetings({ user }) {
   const availableSlots = slots.filter(slot => Number(slot.booked_count || 0) < Number(slot.max_bookings || 1))
 
   return <section className="meeting-management">
-    <section className="people-hero meeting-hero"><div><span>Family communication</span><h2>Parent-teacher meetings</h2><p>Publish teacher availability, book parent meetings, and queue reminders.</p></div><CalendarCheck /></section>
+    <section className="people-hero meeting-hero"><div><span>Family communication</span><h2>Parent-teacher meetings</h2><p>Publish teacher availability, book meetings, and queue WhatsApp reminders for 5, 3, and 1 day before each meeting.</p></div><CalendarCheck /></section>
     {error && <div className="form-error" role="alert">{error}</div>}
     {notice && <div className="success-notice" role="status">{notice}</div>}
     <div className="page-actions"><label>Status<select value={status} onChange={e => setStatus(e.target.value)}>{['all', 'booked', 'completed', 'cancelled'].map(value => <option key={value}>{value}</option>)}</select></label><button className="button button-small" disabled={busy || loading} onClick={() => setRefresh(value => value + 1)}>Refresh</button></div>
@@ -109,14 +116,14 @@ export default function ParentTeacherMeetings({ user }) {
         <label>Meeting link<input maxLength="500" value={slotForm.meeting_link} onChange={e => setSlotForm({ ...slotForm, meeting_link: e.target.value })} /></label>
         <label className="wide">Notes<textarea maxLength="1000" value={slotForm.notes} onChange={e => setSlotForm({ ...slotForm, notes: e.target.value })} /></label>
       </div><button className="button button-small" disabled={busy}><Send size={16} />Publish slot</button></form>}
-      {(isAdmin || isParent) && <form className="editor-card" onSubmit={bookSlot}><div className="editor-heading"><UserRound /><div><h3>Book a meeting</h3><p>Parents book for linked children. A WhatsApp reminder is queued when mobile is available.</p></div></div><div className="field-grid">
+      {(isAdmin || isParent) && <form className="editor-card" onSubmit={bookSlot}><div className="editor-heading"><UserRound /><div><h3>Book a meeting</h3><p>Parents book for linked children. WhatsApp reminders are queued 5, 3, and 1 day before the meeting when mobile is available.</p></div></div><div className="field-grid">
         <label>Available slot<select required value={bookingForm.slot_id} onChange={e => setBookingForm({ ...bookingForm, slot_id: e.target.value })}><option value="">Select slot</option>{availableSlots.map(slot => <option key={slot.id} value={slot.id}>{display(slot.slot_start)} - {slot.teacher_name} ({slot.booked_count}/{slot.max_bookings})</option>)}</select></label>
         <label>Parent<select required value={bookingForm.parent_id} disabled={isParent && options.parents.length === 1} onChange={e => setBookingForm({ ...bookingForm, parent_id: e.target.value })}><option value="">Select parent</option>{options.parents.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
         <label>Student<select required value={bookingForm.student_id} onChange={e => setBookingForm({ ...bookingForm, student_id: e.target.value })}><option value="">Select student</option>{options.students.filter(item => !bookingForm.parent_id || !item.parent_id || String(item.parent_id) === String(bookingForm.parent_id)).map(item => <option key={`${item.parent_id || 'admin'}-${item.id}`} value={item.id}>{item.name}{item.class_name ? ` - ${item.class_name} ${item.section || ''}` : ''}</option>)}</select></label>
         <label className="wide">Agenda<textarea maxLength="1000" value={bookingForm.agenda} onChange={e => setBookingForm({ ...bookingForm, agenda: e.target.value })} /></label>
       </div><button className="button button-small" disabled={busy || !availableSlots.length}><CalendarCheck size={16} />Book meeting</button></form>}
       <section className="data-panel"><div className="panel-title"><div><h2>Published slots</h2><p>{slots.length} active slots</p></div></div><div className="meeting-slot-grid">{slots.map(slot => <article key={slot.id}><Clock /><div><b>{slot.teacher_name}</b><small>{display(slot.slot_start)} to {display(slot.slot_end)}</small><small>{slot.mode} {slot.location ? `- ${slot.location}` : ''}</small></div><span className="delivery-status active">{slot.booked_count}/{slot.max_bookings}</span>{(isAdmin || isTeacher) && <button className="refresh-button danger" disabled={busy} onClick={() => mutate(() => schoolApi.cancelMeetingSlot(slot.id, { reason: 'Slot cancelled from website.' }))}>Cancel</button>}</article>)}{!slots.length && <div className="empty-state"><CalendarCheck /><h3>No active slots</h3><p>Publish availability to start accepting bookings.</p></div>}</div></section>
-      <section className="data-panel meeting-table"><div className="panel-title"><div><h2>Bookings</h2><p>{bookings.length} records</p></div></div><div className="table-wrap"><table><thead><tr><th>Meeting</th><th>Family</th><th>Mode</th><th>Status</th><th>Agenda</th><th>Actions</th></tr></thead><tbody>{bookings.map(row => <tr key={row.id}><td><b>{display(row.slot_start)}</b><small>{row.teacher_name}</small></td><td>{row.parent_name}<small>{row.student_name} - {row.class_name} {row.section}</small></td><td>{row.mode}<small>{row.location || row.meeting_link}</small></td><td><span className={`delivery-status ${row.status}`}>{row.status}</span></td><td>{row.agenda || '-'}</td><td>{row.status === 'booked' ? <div className="meeting-actions">{(isAdmin || isTeacher) && <button disabled={busy} onClick={() => mutate(() => schoolApi.updateMeetingBookingStatus(row.id, { status: 'completed' }))}>Complete</button>}<button disabled={busy} onClick={() => mutate(() => schoolApi.updateMeetingBookingStatus(row.id, { status: 'cancelled', reason: 'Cancelled from website.' }))}>Cancel</button></div> : '-'}</td></tr>)}{!bookings.length && <tr><td colSpan="6">No meeting bookings match this status.</td></tr>}</tbody></table></div></section>
+      <section className="data-panel meeting-table"><div className="panel-title"><div><h2>Bookings</h2><p>{bookings.length} records</p></div></div><div className="table-wrap"><table><thead><tr><th>Meeting</th><th>Family</th><th>Mode</th><th>Status</th><th>Reminders</th><th>Agenda</th><th>Actions</th></tr></thead><tbody>{bookings.map(row => <tr key={row.id}><td><b>{display(row.slot_start)}</b><small>{row.teacher_name}</small></td><td>{row.parent_name}<small>{row.student_name} - {row.class_name} {row.section}</small></td><td>{row.mode}<small>{row.location || row.meeting_link}</small></td><td><span className={`delivery-status ${row.status}`}>{row.status}</span></td><td><span className="meeting-reminders"><BellRing size={13} />{row.reminder_count || 0} queued</span>{row.next_reminder_at && <small>{display(row.next_reminder_at)}</small>}</td><td>{row.agenda || '-'}</td><td>{row.status === 'booked' ? <div className="meeting-actions">{(isAdmin || isTeacher) && <button disabled={busy} onClick={() => mutate(() => schoolApi.updateMeetingBookingStatus(row.id, { status: 'completed' }))}>Complete</button>}<button disabled={busy} onClick={() => mutate(() => schoolApi.updateMeetingBookingStatus(row.id, { status: 'cancelled', reason: 'Cancelled from website.' }))}>Cancel</button></div> : '-'}</td></tr>)}{!bookings.length && <tr><td colSpan="7">No meeting bookings match this status.</td></tr>}</tbody></table></div></section>
     </>}
   </section>
 }
