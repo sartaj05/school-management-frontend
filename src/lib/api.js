@@ -87,6 +87,7 @@ export const schoolApi = {
   forgotPassword: (values) => api('/auth/forgot-password', { method: 'POST', body: JSON.stringify(values) }),
   resetPassword: (values) => api('/auth/reset-password', { method: 'POST', body: JSON.stringify(values) }),
   logout: (refreshToken) => api('/auth/logout', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${refreshToken}` } }),
+  logoutAccess: (accessToken) => api('/auth/logout/access', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${accessToken}` } }),
   profile: () => api('/auth/profile'),
   updateProfile: (values) => api('/auth/profile', { method: 'PUT', body: JSON.stringify(values) }),
   sessions: () => api('/auth/sessions'),

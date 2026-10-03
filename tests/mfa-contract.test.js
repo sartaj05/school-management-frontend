@@ -31,3 +31,10 @@ test('supports one-time MFA recovery codes in the login and security screens', (
     assert.match(card, /will not be shown again/)
     assert.match(card, /Regenerate recovery codes/)
 })
+
+test('logout revokes both the access token and refresh session', () => {
+    const api = read('src/lib/api.js')
+    const app = read('src/App.jsx')
+    assert.match(api, /logoutAccess: \(accessToken\) => api\('\/auth\/logout\/access'/)
+    assert.match(app, /schoolApi\.logoutAccess\(accessToken\)/)
+})
