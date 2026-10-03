@@ -78,6 +78,7 @@ export const schoolApi = {
   mfaSetup: () => api('/auth/mfa/setup', { method: 'POST' }),
   mfaEnable: (code) => api('/auth/mfa/enable', { method: 'POST', body: JSON.stringify({ code }) }),
   mfaDisable: (code) => api('/auth/mfa/disable', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaRegenerateRecoveryCodes: (code) => api('/auth/mfa/recovery/regenerate', { method: 'POST', body: JSON.stringify({ code }) }),
   mfaAdminReset: (schoolId, userId) => api(`/super-admin/schools/${schoolId}/users/${userId}/mfa/reset`, { method: 'POST' }),
   publicContent: () => api('/public/content'),
   publicPlans: () => api('/public/plans'),

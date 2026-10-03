@@ -18,6 +18,7 @@ test('exposes setup, enable and disable endpoints for account security', () => {
     assert.match(api, /mfaSetup: \(\) => api\('\/auth\/mfa\/setup'/)
     assert.match(api, /mfaEnable: \(code\) => api\('\/auth\/mfa\/enable'/)
     assert.match(api, /mfaDisable: \(code\) => api\('\/auth\/mfa\/disable'/)
+    assert.match(api, /mfaRegenerateRecoveryCodes: \(code\) => api\('\/auth\/mfa\/recovery\/regenerate'/)
     assert.match(api, /mfaAdminReset: \(schoolId, userId\)/)
 })
 
@@ -28,4 +29,5 @@ test('supports one-time MFA recovery codes in the login and security screens', (
     assert.match(login, /one-time recovery code/)
     assert.match(card, /recovery_codes/)
     assert.match(card, /will not be shown again/)
+    assert.match(card, /Regenerate recovery codes/)
 })

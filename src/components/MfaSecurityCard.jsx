@@ -39,6 +39,11 @@ export default function MfaSecurityCard() {
     try { await schoolApi.mfaDisable(code); setCode(''); setSuccess('Two-factor authentication is disabled.'); await load() } catch (err) { setError(err.message) } finally { setBusy(false) }
   }
 
+  async function regenerate() {
+    setBusy(true); setError(''); setSuccess('')
+    try { const result = await schoolApi.mfaRegenerateRecoveryCodes(code); setRecoveryCodes(result.recovery_codes || []); setCode(''); setSuccess('Recovery codes regenerated. The previous codes no longer work.'); await load() } catch (err) { setError(err.message) } finally { setBusy(false) }
+  }
+
   if (!available) return null
   return <section className="data-panel">
     <div className="panel-title"><div><span>Account security</span><h2><ShieldCheck size={18} /> Two-factor authentication</h2></div></div>
@@ -46,6 +51,7 @@ export default function MfaSecurityCard() {
     {!status ? <span>Loading security status...</span> : status.enabled ? <>
       <div className="success-notice">Authenticator protection is enabled.</div>
       <label>Current authenticator code<input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={event => setCode(event.target.value)} /></label>
+      <button className="button button-small" disabled={busy || code.length !== 6} onClick={regenerate}><KeyRound size={16} /> Regenerate recovery codes</button>
       <button className="button button-small" disabled={busy || code.length !== 6} onClick={disable}><KeyRound size={16} /> Disable MFA</button>
     </> : setup ? <>
       <p><b>Secret:</b> <code>{setup.secret}</code></p>
