@@ -74,6 +74,10 @@ async function refreshAccessToken(refreshToken) {
 
 export const schoolApi = {
   schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values) }),
+  mfaStatus: () => api('/auth/mfa/status'),
+  mfaSetup: () => api('/auth/mfa/setup', { method: 'POST' }),
+  mfaEnable: (code) => api('/auth/mfa/enable', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaDisable: (code) => api('/auth/mfa/disable', { method: 'POST', body: JSON.stringify({ code }) }),
   publicContent: () => api('/public/content'),
   publicPlans: () => api('/public/plans'),
   updatePublicContent: (values) => api('/public/content', { method: 'PUT', body: values instanceof FormData ? values : toFormData(values) }),
