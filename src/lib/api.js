@@ -174,6 +174,8 @@ export const schoolApi = {
   markAttendance: (values) => api('/attendance/mark', { method: 'POST', body: JSON.stringify(values) }),
   sendNotification: (type, values) => api(`/notifications/${type}`, { method: 'POST', body: JSON.stringify(values) }),
   notificationHistory: (limit = 50) => api(`/notifications/all?limit=${limit}`),
+  notificationPreferences: () => api('/notifications/preferences'),
+  saveNotificationPreferences: (values) => api('/notifications/preferences', { method: 'PATCH', body: JSON.stringify(values) }),
   notificationsByUser: (userId) => api(`/notifications/user?user_id=${encodeURIComponent(userId)}`),
   notificationQueue: (status = 'all', page = 1, perPage = 25, channel = 'all', search = '') => api(`/notifications/queue?status=${encodeURIComponent(status)}&page=${page}&per_page=${perPage}&channel=${encodeURIComponent(channel)}&search=${encodeURIComponent(search)}`),
   notificationDeliveryAttempts: (notificationId) => api(`/notifications/queue/${notificationId}/attempts`),
