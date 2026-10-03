@@ -94,12 +94,9 @@ export default function DashboardPage({ session, onLogout, onProfileUpdated, lan
     }).catch(() => { if (active) setFeatureMatrix({}) })
     return () => { active = false }
   }, [isSuper])
-  const localPlanAllows = name => {
-    const premium = ['hostel', 'leave_and_payroll', 'scholarship_and_concession', 'inventory_purchase_management', 'academic_analytics'].includes(name)
-    const enterprise = ['expense_and_vendor_payments', 'smart_classroom_recording'].includes(name)
-    return premium ? ['premium', 'enterprise'].includes(schoolPlan) : enterprise ? schoolPlan === 'enterprise' : true
-  }
-  const serverEnabled = name => isSuper || (featureMatrix ? featureMatrix[name]?.enabled === true : localPlanAllows(name))
+  // The server entitlement response is authoritative. Until it arrives, hide
+  // gated modules instead of trusting stale/local plan metadata.
+  const serverEnabled = name => isSuper || (featureMatrix ? featureMatrix[name]?.enabled === true : false)
   const featureAccess={analytics:serverEnabled('academic_analytics'),payroll:serverEnabled('leave_and_payroll'),leave:serverEnabled('leave_and_payroll'),smartClassroom:serverEnabled('smart_classroom_recording'),hostel:serverEnabled('hostel'),inventory:serverEnabled('inventory_purchase_management'),scholarships:serverEnabled('scholarship_and_concession'),expenses:serverEnabled('expense_and_vendor_payments')}
   const schoolLogo = data?.data?.school?.logo || data?.data?.school?.logo_path || data?.school?.logo || data?.school?.logo_path || session?.school_logo || session?.user?.school_logo || ''
   const profileInitial = (user.name || 'U').slice(0, 1).toUpperCase()
