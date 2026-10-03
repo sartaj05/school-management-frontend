@@ -94,6 +94,7 @@ export const schoolApi = {
   revokeSession: (sessionId) => api(`/auth/sessions/${sessionId}`, { method: 'DELETE' }),
   superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
   dashboard: () => api('/dashboard/home'),
+  globalSearch: (query) => api(`/search?q=${encodeURIComponent(query)}`),
   featureAccess: () => api('/school/feature-access'),
   syncCheckpoint: () => api('/sync/checkpoint'),
   academicYears: () => api('/academic-years'),
