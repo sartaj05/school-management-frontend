@@ -18,4 +18,14 @@ test('exposes setup, enable and disable endpoints for account security', () => {
     assert.match(api, /mfaSetup: \(\) => api\('\/auth\/mfa\/setup'/)
     assert.match(api, /mfaEnable: \(code\) => api\('\/auth\/mfa\/enable'/)
     assert.match(api, /mfaDisable: \(code\) => api\('\/auth\/mfa\/disable'/)
+    assert.match(api, /mfaAdminReset: \(schoolId, userId\)/)
+})
+
+test('supports one-time MFA recovery codes in the login and security screens', () => {
+    const login = read('src/pages/LoginPage.jsx')
+    const card = read('src/components/MfaSecurityCard.jsx')
+    assert.match(login, /Authenticator or recovery code/)
+    assert.match(login, /one-time recovery code/)
+    assert.match(card, /recovery_codes/)
+    assert.match(card, /will not be shown again/)
 })
