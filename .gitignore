@@ -1,6 +1,7 @@
 # React build/dependency output
 node_modules/
 dist/
+test-results/
 
 # Local environment variables
 .env

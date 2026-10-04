@@ -15,6 +15,9 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
+If Playwright's browser download is unavailable, set
+`WEB_E2E_CHROMIUM_EXECUTABLE` to an installed Chrome or Chromium executable.
+
 The suite is intentionally skipped when credentials are not supplied, so a
 normal unit-test run never contacts a tenant. The React web client currently
 does not implement an offline mutation queue; its offline test therefore

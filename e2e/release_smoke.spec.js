@@ -38,7 +38,7 @@ test.describe('React browser release smoke', () => {
     await page.getByLabel(/Class/).fill('Grade 5')
     await page.getByLabel(/Section/).fill('A')
     await page.getByRole('button', { name: /register student/i }).click()
-    await expect(page.getByText(/student registered successfully/i)).toBeVisible()
+    await expect(page.getByText(/student created successfully/i)).toBeVisible()
     await expect(page.locator('.student-directory')).toContainText(admission)
   })
 

@@ -13,6 +13,9 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    ...(env.WEB_E2E_CHROMIUM_EXECUTABLE
+      ? { launchOptions: { executablePath: env.WEB_E2E_CHROMIUM_EXECUTABLE } }
+      : {}),
     ...devices['Desktop Chrome'],
   },
 })
