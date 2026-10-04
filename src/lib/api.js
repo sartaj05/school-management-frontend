@@ -108,6 +108,7 @@ export const schoolApi = {
   settings: () => api('/master/settings'),
   schools: () => api('/school/list'),
   superAdminSchools: (filters = {}) => api(`/super-admin/schools?${new URLSearchParams(filters)}`),
+  schoolAdminOptions: () => api('/super-admin/schools/admin-options'),
   school: (schoolId) => api(`/school/${schoolId}`),
   schoolSubscription: (schoolId) => api(`/super-admin/schools/${schoolId}/subscription`),
   updateSchoolSubscription: (schoolId, values) => api(`/super-admin/schools/${schoolId}/subscription`, { method: 'PATCH', body: JSON.stringify(values) }),

@@ -249,31 +249,127 @@ function NotificationHistory({rows,busy,reload}) { return <section className="da
 
 function UserNotificationLookup({defaultUserId}) { const [userId,setUserId]=useState(defaultUserId||''),[rows,setRows]=useState([]),[busy,setBusy]=useState(false),[searched,setSearched]=useState(false),[error,setError]=useState(''); async function submit(e){e.preventDefault();setBusy(true);setError('');try{const result=await schoolApi.notificationsByUser(userId);setRows(result.data||[]);setSearched(true)}catch(err){setError(err.message)}finally{setBusy(false)}} return <section className="data-panel user-notification-lookup"><div className="panel-title"><div><span>Individual inbox API</span><h2>Find notifications by user ID</h2></div></div><form onSubmit={submit}><label>User ID<input required type="number" min="1" value={userId} onChange={e=>setUserId(e.target.value)}/></label><button className="button button-small" disabled={busy}>{busy?'Searching...':'Search user notifications'}</button></form>{error&&<div className="form-error lookup-error">{error}</div>}{searched&&(rows.length?<div className="history-list">{rows.map(row=><article key={row.id}><span className={`delivery-dot ${row.status}`}/><div><b>{row.title}</b><p>{row.message}</p><small>{row.phone_number||'No phone'} - {row.created_at?new Date(row.created_at).toLocaleString():'Unknown time'}</small></div><span className={`delivery-status ${row.status}`}>{row.status}</span></article>)}</div>:<div className="lookup-empty">No notifications are linked to user ID {userId}.</div>)}</section> }
 
-function UserForm({user,onDone}) { const isSuper=user.role==='super_admin'; const roles=isSuper?['School Admin']:user.role==='School Admin'?['Teacher','Student','Parent','Hostel Staff','Accounts Staff','Driver']:[]; const [schools,setSchools]=useState([]),[values,setValues]=useState({name:'',email:'',mobile:'+91',school_domain:user.school_domain||'',password:'',role:roles[0]}),[busy,setBusy]=useState(false),[error,setError]=useState(''); useEffect(()=>{if(isSuper) schoolApi.schools().then(result=>setSchools(result.schools||[])).catch(err=>setError(err.message))},[isSuper]); const field=(name,value)=>setValues({...values,[name]:value}); async function submit(e){e.preventDefault();setBusy(true);setError('');try{const result=await schoolApi.createUser(values);onDone(result.message||'User account created successfully.')}catch(err){setError(err.message)}finally{setBusy(false)}} return <form className="editor-card" onSubmit={submit}><div className="editor-heading"><UsersRound/><div><h3>Create a user account</h3><p>Permissions are limited automatically by your logged-in role.</p></div></div><div className="field-grid three"><label>Full name *<input required value={values.name} onChange={e=>field('name',e.target.value)}/></label><label>Email *<input required type="email" value={values.email} onChange={e=>field('email',e.target.value)}/></label><label>Mobile *<input required value={values.mobile} onChange={e=>field('mobile',phoneValue(e.target.value))}/></label><label>School *{isSuper?<select required value={values.school_domain} onChange={e=>field('school_domain',e.target.value)}><option value="">Select a school</option>{schools.map(s=><option key={s.id} value={s.domain}>{s.schoolName}</option>)}</select>:<input value={values.school_domain} readOnly/>}</label><label>Role *<select value={values.role} onChange={e=>field('role',e.target.value)}>{roles.map(role=><option key={role}>{role}</option>)}</select></label><label>Temporary password *<input required type="password" minLength="8" value={values.password} onChange={e=>field('password',e.target.value)} placeholder="Minimum 8 characters"/></label></div>{values.email&&!emailOk(values.email)&&<div className="form-error">Enter a valid email address.</div>}{values.mobile&&values.mobile!=='+91'&&!phoneOk(values.mobile)&&<div className="form-error">Enter a valid Indian mobile number.</div>}{error&&<div className="form-error">{error}</div>}<button className="button button-small" disabled={busy}><Save size={16}/>{busy?'Creating account...':'Create user account'}</button></form> }
+function UserForm({ user, onDone }) {
+  const isSuper = user.role === 'super_admin'
+  const roles = isSuper
+    ? ['School Admin']
+    : user.role === 'School Admin'
+      ? ['Teacher', 'Student', 'Parent', 'Hostel Staff', 'Accounts Staff', 'Driver']
+      : []
+  const [schools, setSchools] = useState([])
+  const [loadingSchools, setLoadingSchools] = useState(isSuper)
+  const [values, setValues] = useState({
+    name: '',
+    email: '',
+    mobile: '+91',
+    school_domain: user.school_domain || '',
+    password: '',
+    role: roles[0],
+  })
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
-function SchoolForm({onDone}) {
-  const [schools,setSchools]=useState([])
-  const [values,setValues]=useState({schoolName:'',domain:'',adminName:'',adminEmail:'',adminPassword:'',adminPasswordConfirm:'',planSetup:'Standard',logo:null})
-  const [busy,setBusy]=useState(false)
-  const [error,setError]=useState('')
-  useEffect(()=>{schoolApi.schools().then(result=>setSchools(result.schools||[])).catch(()=>setSchools([]))},[])
-  const domains=new Set(schools.map(s=>(s.domain||'').toLowerCase()))
-  const suggested=values.domain&&domains.has(values.domain)?recommendedDomain(values.domain,domains):''
-  const field=(name,value)=>setValues({...values,[name]:name==='domain'?domainValue(value):value})
-  async function submit(e){
-    e.preventDefault()
-    setError('')
-    if(values.adminPassword!==values.adminPasswordConfirm){setError('Administrator password and confirmation do not match.');return}
-    if(values.adminPassword.length<8){setError('Administrator password must contain at least 8 characters.');return}
-    setBusy(true)
-    try{
-      const result=await schoolApi.createSchool(values)
-      const credentials=result.temporaryPassword ? ' Temporary password: ' + result.temporaryPassword : ' Admin login: ' + values.adminName + ' (' + values.adminEmail + ').'
-      onDone((result.message||'School onboarded successfully.') + credentials + ' The administrator must change the password on first login.')
-    }catch(err){setError(err.message)}finally{setBusy(false)}
+  useEffect(() => {
+    if (!isSuper) return undefined
+    let cancelled = false
+    setLoadingSchools(true)
+    schoolApi.schoolAdminOptions()
+      .then(result => { if (!cancelled) setSchools(result.schools || []) })
+      .catch(err => { if (!cancelled) setError(err.message) })
+      .finally(() => { if (!cancelled) setLoadingSchools(false) })
+    return () => { cancelled = true }
+  }, [isSuper])
+
+  const field = (name, value) => setValues(current => ({ ...current, [name]: value }))
+  const selectSchool = domain => {
+    const school = schools.find(item => item.domain === domain)
+    setValues(current => ({
+      ...current,
+      school_domain: domain,
+      email: school?.adminEmail || '',
+    }))
   }
-  return <form className="editor-card" onSubmit={submit}><div className="editor-heading"><School/><div><h3>Onboard a school</h3><p>Create its tenant workspace and register it in the central system.</p></div></div><div className="field-grid"><label>School name *<input required value={values.schoolName} onChange={e=>field('schoolName',e.target.value)} placeholder="Green Valley School"/></label><label>Unique domain *<input required value={values.domain} onChange={e=>field('domain',e.target.value.toLowerCase().replace(/\s+/g,'-'))} placeholder="green-valley"/><small className="field-help">{suggested?'Domain already exists. Recommended: '+suggested:'Used by staff when signing in.'}</small>{suggested&&<button type="button" className="text-action" onClick={()=>field('domain',suggested)}>Use recommended domain</button>}</label><label>Administrator name *<input required value={values.adminName} onChange={e=>field('adminName',e.target.value)} placeholder="School Principal"/></label><label>Administrator email *<input required type="email" value={values.adminEmail} onChange={e=>field('adminEmail',e.target.value)} placeholder="admin@school.com"/></label><label>Administrator password *<input required type="password" minLength="8" value={values.adminPassword} onChange={e=>field('adminPassword',e.target.value)} autoComplete="new-password" placeholder="At least 8 characters"/></label><label>Confirm administrator password *<input required type="password" minLength="8" value={values.adminPasswordConfirm} onChange={e=>field('adminPasswordConfirm',e.target.value)} autoComplete="new-password"/></label>{values.adminEmail&&!emailOk(values.adminEmail)&&<div className="form-error wide">Enter a valid administrator email.</div>}<label>Plan *<select value={values.planSetup} onChange={e=>field('planSetup',e.target.value)}><option>Standard</option><option>Premium</option><option>Enterprise</option><option>Trial</option></select></label><label className="wide">School logo *<input required type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={e=>field('logo',e.target.files[0])}/><small className="field-help">PNG, JPG or JPEG.</small></label></div>{error&&<div className="form-error">{error}</div>}<button className="button button-small" disabled={busy}><Save size={16}/>{busy?'Creating school...':'Onboard school'}</button></form>
+
+  async function submit(event) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      const result = await schoolApi.createUser(values)
+      onDone(result.message || 'User account created successfully.')
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return <form className="editor-card" onSubmit={submit}>
+    <div className="editor-heading"><UsersRound /><div><h3>{isSuper ? 'Create a School Admin' : 'Create a user account'}</h3><p>{isSuper ? 'Choose a school. Its saved login email will be used for this Admin account.' : 'Permissions are limited automatically by your logged-in role.'}</p></div></div>
+    <div className="field-grid three">
+      {isSuper ? <>
+        <label>School *<select required value={values.school_domain} onChange={event => selectSchool(event.target.value)}><option value="">Select a school</option>{schools.map(school => <option key={school.id} value={school.domain}>{school.schoolName}</option>)}</select></label>
+        <label>School login email *<input required type="email" value={values.email} readOnly placeholder="Select a school first" /></label>
+        <label>Admin full name *<input required value={values.name} onChange={event => field('name', event.target.value)} /></label>
+        <label>Mobile *<input required value={values.mobile} onChange={event => field('mobile', phoneValue(event.target.value))} /></label>
+        <label>Role<input value="School Admin" readOnly /></label>
+        <label>Temporary password *<input required type="password" minLength="8" value={values.password} onChange={event => field('password', event.target.value)} placeholder="Minimum 8 characters" autoComplete="new-password" /><small className="field-help">The Admin will change it at first login.</small></label>
+      </> : <>
+        <label>Full name *<input required value={values.name} onChange={event => field('name', event.target.value)} /></label>
+        <label>Email *<input required type="email" value={values.email} onChange={event => field('email', event.target.value)} /></label>
+        <label>Mobile *<input required value={values.mobile} onChange={event => field('mobile', phoneValue(event.target.value))} /></label>
+        <label>School *<input value={values.school_domain} readOnly /></label>
+        <label>Role *<select value={values.role} onChange={event => field('role', event.target.value)}>{roles.map(role => <option key={role}>{role}</option>)}</select></label>
+        <label>Temporary password *<input required type="password" minLength="8" value={values.password} onChange={event => field('password', event.target.value)} placeholder="Minimum 8 characters" /></label>
+      </>}
+    </div>
+    {isSuper && !loadingSchools && schools.length === 0 && <div className="field-help">No school is waiting for an Admin. Add a school with its login email first.</div>}
+    {values.email && !emailOk(values.email) && <div className="form-error">Enter a valid email address.</div>}
+    {values.mobile && values.mobile !== '+91' && !phoneOk(values.mobile) && <div className="form-error">Enter a valid Indian mobile number.</div>}
+    {error && <div className="form-error">{error}</div>}
+    <button className="button button-small" disabled={busy || loadingSchools || (isSuper && schools.length === 0)}><Save size={16} />{busy ? 'Creating account...' : isSuper ? 'Create School Admin' : 'Create user account'}</button>
+  </form>
 }
+
+function SchoolForm({ onDone }) {
+  const [schools, setSchools] = useState([])
+  const [values, setValues] = useState({ schoolName: '', domain: '', adminEmail: '', planSetup: 'Standard', logo: null })
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  useEffect(() => { schoolApi.schools().then(result => setSchools(result.schools || [])).catch(() => setSchools([])) }, [])
+  const domains = new Set(schools.map(school => (school.domain || '').toLowerCase()))
+  const suggested = values.domain && domains.has(values.domain) ? recommendedDomain(values.domain, domains) : ''
+  const field = (name, value) => setValues(current => ({ ...current, [name]: name === 'domain' ? domainValue(value) : value }))
+
+  async function submit(event) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    try {
+      const result = await schoolApi.createSchool(values)
+      onDone(`${result.message || 'School created successfully.'} Next, create its School Admin from User Management.`)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return <form className="editor-card" onSubmit={submit}>
+    <div className="editor-heading"><School /><div><h3>Add a school</h3><p>Save the school details and login email now. Create its Admin account separately afterward.</p></div></div>
+    <div className="field-grid">
+      <label>School name *<input required value={values.schoolName} onChange={event => field('schoolName', event.target.value)} placeholder="Green Valley School" /></label>
+      <label>Unique domain *<input required value={values.domain} onChange={event => field('domain', event.target.value.toLowerCase().replace(/\s+/g, '-'))} placeholder="green-valley" /><small className="field-help">{suggested ? `Domain already exists. Recommended: ${suggested}` : 'Used by staff when signing in.'}</small>{suggested && <button type="button" className="text-action" onClick={() => field('domain', suggested)}>Use recommended domain</button>}</label>
+      <label>School login email *<input required type="email" value={values.adminEmail} onChange={event => field('adminEmail', event.target.value)} placeholder="office@school.com" /><small className="field-help">This email becomes the School Admin login email.</small></label>
+      <label>Plan *<select value={values.planSetup} onChange={event => field('planSetup', event.target.value)}><option>Standard</option><option>Premium</option><option>Enterprise</option><option>Trial</option></select></label>
+      <label className="wide">School logo *<input required type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={event => field('logo', event.target.files[0])} /><small className="field-help">PNG, JPG or JPEG.</small></label>
+    </div>
+    {values.adminEmail && !emailOk(values.adminEmail) && <div className="form-error">Enter a valid school login email.</div>}
+    {error && <div className="form-error">{error}</div>}
+    <button className="button button-small" disabled={busy}><Save size={16} />{busy ? 'Creating school...' : 'Add school'}</button>
+  </form>
+}
+
 function ClassForm({onDone}) { const [values,setValues]=useState({class_name:'',description:''}),[busy,setBusy]=useState(false),[error,setError]=useState(''); async function submit(e){e.preventDefault();setBusy(true);setError('');try{const result=await schoolApi.createClass(values);onDone(result.message||'Class created successfully.')}catch(err){setError(err.message)}finally{setBusy(false)}} return <form className="editor-card" onSubmit={submit}><div className="editor-heading"><BookOpen/><div><h3>Create a class</h3><p>Add a class to the current school workspace.</p></div></div><div className="field-grid"><label>Class name<input required value={values.class_name} onChange={e=>setValues({...values,class_name:e.target.value})} placeholder="Example: Grade 8"/></label><label>Description<input value={values.description} onChange={e=>setValues({...values,description:e.target.value})} placeholder="Optional class description"/></label></div>{error&&<div className="form-error">{error}</div>}<button className="button button-small" disabled={busy}><Save size={16}/>{busy?'Creating...':'Create class'}</button></form> }
 
 function StudentForm({onDone}) { const empty={admission_no:'',first_name:'',last_name:'',gender:'',dob:'',mobile:'',email:'',father_name:'',mother_name:'',class_name:'',section:'',address:'',photo:null}; const [values,setValues]=useState(empty),[busy,setBusy]=useState(false),[error,setError]=useState(''); const field=(name,value)=>setValues({...values,[name]:value}); async function submit(e){e.preventDefault();setBusy(true);setError('');try{const result=await schoolApi.createStudent(values);onDone(result.message||'Student registered successfully.')}catch(err){setError(err.message)}finally{setBusy(false)}} return <form className="editor-card" onSubmit={submit}><div className="editor-heading"><UsersRound/><div><h3>Register a student</h3><p>Fields marked with * are required by the Flask API.</p></div></div><div className="field-grid three"><label>Admission number *<input required value={values.admission_no} onChange={e=>field('admission_no',e.target.value)} /></label><label>First name *<input required value={values.first_name} onChange={e=>field('first_name',e.target.value)} /></label><label>Last name<input value={values.last_name} onChange={e=>field('last_name',e.target.value)} /></label><label>Class *<input required value={values.class_name} onChange={e=>field('class_name',e.target.value)} placeholder="Grade 8" /></label><label>Section *<input required value={values.section} onChange={e=>field('section',e.target.value)} placeholder="A" /></label><label>Gender<select value={values.gender} onChange={e=>field('gender',e.target.value)}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></label><label>Date of birth<input type="date" value={values.dob} onChange={e=>field('dob',e.target.value)} /></label><label>Mobile<input value={values.mobile} onChange={e=>field('mobile',phoneValue(e.target.value))} /></label><label>Email<input type="email" value={values.email} onChange={e=>field('email',e.target.value)} /></label>{values.mobile&&values.mobile!=='+91'&&!phoneOk(values.mobile)&&<div className="form-error">Enter a valid Indian mobile number.</div>}{values.email&&!emailOk(values.email)&&<div className="form-error">Enter a valid email address.</div>}<label>Father name<input value={values.father_name} onChange={e=>field('father_name',e.target.value)} /></label><label>Mother name<input value={values.mother_name} onChange={e=>field('mother_name',e.target.value)} /></label><label>Photo<input type="file" accept="image/*" onChange={e=>field('photo',e.target.files[0])} /></label><label className="wide">Address<textarea value={values.address} onChange={e=>field('address',e.target.value)} rows="2" /></label></div>{error&&<div className="form-error">{error}</div>}<button className="button button-small" disabled={busy}><Save size={16}/>{busy?'Registering...':'Register student'}</button></form> }
