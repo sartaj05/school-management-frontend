@@ -98,7 +98,7 @@ export default function DashboardPage({ session, onLogout, onProfileUpdated, lan
   const t = value => translateUi(language, value)
   const allowedPages = rolePermissions || localRolePages(user.role)
   const canOpen = useCallback(key => allowedPages.includes(key), [allowedPages])
-  useEffect(() => { if (!canOpen(page)) setPage('overview') }, [canOpen, page])
+  useEffect(() => { if (!canOpen(page)) setPage('overview') }, [canOpen, page, setPage])
   const schoolPlan=String(user.school_plan||user.plan_setup||session?.school_plan||session?.plan_setup||resolvedPlan||data?.data?.user?.school_plan||'standard').trim().toLowerCase()
   const sessionPlanKnown=isSuper||Boolean(user.school_plan||user.plan_setup||session?.school_plan||session?.plan_setup)
   useEffect(() => {

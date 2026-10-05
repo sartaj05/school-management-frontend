@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { isWithinJavaScriptBudget, RELEASE_BUDGETS } from '../src/lib/releaseCertification.js'
 
 const source = file => readFileSync(new URL('../' + file, import.meta.url), 'utf8')
@@ -23,7 +23,12 @@ test('release budgets reject an oversized initial bundle', () => {
 })
 
 test('release certification includes tenant isolation and mobile handoff evidence', () => {
-  const guide = source('../Flak-API---For-School-Management-System-app/docs/RELEASE_CERTIFICATION.md')
+  const guidePaths = [
+    new URL('../Flak-API---For-School-Management-System-app/docs/RELEASE_CERTIFICATION.md', import.meta.url),
+    new URL('../../Flak-API---For-School-Management-System-app/docs/RELEASE_CERTIFICATION.md', import.meta.url),
+  ]
+  const guidePath = guidePaths.find(existsSync) || guidePaths[0]
+  const guide = readFileSync(guidePath, 'utf8')
   assert.match(guide, /tenant-isolation/)
   assert.match(guide, /Flutter widget and API contract tests/)
 })
