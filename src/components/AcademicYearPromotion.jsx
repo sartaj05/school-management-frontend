@@ -2,7 +2,8 @@ import { Archive, GraduationCap, History, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 
-export default function AcademicYearPromotion({ canManage: explicitCanManage }) {
+export default function AcademicYearPromotion({ canManage: explicitCanManage, initialData }) {
+  const initialYears = Array.isArray(initialData?.data) ? initialData.data : []
   const sessionRole = (() => {
     try {
       const session = JSON.parse(sessionStorage.getItem('school_session') || '{}')
@@ -10,10 +11,10 @@ export default function AcademicYearPromotion({ canManage: explicitCanManage }) 
     } catch { return '' }
   })()
   const canManage = explicitCanManage ?? sessionRole === 'School Admin'
-  const [years, setYears] = useState([])
+  const [years, setYears] = useState(initialYears)
   const [form, setForm] = useState({ from_year: '', to_year: '', promotions: [] })
   const [newYear, setNewYear] = useState({ year_label: '', starts_on: '', ends_on: '' })
-  const [enrollmentYear, setEnrollmentYear] = useState('')
+  const [enrollmentYear, setEnrollmentYear] = useState(() => initialYears.find(year => year.status === 'active')?.year_label || initialYears[0]?.year_label || '')
   const [enrollments, setEnrollments] = useState([])
   const [historyStudentId, setHistoryStudentId] = useState('')
   const [historyRows, setHistoryRows] = useState([])
@@ -39,11 +40,6 @@ export default function AcademicYearPromotion({ canManage: explicitCanManage }) 
       setEnrollments(result.data || [])
     } catch (requestError) { setError(requestError.message) }
   }
-
-  useEffect(() => {
-    const timer = setTimeout(load, 0)
-    return () => clearTimeout(timer)
-  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => loadEnrollments(enrollmentYear), 0)

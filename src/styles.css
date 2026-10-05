@@ -551,3 +551,50 @@ input,select,textarea{max-width:100%}
   .table-wrap th,.table-wrap td{white-space:nowrap}
   .admission-modal-backdrop{padding:10px}
 }
+
+/* Consistent spacing for dense portal panels and input rows. */
+.document-exports{display:grid;gap:18px;min-width:0}
+.document-exports>.people-hero,.document-exports>.editor-card,.document-exports>.data-panel{margin:0;min-width:0}
+.export-card{display:grid;grid-template-columns:minmax(220px,360px) minmax(0,max-content);align-items:end;gap:16px}
+.export-card>label{display:grid;gap:6px;min-width:0;color:#536e81;font-size:11px;font-weight:700}
+.export-card input{width:100%;min-height:42px;margin-top:0;border:1px solid #d5e5ee;border-radius:9px;padding:10px 11px;background:#fbfdff;color:#1d3a50}
+.export-card>.button{min-height:42px;white-space:normal}
+.academic-year-promotion>.field-help{margin:0;padding:12px 28px 0}
+.academic-year-promotion>.field-grid{margin:0;padding:18px 28px 0}
+.academic-year-promotion>.academic-year-table{margin:16px 28px}
+.academic-year-promotion>.academic-history{margin:18px 28px;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fff}
+.academic-year-promotion>.academic-history>.panel-title{margin:0 0 16px;padding:18px 20px}
+.academic-year-promotion>.academic-history>.field-grid{grid-template-columns:minmax(0,1fr) minmax(180px,auto);align-items:end;margin:0;padding:0 20px 18px}
+.academic-year-promotion>.academic-history>.field-grid button{min-height:42px}
+.academic-year-promotion>.academic-history>.field-help{margin:0;padding:0 20px 18px}
+.academic-year-promotion>.academic-history>.table-wrap{margin:0}
+.academic-year-promotion>.field-help:last-child{padding-bottom:18px}
+.fee-collection-requests>form.field-grid{margin:0;padding:22px 28px 24px;border-bottom:1px solid #e2e8f0}
+.fee-collection-requests>form.field-grid>*{min-width:0}
+.fee-collection-requests>form.field-grid label{display:grid;gap:6px}
+.fee-collection-requests>form.field-grid input,.fee-collection-requests>form.field-grid select,.fee-collection-requests>form.field-grid textarea{width:100%;min-width:0;min-height:42px;margin:0}
+.fee-collection-requests>.table-wrap{border-top:1px solid #e2e8f0}
+.calendar-event-grid{min-width:0}
+.calendar-event-grid>.empty-state{grid-column:1/-1;margin:0;padding:52px 20px;border:1px solid #e2e8f0;border-radius:18px;background:#fff;box-shadow:0 4px 14px rgba(15,23,42,.045)}
+@media(max-width:720px){
+  .document-exports{gap:14px}
+  .export-card{grid-template-columns:minmax(0,1fr);gap:12px}
+  .export-card>.button{width:100%;justify-content:center}
+  .fee-collection-requests>form.field-grid{grid-template-columns:minmax(0,1fr)}
+  .academic-year-promotion>.field-help{padding-inline:18px}
+  .academic-year-promotion>.field-grid{padding-inline:18px}
+  .academic-year-promotion>.academic-year-table{margin-inline:18px}
+  .academic-year-promotion>.academic-history{margin-inline:18px}
+  .academic-year-promotion>.academic-history>.panel-title{padding-inline:16px}
+  .academic-year-promotion>.academic-history>.field-grid{grid-template-columns:minmax(0,1fr);padding-inline:16px}
+  .academic-year-promotion>.academic-history>.field-grid button{width:100%;justify-content:center}
+  .academic-year-promotion>.academic-history>.field-help{padding-inline:16px}
+  .fee-collection-requests>form.field-grid{padding:18px}
+}
+@media(max-width:420px){
+  .academic-year-promotion>.academic-history{margin-inline:12px}
+  .academic-year-promotion>.academic-history>.panel-title{padding:16px 14px}
+  .academic-year-promotion>.academic-history>.field-grid{padding-inline:14px}
+  .academic-year-promotion>.academic-history>.field-help{padding-inline:14px}
+  .fee-collection-requests>form.field-grid{padding:16px 14px}
+}
