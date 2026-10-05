@@ -2,15 +2,10 @@ import { AlertTriangle, Bus, CheckCircle2, MapPin, Navigation, Plus, RefreshCw, 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import { isValidIndiaMobile as phoneOk, normalizeIndiaMobile as phoneValue } from '../lib/indiaMobile'
 
 const today = new Date().toISOString().slice(0, 10)
-const phoneValue = value => {
-  const digits = String(value || '').replace(/\D/g, '')
-  const normalized = digits.startsWith('91') ? digits.slice(0, 12) : `91${digits.slice(0, 10)}`
-  return normalized.length <= 2 ? '+91' : `+${normalized}`
-}
-const phoneOk = value => /^\+91[6-9]\d{9}$/.test(value || '')
-const emptyVehicle = { vehicle_no: '', registration_no: '', vehicle_type: 'bus', capacity: 40, driver_name: '', driver_user_id: '', driver_mobile: '+91', driver_license: '', helper_name: '', helper_mobile: '+91', status: 'active' }
+const emptyVehicle = { vehicle_no: '', registration_no: '', vehicle_type: 'bus', capacity: 40, driver_name: '', driver_user_id: '', driver_mobile: '+91', driver_license: '', helper_name: '', helper_mobile: '', status: 'active' }
 const emptyRoute = { name: '', route_code: '', vehicle_id: '', direction: 'both', start_time: '', end_time: '', status: 'active' }
 const emptyStop = { route_id: '', stop_name: '', stop_order: 1, pickup_time: '', drop_time: '', latitude: '', longitude: '' }
 const emptyAssignment = { student_id: '', route_id: '', stop_id: '', pickup_required: true, drop_required: true, start_date: today, end_date: '', notes: '' }
@@ -145,7 +140,7 @@ export default function TransportManagement({ user }) {
 
   function editVehicle(item) {
     setEditingVehicle(item.id)
-    setVehicleForm({ ...emptyVehicle, ...item, helper_mobile: item.helper_mobile || '+91' })
+    setVehicleForm({ ...emptyVehicle, ...item, helper_mobile: item.helper_mobile || '' })
   }
 
   function editRoute(item) {
@@ -324,15 +319,15 @@ export default function TransportManagement({ user }) {
           <label>Vehicle type<select value={vehicleForm.vehicle_type} onChange={e => changeVehicle('vehicle_type', e.target.value)}><option value="bus">Bus</option><option value="van">Van</option><option value="auto">Auto</option></select></label>
           <label>Driver name *<input required value={vehicleForm.driver_name} onChange={e => changeVehicle('driver_name', e.target.value)}/></label>
           <label>Driver login<select value={vehicleForm.driver_user_id || ''} onChange={e => changeVehicle('driver_user_id', e.target.value)}><option value="">No Driver login</option>{drivers.map(item => <option key={item.id} value={item.id}>{item.name} / {item.email}</option>)}</select></label>
-          <label>Driver mobile *<input required value={vehicleForm.driver_mobile} onChange={e => changeVehicle('driver_mobile', phoneValue(e.target.value))}/></label>
+          <label>Driver mobile *<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Enter 10 digits starting with 6, 7, 8, or 9." required value={vehicleForm.driver_mobile} onChange={e => changeVehicle('driver_mobile', phoneValue(e.target.value))}/></label>
           <label>Driver license<input value={vehicleForm.driver_license || ''} onChange={e => changeVehicle('driver_license', e.target.value)}/></label>
           <label>Helper name<input value={vehicleForm.helper_name || ''} onChange={e => changeVehicle('helper_name', e.target.value)}/></label>
-          <label>Helper mobile<input value={vehicleForm.helper_mobile || ''} onChange={e => changeVehicle('helper_mobile', phoneValue(e.target.value))}/></label>
+          <label>Helper mobile<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Optional. If entered, use 10 digits starting with 6, 7, 8, or 9." value={vehicleForm.helper_mobile || ''} onChange={e => changeVehicle('helper_mobile', phoneValue(e.target.value))}/></label>
           <label>Status<select value={vehicleForm.status} onChange={e => changeVehicle('status', e.target.value)}><option value="active">Active</option><option value="maintenance">Maintenance</option><option value="inactive">Inactive</option></select></label>
         </div>
-        {vehicleForm.driver_mobile && vehicleForm.driver_mobile !== '+91' && !phoneOk(vehicleForm.driver_mobile) && <div className="form-error">Enter a valid Indian driver mobile number.</div>}
-        {vehicleForm.helper_mobile && vehicleForm.helper_mobile !== '+91' && !phoneOk(vehicleForm.helper_mobile) && <div className="form-error">Enter a valid Indian helper mobile number.</div>}
-        <div className="student-row-actions"><button className="button button-small" disabled={busy}><Save size={16}/>{busy ? 'Saving...' : editingVehicle ? 'Update vehicle' : 'Add vehicle'}</button>{editingVehicle && <button type="button" onClick={() => { setEditingVehicle(null); setVehicleForm(emptyVehicle) }}>Cancel</button>}</div>
+        {vehicleForm.driver_mobile && !phoneOk(vehicleForm.driver_mobile) && <div className="form-error">Enter a valid Indian driver mobile number: 10 digits starting with 6, 7, 8, or 9.</div>}
+        {vehicleForm.helper_mobile && !phoneOk(vehicleForm.helper_mobile) && <div className="form-error">Enter a valid Indian helper mobile number: 10 digits starting with 6, 7, 8, or 9.</div>}
+        <div className="student-row-actions"><button className="button button-small" disabled={busy||!phoneOk(vehicleForm.driver_mobile)||Boolean(vehicleForm.helper_mobile&&!phoneOk(vehicleForm.helper_mobile))}><Save size={16}/>{busy ? 'Saving...' : editingVehicle ? 'Update vehicle' : 'Add vehicle'}</button>{editingVehicle && <button type="button" onClick={() => { setEditingVehicle(null); setVehicleForm(emptyVehicle) }}>Cancel</button>}</div>
       </form>
 
       <form className="editor-card" onSubmit={saveRoute}>

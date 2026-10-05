@@ -51,12 +51,14 @@ export default function NotificationPreferences() {
   return <section className="data-panel notification-preferences">
     <div className="panel-title"><div><span>Personal delivery settings</span><h2>Automated alert preferences</h2></div><BellRing /></div>
     <p className="field-help">Choose whether attendance and fee alerts are generated for your account and which delivery channel should be preferred.</p>
-    {busy ? <div className="history-loading">Loading notification preferences…</div> : <form className="field-grid three" onSubmit={save}>
+    {busy ? <div className="history-loading">Loading notification preferences…</div> : <form className="notification-preferences-form" onSubmit={save}>
+      <div className="notification-toggle-grid">
       <label className="accessibility-check"><input type="checkbox" checked={preferences.enabled} onChange={event => update('enabled', event.target.checked)} />Receive automated alerts</label>
       <label className="accessibility-check"><input type="checkbox" checked={preferences.attendance_alerts} onChange={event => update('attendance_alerts', event.target.checked)} />Attendance alerts</label>
       <label className="accessibility-check"><input type="checkbox" checked={preferences.fee_alerts} onChange={event => update('fee_alerts', event.target.checked)} />Fee due and overdue alerts</label>
+      </div>
       <label>Preferred delivery channel<select value={preferences.channel} onChange={event => update('channel', event.target.value)}><option value="whatsapp">WhatsApp</option><option value="email">Email</option><option value="push">Mobile push</option><option value="portal">Portal inbox</option></select></label>
-      <div className="page-actions"><button className="button button-small" disabled={saving}><Save size={16} />{saving ? 'Saving…' : 'Save preferences'}</button></div>
+      <div className="notification-preferences-actions"><button className="button button-small" disabled={saving}><Save size={16} />{saving ? 'Saving…' : 'Save preferences'}</button></div>
     </form>}
     {error && <div className="form-error" role="alert">{error}</div>}
     {notice && <div className="success-notice" role="status">{notice}</div>}

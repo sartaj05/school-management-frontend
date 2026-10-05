@@ -2,14 +2,9 @@ import { CheckCircle2, Search, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import PublicLayout from '../components/PublicLayout'
 import { schoolApi } from '../lib/api'
+import { isValidIndiaMobile as phoneOk, normalizeIndiaMobile as phoneValue } from '../lib/indiaMobile'
 import { translateUi } from '../lib/i18n'
 
-const phoneValue = value => {
-  const digits = String(value || '').replace(/\D/g, '')
-  const normalized = digits.startsWith('91') ? digits.slice(0, 12) : '91' + digits.slice(0, 10)
-  return normalized.length <= 2 ? '+91' : '+' + normalized
-}
-const phoneOk = value => /^\+91[6-9]\d{9}$/.test(value || '')
 const emailOk = value => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value || '')
 
 export default function AdmissionPage({ language = 'en' }) {
@@ -77,7 +72,7 @@ export default function AdmissionPage({ language = 'en' }) {
         <label>{t('Date of birth')}<input type="date" value={values.dob} onChange={e => field('dob', e.target.value)} /></label>
         <label>{t('Guardian name')} *<input required value={values.guardian_name} onChange={e => field('guardian_name', e.target.value)} /></label>
         <label>{t('Relationship')}<select value={values.guardian_relation} onChange={e => field('guardian_relation', e.target.value)}><option value="father">{t('Father')}</option><option value="mother">{t('Mother')}</option><option value="guardian">{t('Guardian')}</option><option value="other">{t('Other')}</option></select></label>
-        <label>{t('Guardian mobile')} *<input required value={values.guardian_mobile} onChange={e => field('guardian_mobile', e.target.value)} /></label>
+        <label>{t('Guardian mobile')} *<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Enter 10 digits starting with 6, 7, 8, or 9." required value={values.guardian_mobile} onChange={e => field('guardian_mobile', e.target.value)} /></label>
         <label>{t('Guardian email')}<input type="email" value={values.guardian_email} onChange={e => field('guardian_email', e.target.value)} /></label>
         {values.guardian_mobile && values.guardian_mobile !== '+91' && !phoneOk(values.guardian_mobile) && <div className="form-error">{t('Enter a valid Indian mobile number.')}</div>}
         {values.guardian_email && !emailOk(values.guardian_email) && <div className="form-error">{t('Enter a valid email address.')}</div>}
@@ -85,7 +80,7 @@ export default function AdmissionPage({ language = 'en' }) {
         <label className="wide">{t('Address')}<textarea rows="3" value={values.address} onChange={e => field('address', e.target.value)} /></label>
       </div>
       {error && <div className="form-error">{error}</div>}
-      <button className="button" disabled={busy}><Send size={17} />{busy ? t('Submitting...') : t('Submit application')}</button>
+      <button className="button" disabled={busy || !phoneOk(values.guardian_mobile)}><Send size={17} />{busy ? t('Submitting...') : t('Submit application')}</button>
     </form>}
 
     <section className="editor-card admission-status-tracker">
@@ -93,8 +88,8 @@ export default function AdmissionPage({ language = 'en' }) {
       <form className="field-grid three" onSubmit={checkStatus}>
         <label>{t('School')} *<select required value={trackValues.school_domain} onChange={e => trackField('school_domain', e.target.value)}><option value="">{t('Select school')}</option>{schools.map(s => <option key={s.id} value={s.domain}>{s.schoolName}</option>)}</select></label>
         <label>{t('Application number')} *<input required value={trackValues.application_no} onChange={e => trackField('application_no', e.target.value.toUpperCase())} placeholder="ADM-1234ABCD" /></label>
-        <label>{t('Guardian mobile')} *<input required value={trackValues.guardian_mobile} onChange={e => trackField('guardian_mobile', e.target.value)} /></label>
-        <div><button className="button button-small" disabled={trackBusy}><Search size={16} />{trackBusy ? t('Checking...') : t('Check status')}</button></div>
+        <label>{t('Guardian mobile')} *<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Enter 10 digits starting with 6, 7, 8, or 9." required value={trackValues.guardian_mobile} onChange={e => trackField('guardian_mobile', e.target.value)} /></label>
+        <div><button className="button button-small" disabled={trackBusy || !phoneOk(trackValues.guardian_mobile)}><Search size={16} />{trackBusy ? t('Checking...') : t('Check status')}</button></div>
       </form>
       {trackError && <div className="form-error">{trackError}</div>}
       {tracked && <div className="admission-status-result"><b>{tracked.student_first_name} {tracked.student_last_name || ''}</b><span>{tracked.school_name} · {tracked.applying_class}</span><strong>{String(tracked.status || '').replaceAll('_', ' ')}</strong><small>{t('Application number:')} {tracked.application_no}</small></div>}

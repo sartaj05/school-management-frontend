@@ -1,18 +1,13 @@
 import { Banknote, CheckCircle2, CreditCard, Plus, Receipt, RefreshCw, Save, Tag, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { normalizeIndiaMobile as phoneValue } from '../lib/indiaMobile'
 
 const today = new Date().toISOString().slice(0, 10)
-const emptyVendor = { name: '', contact_person: '', mobile: '+91', email: '', gst_number: '', pan_number: '', address: '' }
+const emptyVendor = { name: '', contact_person: '', mobile: '', email: '', gst_number: '', pan_number: '', address: '' }
 const emptyCategory = { name: '', budget_amount: 0, description: '' }
 const emptyBill = { bill_number: `BILL-${today.replaceAll('-', '')}`, vendor_id: '', category_id: '', bill_date: today, due_date: '', amount: '', tax_amount: 0, purpose: '' }
 const emptyPayment = { bill_id: '', payment_date: today, amount: '', payment_mode: 'bank_transfer', reference_no: '', notes: '' }
-
-const phoneValue = value => {
-  const digits = String(value || '').replace(/\D/g, '')
-  const normalized = digits.startsWith('91') ? digits.slice(0, 12) : `91${digits.slice(0, 10)}`
-  return normalized.length <= 2 ? '+91' : `+${normalized}`
-}
 
 export default function ExpenseManagement() {
   const [summary, setSummary] = useState({})

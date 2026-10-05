@@ -2,6 +2,7 @@ import { Edit3, Eye, Save, Trash2, UserRound, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import { isValidIndiaMobile, normalizeIndiaMobile } from '../lib/indiaMobile'
 
 const editableFields = ['admission_no', 'first_name', 'last_name', 'gender', 'dob', 'mobile', 'email', 'father_name', 'mother_name', 'class_name', 'section', 'address']
 
@@ -30,7 +31,12 @@ export default function StudentDirectory({ rows, canDelete, reload }) {
   }
 
   async function save(event) {
-    event.preventDefault(); setBusy(true); setError(''); setMessage('')
+    event.preventDefault()
+    if (selected.mobile && !isValidIndiaMobile(selected.mobile)) {
+      setError('Enter a valid Indian mobile number: 10 digits starting with 6, 7, 8, or 9.')
+      return
+    }
+    setBusy(true); setError(''); setMessage('')
     try {
       const values = Object.fromEntries(editableFields.map(field => [field, selected[field] || '']))
       const result = await schoolApi.updateStudent(selected.id, values)
@@ -57,7 +63,29 @@ function StudentDetails({ student }) {
 }
 
 function StudentEditForm({ student, students, classes, field, save, busy, error }) {
-  const [addingSection, setAddingSection] = useState(false)
-  const sections = [...new Set(students.filter(item => item.class_name === student.class_name).map(item => (item.section || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
-  return <form className="student-edit-form" onSubmit={save}><div className="field-grid three"><label>Admission number *<input required value={student.admission_no || ''} onChange={e => field('admission_no', e.target.value)} /></label><label>First name *<input required value={student.first_name || ''} onChange={e => field('first_name', e.target.value)} /></label><label>Last name<input value={student.last_name || ''} onChange={e => field('last_name', e.target.value)} /></label><label>Class *<select required value={student.class_name || ''} onChange={e => { field('class_name', e.target.value); field('section', ''); setAddingSection(false) }}><option value="">Select class</option>{classes.map(item => <option key={item.id} value={item.class_name}>{item.class_name}</option>)}{student.class_name && !classes.some(item => item.class_name === student.class_name) && <option value={student.class_name}>{student.class_name}</option>}</select></label><label>Section *<select required value={addingSection ? '__new__' : student.section || ''} disabled={!student.class_name} onChange={e => { if (e.target.value === '__new__') { setAddingSection(true); field('section', '') } else { setAddingSection(false); field('section', e.target.value) } }}><option value="">Select section</option>{sections.map(section => <option key={section} value={section}>{section}</option>)}<option value="__new__">Add a new section…</option></select></label>{addingSection && <label>New section name *<input required value={student.section || ''} onChange={e => field('section', e.target.value)} placeholder="Example: A" /></label>}<label>Gender<select value={student.gender || ''} onChange={e => field('gender', e.target.value)}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></label><label>Date of birth<input type="date" value={student.dob || ''} onChange={e => field('dob', e.target.value)} /></label><label>Mobile<input value={student.mobile || ''} onChange={e => field('mobile', e.target.value)} /></label><label>Email<input type="email" value={student.email || ''} onChange={e => field('email', e.target.value)} /></label><label>Father name<input value={student.father_name || ''} onChange={e => field('father_name', e.target.value)} /></label><label>Mother name<input value={student.mother_name || ''} onChange={e => field('mother_name', e.target.value)} /></label><label className="wide">Address<textarea rows="3" value={student.address || ''} onChange={e => field('address', e.target.value)} /></label></div>{error && <div className="form-error">{error}</div>}<button className="button button-small" disabled={busy}><Save />{busy ? 'Saving…' : 'Save student'}</button></form>
+  const commonSections = ['A', 'B', 'C', 'D', 'E', 'F']
+  const sections = [...new Set([
+    ...commonSections,
+    ...students.filter(item => item.class_name === student.class_name).map(item => (item.section || '').trim()).filter(Boolean),
+  ])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+  const invalidMobile = Boolean(student.mobile && !isValidIndiaMobile(student.mobile))
+  return <form className="student-edit-form" onSubmit={save}>
+    <div className="field-grid three">
+      <label>Admission number *<input required value={student.admission_no || ''} onChange={e => field('admission_no', e.target.value)} /></label>
+      <label>First name *<input required value={student.first_name || ''} onChange={e => field('first_name', e.target.value)} /></label>
+      <label>Last name<input value={student.last_name || ''} onChange={e => field('last_name', e.target.value)} /></label>
+      <label>Class *<select required value={student.class_name || ''} onChange={e => { field('class_name', e.target.value); field('section', '') }}><option value="">Select class</option>{classes.map(item => <option key={item.id} value={item.class_name}>{item.class_name}</option>)}{student.class_name && !classes.some(item => item.class_name === student.class_name) && <option value={student.class_name}>{student.class_name}</option>}</select></label>
+      <label>Section *<select required value={student.section || ''} disabled={!student.class_name} onChange={e => field('section', e.target.value)}><option value="">Select section</option>{sections.map(section => <option key={section} value={section}>{section}</option>)}</select></label>
+      <label>Gender<select value={student.gender || ''} onChange={e => field('gender', e.target.value)}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></label>
+      <label>Date of birth<input type="date" value={student.dob || ''} onChange={e => field('dob', e.target.value)} /></label>
+      <label>Mobile<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Optional. If entered, use 10 digits starting with 6, 7, 8, or 9." value={student.mobile || ''} onChange={e => field('mobile', normalizeIndiaMobile(e.target.value))} /></label>
+      <label>Email<input type="email" value={student.email || ''} onChange={e => field('email', e.target.value)} /></label>
+      <label>Father name<input value={student.father_name || ''} onChange={e => field('father_name', e.target.value)} /></label>
+      <label>Mother name<input value={student.mother_name || ''} onChange={e => field('mother_name', e.target.value)} /></label>
+      <label className="wide">Address<textarea rows="3" value={student.address || ''} onChange={e => field('address', e.target.value)} /></label>
+    </div>
+    {invalidMobile && <div className="form-error">Enter a valid Indian mobile number: 10 digits starting with 6, 7, 8, or 9.</div>}
+    {error && <div className="form-error">{error}</div>}
+    <button className="button button-small" disabled={busy || invalidMobile}><Save />{busy ? 'Saving…' : 'Save student'}</button>
+  </form>
 }

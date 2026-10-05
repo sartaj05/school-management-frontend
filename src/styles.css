@@ -493,3 +493,61 @@ input,select,textarea{max-width:100%}
 .sidebar-nav-section { display: grid; gap: 3px; }
 .sidebar-nav-section + .sidebar-nav-section { margin-top: 4px; padding-top: 6px; border-top: 1px solid rgba(148, 163, 184, .18); }
 .sidebar-nav-section-title { padding: 5px 12px 2px; color: #94a3b8; font-size: 9px; font-weight: 800; letter-spacing: .09em; line-height: 1.3; text-transform: uppercase; }
+
+/* Responsive guardrails for the school portal and its dense management forms. */
+.app-shell,.dashboard-main,.dashboard-content,.data-panel,.editor-card,.table-wrap{min-width:0;max-width:100%}
+.dashboard-content>*{min-width:0;max-width:100%}
+.dashboard-content input,.dashboard-content select,.dashboard-content textarea,.dashboard-content button{max-width:100%}
+.table-wrap{overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+.notification-preferences>.field-help{margin:16px 28px}
+.notification-preferences-form{display:grid;grid-template-columns:minmax(220px,1fr) minmax(200px,.8fr) auto;align-items:end;gap:14px;padding:0 28px 24px}
+.notification-toggle-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.notification-preferences-form>.notification-toggle-grid .accessibility-check{display:flex!important;align-items:flex-start;justify-content:flex-start;gap:10px!important;min-width:0;min-height:58px;padding:13px 14px;border:1px solid #e2e8f0;border-radius:11px;background:#fbfdff;color:#475569;line-height:1.45}
+.notification-preferences-form .accessibility-check input{flex:0 0 auto;margin:2px 0 0;accent-color:#4f46e5}
+.notification-preferences-form>label:not(.accessibility-check){display:grid;gap:7px;color:#475569;font-size:11px;font-weight:700}
+.notification-preferences-form select{width:100%;min-height:42px;border:1px solid #dbe5ef;border-radius:9px;padding:0 11px;background:#fff;color:#17324b}
+.notification-preferences-actions{display:flex;align-items:end}
+.notification-preferences-actions .button{white-space:nowrap}
+
+@media(max-width:900px){
+  .notification-preferences-form{grid-template-columns:minmax(0,1fr) auto}
+  .notification-toggle-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-header{gap:10px}
+  .dashboard-header .global-search{min-width:0;flex:1 1 170px;margin-inline:8px}
+  .dashboard-content .field-grid.three,.dashboard-content .field-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-content .field-grid .wide{grid-column:1/-1}
+}
+@media(max-width:720px){
+  .dashboard-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 9px;height:auto;min-height:70px;padding:10px 12px}
+  .dashboard-header>div:first-of-type{grid-column:2;grid-row:1;min-width:0}
+  .dashboard-header .global-search{grid-column:1/-1;grid-row:2;width:100%;margin:0}
+  .dashboard-header .header-user{grid-column:3;grid-row:1;max-width:min(34vw,145px);margin:0}
+  .dashboard-header .header-user b{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dashboard-content{width:100%;padding:18px 12px}
+  .dashboard-content .field-grid,.dashboard-content .field-grid.three,.dashboard-content .field-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .notification-preferences-form{grid-template-columns:1fr;padding:0 18px 20px}
+  .notification-preferences>.field-help{margin-inline:18px}
+  .notification-preferences-actions .button{width:100%}
+  .notification-preferences-actions{display:block}
+  .panel-title{gap:12px;flex-wrap:wrap}
+  .panel-title>div{min-width:0}
+  .editor-heading{align-items:flex-start}
+}
+@media(max-width:540px){
+  .dashboard-header{grid-template-columns:auto minmax(0,1fr) auto}
+  .dashboard-header h1{font-size:16px;line-height:1.2}
+  .dashboard-header>div:first-of-type small{max-width:42vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dashboard-header .header-user{max-width:32vw}
+  .dashboard-header .header-user>span{display:none}
+  .dashboard-content{padding:15px 10px}
+  .dashboard-content .field-grid,.dashboard-content .field-grid.three,.dashboard-content .field-grid.two,.dashboard-content .attendance-filter{grid-template-columns:minmax(0,1fr)}
+  .dashboard-content .field-grid .wide{grid-column:auto}
+  .notification-toggle-grid{grid-template-columns:minmax(0,1fr)}
+  .notification-preferences-form{padding-inline:14px}
+  .notification-preferences>.field-help{margin-inline:14px}
+  .data-panel,.editor-card{border-radius:13px}
+  .panel-title{padding:17px 15px}
+  .editor-card{padding:17px 14px}
+  .table-wrap th,.table-wrap td{white-space:nowrap}
+  .admission-modal-backdrop{padding:10px}
+}
