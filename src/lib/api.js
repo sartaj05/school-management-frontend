@@ -137,6 +137,7 @@ export const schoolApi = {
   parentDirectoryPage: ({ q = '', search = '', status = '', page = 1, per_page = 100 } = {}) => api(`/parent/all?${new URLSearchParams({ q: q || search, status, page, per_page })}`),
   parent: (parentId) => api(`/parent/${parentId}`),
   updateParent: (parentId, values) => api(`/parent/${parentId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  createParentPortalAccount: (parentId, values) => api(`/parent/${parentId}/portal-account`, { method: 'POST', body: JSON.stringify(values) }),
   deleteParent: (parentId) => api(`/parent/${parentId}`, { method: 'DELETE' }),
   parentStudents: (parentId) => api(`/parent/${parentId}/students`),
   studentParents: (studentId) => api(`/parent/students/${studentId}/parents`),
