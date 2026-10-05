@@ -1,6 +1,7 @@
 import { Banknote, CheckCircle2, CreditCard, Plus, Receipt, RefreshCw, Save, Tag, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
 import { normalizeIndiaMobile as phoneValue } from '../lib/indiaMobile'
 
 const today = new Date().toISOString().slice(0, 10)
@@ -25,6 +26,8 @@ export default function ExpenseManagement() {
   const [message, setMessage] = useState('')
 
   const payableBills = useMemo(() => bills.filter(item => ['approved', 'partially_paid'].includes(item.status) && Number(item.outstanding_amount) > 0), [bills])
+  function clearFilters() { setStatus('all'); load('all') }
+  useFilterReset(clearFilters, Number(status !== 'all'))
 
   async function load(selectedStatus = status) {
     setBusy(true); setError('')

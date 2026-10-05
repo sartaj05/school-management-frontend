@@ -2,6 +2,7 @@ import { BarChart3, BellRing, Clock3, Download, FileText, Play, RefreshCw, Rotat
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import { useFilterReset } from './FilterResetContext'
 
 const nowLocal = () => {
   const value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
@@ -95,6 +96,12 @@ export default function NotificationQueue({ user }) {
   function changeStatus(value) { setStatus(value); load(1, value, channel, search) }
   function changeChannel(value) { setChannel(value); load(1, status, value, search) }
   function submitSearch(event) { event.preventDefault(); load(1, status, channel, search) }
+  function clearFilters() {
+    setStatus('all'); setChannel('all'); setSearch(''); setAuditTargetId(''); setDeliveryAudit(null)
+    load(1, 'all', 'all', '')
+  }
+  const activeFilterCount = Number(status !== 'all') + Number(channel !== 'all') + Number(Boolean(search.trim())) + Number(Boolean(auditTargetId))
+  useFilterReset(clearFilters, activeFilterCount)
   async function showDeliveryAudit(row) {
     if (deliveryAudit?.notificationId === row.id) { setDeliveryAudit(null); return }
     setBusy(true); setError('')

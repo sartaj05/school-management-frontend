@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, Download, Plus, RefreshCw } from 'lucide-react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
 
 const emptyForm = { entry_type: 'income', source_type: 'manual', description: '', amount: '', entry_date: '', reference_no: '' }
 const emptySettlement = { settlement_date: '', opening_balance: '0', notes: '' }
@@ -38,6 +39,9 @@ export default function FinanceLedger() {
   }, [filters, fromDate, toDate, selectedSettlementId])
 
   useEffect(() => { const timer = setTimeout(() => load(), 0); return () => clearTimeout(timer) }, [load])
+  function clearFilters() { setFromDate(''); setToDate(''); setStatus('') }
+  const activeFilterCount = Number(Boolean(fromDate)) + Number(Boolean(toDate)) + Number(Boolean(status))
+  useFilterReset(clearFilters, activeFilterCount)
 
   const submit = async event => {
     event.preventDefault(); setBusy(true); setError(''); setNotice('')

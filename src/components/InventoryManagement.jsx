@@ -2,6 +2,7 @@ import { Package } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import InventoryPurchaseManagement from './InventoryPurchaseManagement'
+import { useFilterReset } from './FilterResetContext'
 
 function Field({ label, name, type = 'text', required = true, ...props }) {
   return <label>{label}<input name={name} type={type} required={required} {...props} /></label>
@@ -57,6 +58,10 @@ export default function InventoryManagement() {
     }, 150)
     return () => { active = false; clearTimeout(timer) }
   }, [search, low, offset, refresh])
+
+  function clearFilters() { setSearch(''); setLow(false); setOffset(0) }
+  const activeFilterCount = Number(Boolean(search.trim())) + Number(low)
+  useFilterReset(clearFilters, activeFilterCount)
 
   async function mutate(action) {
     setBusy(true); setError(''); setNotice('')

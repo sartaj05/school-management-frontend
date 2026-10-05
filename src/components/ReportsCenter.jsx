@@ -2,6 +2,7 @@ import { BarChart3, Download, FileSpreadsheet, Printer, Search } from 'lucide-re
 import { useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { translateUi } from '../lib/i18n'
+import { useFilterReset } from './FilterResetContext'
 
 const blankFilters = { from_date: '', to_date: '', class_name: '', section: '', status: '', academic_year: '', entry_type: '', role: '' }
 
@@ -17,6 +18,9 @@ export default function ReportsCenter({ user, language = 'en' }) {
   useEffect(() => { Promise.all([schoolApi.reportCatalog(), schoolApi.reportSummary()]).then(([catalogResult, summaryResult]) => { setCatalog(catalogResult.reports || []); setSummary(summaryResult.summary || {}); if (catalogResult.reports?.[0]) setReport(catalogResult.reports[0].key) }).catch(requestError => setError(requestError.message)) }, [])
   const selected = useMemo(() => catalog.find(item => item.key === report) || {}, [catalog, report])
   const field = (name, value) => setFilters(current => ({ ...current, [name]: value }))
+  function clearFilters() { setFilters(blankFilters); setNotice(''); setError('') }
+  const activeFilterCount = Object.values(filters).filter(Boolean).length
+  useFilterReset(clearFilters, activeFilterCount)
   const query = () => Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== ''))
   async function downloadCsv() { setBusy(true); setError(''); setNotice(''); try { await schoolApi.downloadReportCsv(report, query()); setNotice(`${t(selected.label || 'Report')} CSV ${t('downloaded.')}`) } catch (requestError) { setError(requestError.message) } finally { setBusy(false) } }
   async function downloadXlsx() { setBusy(true); setError(''); setNotice(''); try { await schoolApi.downloadReportXlsx(report, query()); setNotice(`${t(selected.label || 'Report')} XLSX ${t('downloaded.')}`) } catch (requestError) { setError(requestError.message) } finally { setBusy(false) } }

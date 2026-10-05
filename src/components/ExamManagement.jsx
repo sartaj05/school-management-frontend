@@ -2,21 +2,28 @@ import { Award, BookOpenCheck, Plus, Save, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import { useFilterReset } from './FilterResetContext'
 
 const today = new Date().toISOString().slice(0, 10)
 const emptyExam = { name: '', class_id: '', academic_year: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`, term: '', start_date: today, end_date: today }
 
 export default function ExamManagement({ user }) {
   const [exams, setExams] = useState([]), [classes, setClasses] = useState([]), [subjects, setSubjects] = useState([])
-  const [examId, setExamId] = useState(''), [subjectId, setSubjectId] = useState(''), [students, setStudents] = useState([]), [cards, setCards] = useState([])
+  const [examId, setExamId] = useState(''), [subjectId, setSubjectId] = useState(''), [students, setStudents] = useState([]), [cards, setCards] = useState([]), [marksDirty, setMarksDirty] = useState(false)
   const [form, setForm] = useState(emptyExam), [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
   const isAdmin = user.role === 'School Admin', selectedExam = exams.find(item => item.id === Number(examId))
   async function load() { setBusy(true); setError(''); try { const [a, b, c] = await Promise.all([schoolApi.exams(), schoolApi.classes(), schoolApi.subjects()]); setExams(a.data || []); setClasses((b.data || []).filter(x => x.status === 'active')); setSubjects((c.data || []).filter(x => x.status === 'active')) } catch (e) { setError(e.message) } finally { setBusy(false) } }
   useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [])
   const field = (name, value) => setForm(current => ({ ...current, [name]: value }))
   async function createExam(event) { event.preventDefault(); setBusy(true); setError(''); setMessage(''); try { const result = await schoolApi.createExam({ ...form, class_id: Number(form.class_id) }); setMessage(result.message); setForm(emptyExam); await load(); setExamId(String(result.exam.id)) } catch (e) { setError(e.message) } finally { setBusy(false) } }
-  async function loadMarks() { if (!examId || !subjectId) return; setBusy(true); setError(''); setCards([]); try { const result = await schoolApi.examStudents(examId, subjectId); setStudents((result.data || []).map(x => ({ ...x, max_marks: x.max_marks ?? 100, marks_obtained: x.marks_obtained ?? '', grade: x.grade || '', remarks: x.remarks || '' }))) } catch (e) { setError(e.message) } finally { setBusy(false) } }
-  function mark(index, name, value) { setStudents(current => current.map((item, i) => i === index ? { ...item, [name]: value } : item)) }
+  async function loadMarks() { if (!examId || !subjectId) return; setBusy(true); setError(''); setCards([]); try { const result = await schoolApi.examStudents(examId, subjectId); setStudents((result.data || []).map(x => ({ ...x, max_marks: x.max_marks ?? 100, marks_obtained: x.marks_obtained ?? '', grade: x.grade || '', remarks: x.remarks || '' }))); setMarksDirty(false) } catch (e) { setError(e.message) } finally { setBusy(false) } }
+  async function clearFilters() {
+    if (marksDirty && !await confirmPopup({ title: 'Discard unsaved marks?', message: 'Clearing the exam and subject filters will remove the unsaved marks currently entered.', confirmLabel: 'Discard and clear', tone: 'danger' })) return
+    setExamId(''); setSubjectId(''); setStudents([]); setCards([]); setMarksDirty(false)
+  }
+  const activeFilterCount = Number(Boolean(examId)) + Number(Boolean(subjectId))
+  useFilterReset(clearFilters, activeFilterCount)
+  function mark(index, name, value) { setStudents(current => current.map((item, i) => i === index ? { ...item, [name]: value } : item)); setMarksDirty(true) }
   async function saveMarks() { setBusy(true); setError(''); setMessage(''); try { const marks = students.map(({ student_id, max_marks, marks_obtained, grade, remarks }) => ({ student_id, max_marks: Number(max_marks), marks_obtained: marks_obtained === '' ? null : Number(marks_obtained), grade, remarks })); const result = await schoolApi.saveExamMarks(examId, { subject_id: Number(subjectId), marks }); setMessage(result.message); await loadMarks() } catch (e) { setError(e.message) } finally { setBusy(false) } }
   async function publish() { if (!await confirmPopup({ title: `Publish ${selectedExam.name}?`, message: 'Published results become read-only.', confirmLabel: 'Publish results', tone: 'primary' })) return; setBusy(true); setError(''); try { const result = await schoolApi.publishExam(examId); setMessage(result.message); await load() } catch (e) { setError(e.message) } finally { setBusy(false) } }
   async function report() { if (!examId) return; setBusy(true); setError(''); try { const result = await schoolApi.examReportCards(examId); setCards(result.data || []) } catch (e) { setError(e.message) } finally { setBusy(false) } }

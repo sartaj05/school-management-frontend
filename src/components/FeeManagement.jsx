@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
 import FeeCollectionRequests from './FeeCollectionRequests'
+import { useFilterReset } from './FilterResetContext'
 
 const today = new Date().toISOString().slice(0, 10)
 const empty = { name: '', class_id: '', academic_year: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`, amount: '', due_date: today, description: '' }
@@ -13,6 +14,8 @@ export default function FeeManagement({ user }) {
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
   async function load(selected = status) { setBusy(true); setError(''); try { const [a, b, c, d] = await Promise.all([schoolApi.feeStructures(), schoolApi.feeInvoices(selected), schoolApi.feeSummary(), schoolApi.classes()]); setStructures(a.data || []); setInvoices(b.data || []); setSummary(c.summary || {}); setClasses((d.data || []).filter(x => x.status === 'active')) } catch (e) { setError(e.message) } finally { setBusy(false) } }
   useEffect(() => { const timer = setTimeout(() => load('all'), 0); return () => clearTimeout(timer) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  function clearFilters() { setStatus('all'); load('all') }
+  useFilterReset(clearFilters, Number(status !== 'all'))
   const field = (name, value) => setForm(current => ({ ...current, [name]: value }))
   async function create(event) { event.preventDefault(); setBusy(true); setError(''); try { const result = await schoolApi.createFeeStructure({ ...form, class_id: Number(form.class_id), amount: Number(form.amount) }); setMessage(result.message); setForm(empty); await load() } catch (e) { setError(e.message) } finally { setBusy(false) } }
   async function generate(item) { if (!await confirmPopup({ title: `Generate ${item.name} invoices?`, message: 'One invoice will be created for every active student in this class.', confirmLabel: 'Generate invoices', tone: 'primary' })) return; setBusy(true); try { const result = await schoolApi.generateFeeInvoices(item.id); setMessage(result.message); await load() } catch (e) { setError(e.message) } finally { setBusy(false) } }

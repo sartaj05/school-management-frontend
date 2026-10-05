@@ -1,6 +1,8 @@
 import { BellRing, CalendarCheck, Clock, Send, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
+import FilterActions from './FilterActions'
 
 function dateInputValue(value) {
   const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000)
@@ -29,6 +31,7 @@ export default function ParentTeacherMeetings({ user }) {
   const [slotForm, setSlotForm] = useState({ teacher_id: '', day: tomorrow, start: '10:00', end: '10:15', mode: 'in_person', location: '', meeting_link: '', max_bookings: 1, notes: '' })
   const [bookingForm, setBookingForm] = useState({ slot_id: '', parent_id: '', student_id: '', agenda: '' })
   const [status, setStatus] = useState('all')
+  const [appliedStatus, setAppliedStatus] = useState('all')
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -43,7 +46,7 @@ export default function ParentTeacherMeetings({ user }) {
         const [opts, slotRows, bookingRows] = await Promise.all([
           schoolApi.meetingOptions(),
           schoolApi.meetingSlots({ status: 'active' }),
-          schoolApi.meetingBookings({ status }),
+          schoolApi.meetingBookings({ status: appliedStatus }),
         ])
         if (!active) return
         setOptions(opts)
@@ -62,7 +65,20 @@ export default function ParentTeacherMeetings({ user }) {
     }
     load()
     return () => { active = false }
-  }, [refresh, status])
+  }, [refresh, appliedStatus])
+
+  const activeFilterCount = status === appliedStatus && status === 'all' ? 0 : 1
+  function clearFilters() {
+    setStatus('all')
+    setAppliedStatus('all')
+    if (status === 'all' && appliedStatus === 'all') setRefresh(value => value + 1)
+  }
+  function applyFilters(event) {
+    event.preventDefault()
+    if (status === appliedStatus) setRefresh(value => value + 1)
+    else setAppliedStatus(status)
+  }
+  useFilterReset(clearFilters, activeFilterCount)
 
   async function mutate(action, done) {
     setBusy(true); setError(''); setNotice('')
@@ -103,7 +119,7 @@ export default function ParentTeacherMeetings({ user }) {
     <section className="people-hero meeting-hero"><div><span>Family communication</span><h2>Parent-teacher meetings</h2><p>Publish teacher availability, book meetings, and queue WhatsApp reminders for 5, 3, and 1 day before each meeting.</p></div><CalendarCheck /></section>
     {error && <div className="form-error" role="alert">{error}</div>}
     {notice && <div className="success-notice" role="status">{notice}</div>}
-    <div className="page-actions"><label>Status<select value={status} onChange={e => setStatus(e.target.value)}>{['all', 'booked', 'completed', 'cancelled'].map(value => <option key={value}>{value}</option>)}</select></label><button className="button button-small" disabled={busy || loading} onClick={() => setRefresh(value => value + 1)}>Refresh</button></div>
+    <form className="page-actions meeting-filter-toolbar" onSubmit={applyFilters}><label>Status<select value={status} onChange={e => setStatus(e.target.value)}>{['all', 'booked', 'completed', 'cancelled'].map(value => <option key={value}>{value}</option>)}</select></label><FilterActions showApply applyLabel="Apply filter" activeCount={activeFilterCount} onClear={clearFilters} busy={busy || loading} /></form>
     {loading ? <p role="status">Loading meetings...</p> : <>
       {(isAdmin || isTeacher) && <form className="editor-card" onSubmit={publishSlot}><div className="editor-heading"><Clock /><div><h3>Publish available slot</h3><p>Teachers can publish their own availability. Admins can publish for any active teacher.</p></div></div><div className="field-grid three">
         <label>Teacher<select required value={slotForm.teacher_id} disabled={isTeacher} onChange={e => setSlotForm({ ...slotForm, teacher_id: e.target.value })}><option value="">Select teacher</option>{options.teachers.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>

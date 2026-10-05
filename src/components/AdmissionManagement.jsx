@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, GraduationCap, PhoneCall, Search } from 'luc
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import { useFilterReset } from './FilterResetContext'
 
 const statuses = ['submitted', 'under_review', 'approved', 'rejected', 'enrolled']
 const sources = ['all', 'website', 'walk_in', 'referral', 'phone', 'social', 'other']
@@ -47,6 +48,16 @@ export default function AdmissionManagement() {
   // load reads the active CRM filters and is intentionally refreshed when any filter changes.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [status, source, dueOnly, query, page])
+
+  function clearFilters() {
+    setStatus('all')
+    setSource('all')
+    setDueOnly(false)
+    setQuery('')
+    setPage(1)
+  }
+  const activeFilterCount = Number(status !== 'all') + Number(source !== 'all') + Number(dueOnly) + Number(Boolean(query.trim()))
+  useFilterReset(clearFilters, activeFilterCount)
 
   async function save(row, nextStatus) {
     if (nextStatus === 'enrolled' && row.status !== 'enrolled' && !await confirmPopup({

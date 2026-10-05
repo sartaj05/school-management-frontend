@@ -2,14 +2,17 @@ import { Download, FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import DocumentTemplateManager from './DocumentTemplateManager'
+import { useFilterReset } from './FilterResetContext'
 
 export default function DocumentExports() {
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
+  const defaultDate = new Date().toISOString().slice(0, 10)
+  const [date, setDate] = useState(defaultDate)
   const [rows, setRows] = useState([])
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const load = () => schoolApi.documents().then(result => setRows(result.data || [])).catch(requestError => setError(requestError.message))
   useEffect(load, [])
+  useFilterReset(() => setDate(defaultDate), Number(date !== defaultDate))
   async function attendance() {
     try { await schoolApi.downloadAttendanceCsv(date); setNotice('Attendance CSV download started.'); load() } catch (requestError) { setError(requestError.message) }
   }

@@ -1,6 +1,7 @@
 import { CalendarCheck, CalendarClock, Save, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
 
 const currentYear = new Date().getFullYear()
 const types = ['casual', 'sick', 'earned']
@@ -32,6 +33,14 @@ export default function LeaveManagement({ user }) {
   const [notice, setNotice] = useState('')
   const person = people.find(item => `${item.person_type}:${item.person_id}` === selected)
   const validYear = /^\d{4}$/.test(year) && Number(year) >= 2000 && Number(year) <= 2100
+  function clearFilters() {
+    setYear(String(currentYear))
+    setStatus('all')
+    if (admin) setSelected('')
+    setOffset(0)
+  }
+  const activeFilterCount = Number(year !== String(currentYear)) + Number(status !== 'all') + Number(admin && Boolean(selected))
+  useFilterReset(clearFilters, activeFilterCount)
 
   useEffect(() => {
     let active = true

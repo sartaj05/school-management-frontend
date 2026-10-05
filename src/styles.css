@@ -479,8 +479,10 @@ input,select,textarea{max-width:100%}
 .operations-dashboard{margin-top:24px}.operations-hero{justify-content:space-between}.operations-hero>div{flex:1}.operations-stat-grid{margin:0 0 18px}.operations-status{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:800;text-transform:capitalize}.operations-status.ready{background:#e5f8f1;color:#278064}.operations-status.pending{background:#fff7ed;color:#a66a17}.operations-status.failed{background:#ffebe7;color:#b94f3b}.operations-columns{margin-bottom:18px}.operations-details{margin:0;padding:0 24px}.operations-details>div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eaf0f4}.operations-details dt{color:#8197a6;font-size:11px}.operations-details dd{margin:0;color:#2f4e64;font-size:11px;font-weight:700;text-align:right}.operations-check-list{display:grid;gap:10px;padding:0 24px}.operations-check-list>div{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #eaf0f4;color:#365b73;font-size:12px;font-weight:700}.operations-check-list>div>span:first-child{flex:1}.operations-check-list small{width:100%;color:#8197a6;font-size:10px;font-weight:400}.operations-table-panel{margin-bottom:18px}.operations-table-panel table{min-width:760px}.operations-readiness{margin-bottom:30px}.operations-dashboard code{padding:2px 4px;border-radius:4px;background:#f1f5f9;color:#334155;font-size:10px}@media(max-width:700px){.operations-hero{align-items:flex-start;flex-direction:column}.operations-hero .button{width:100%}.operations-columns{display:block}.operations-columns>.data-panel{margin-bottom:18px}}
 .global-search { position: relative; display: flex; align-items: center; gap: .5rem; min-width: min(34vw, 360px); margin-left: auto; }
 .global-search > svg { position: absolute; left: .75rem; color: var(--muted); pointer-events: none; }
-.global-search input { width: 100%; min-height: 2.4rem; padding: .55rem .8rem .55rem 2.25rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); }
-.global-search-status { position: absolute; right: .75rem; font-size: .72rem; color: var(--muted); }
+.global-search input { width: 100%; min-height: 2.4rem; padding: .55rem 2.5rem .55rem 2.25rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); }
+.global-search-clear { position: absolute; right: .45rem; display: grid; place-items: center; width: 27px; height: 27px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+.global-search-clear:hover, .global-search-clear:focus-visible { background: #eef2ff; color: #3730a3; outline: none; }
+.global-search-status { position: absolute; right: 2.6rem; font-size: .72rem; color: var(--muted); }
 .global-search-results { position: absolute; z-index: 20; top: calc(100% + .5rem); left: 0; right: 0; max-height: 20rem; overflow: auto; padding: .35rem; border: 1px solid var(--line); border-radius: .8rem; background: var(--surface); box-shadow: 0 14px 34px rgba(15, 23, 42, .16); }
 .global-search-results button { display: flex; width: 100%; align-items: center; gap: .65rem; padding: .65rem .7rem; border: 0; border-radius: .55rem; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
 .global-search-results button:hover, .global-search-results button:focus-visible { background: #f8fafc; outline: none; }
@@ -521,6 +523,7 @@ input,select,textarea{max-width:100%}
   .dashboard-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 9px;height:auto;min-height:70px;padding:10px 12px}
   .dashboard-header>div:first-of-type{grid-column:2;grid-row:1;min-width:0}
   .dashboard-header .global-search{grid-column:1/-1;grid-row:2;width:100%;margin:0}
+  .dashboard-header .global-clear-filters{grid-column:1/-1;grid-row:3;justify-self:start;margin:0 0 2px}
   .dashboard-header .header-user{grid-column:3;grid-row:1;max-width:min(34vw,145px);margin:0}
   .dashboard-header .header-user b{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .dashboard-content{width:100%;padding:18px 12px}
@@ -598,3 +601,17 @@ input,select,textarea{max-width:100%}
   .academic-year-promotion>.academic-history>.field-help{padding-inline:14px}
   .fee-collection-requests>form.field-grid{padding:16px 14px}
 }
+
+/* One consistent reset action for active page filters. */
+.global-clear-filters{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;margin:0 12px;padding:9px 12px;border:1px solid #c7d2fe;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;transition:background .15s ease,border-color .15s ease,transform .15s ease}
+.global-clear-filters:hover{background:#e0e7ff;border-color:#a5b4fc;transform:translateY(-1px)}
+.global-clear-filters:focus-visible{outline:3px solid rgba(99,102,241,.25);outline-offset:2px}
+.global-clear-filters b,.filter-count{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#4f46e5;color:#fff;font-size:10px;line-height:1}
+.filter-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.filter-actions button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px}
+.filter-count.muted{background:#e2e8f0;color:#475569}
+.meeting-filter-toolbar{display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:18px 0 24px}
+.meeting-filter-toolbar>label{display:grid;gap:6px;min-width:150px;color:#536e81;font-size:11px;font-weight:700}
+.meeting-filter-toolbar select{min-height:42px;padding:0 12px;border:1px solid #d5e5ee;border-radius:10px;background:#fff;color:#1d3a50}
+@media(max-width:900px){.global-clear-filters{margin-inline:4px}.global-clear-filters span{display:none}}
+@media(max-width:600px){.global-clear-filters{width:38px;height:38px;padding:0}.global-clear-filters b{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 3px;font-size:9px}.meeting-filter-toolbar{align-items:stretch}.meeting-filter-toolbar>label{width:100%}.filter-actions{width:100%;justify-content:stretch}.filter-actions>button{flex:1}}

@@ -1,6 +1,7 @@
 import { Archive, GraduationCap, History, Save } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
 
 export default function AcademicYearPromotion({ canManage: explicitCanManage, initialData }) {
   const initialYears = Array.isArray(initialData?.data) ? initialData.data : []
@@ -12,9 +13,10 @@ export default function AcademicYearPromotion({ canManage: explicitCanManage, in
   })()
   const canManage = explicitCanManage ?? sessionRole === 'School Admin'
   const [years, setYears] = useState(initialYears)
+  const defaultEnrollmentYear = years.find(year => year.status === 'active')?.year_label || years[0]?.year_label || ''
   const [form, setForm] = useState({ from_year: '', to_year: '', promotions: [] })
   const [newYear, setNewYear] = useState({ year_label: '', starts_on: '', ends_on: '' })
-  const [enrollmentYear, setEnrollmentYear] = useState(() => initialYears.find(year => year.status === 'active')?.year_label || initialYears[0]?.year_label || '')
+  const [enrollmentYear, setEnrollmentYear] = useState(defaultEnrollmentYear)
   const [enrollments, setEnrollments] = useState([])
   const [historyStudentId, setHistoryStudentId] = useState('')
   const [historyRows, setHistoryRows] = useState([])
@@ -45,6 +47,14 @@ export default function AcademicYearPromotion({ canManage: explicitCanManage, in
     const timer = setTimeout(() => loadEnrollments(enrollmentYear), 0)
     return () => clearTimeout(timer)
   }, [enrollmentYear])
+
+  function clearFilters() {
+    setEnrollmentYear(defaultEnrollmentYear)
+    setHistoryStudentId('')
+    setHistoryRows([])
+  }
+  const activeFilterCount = Number(enrollmentYear !== defaultEnrollmentYear) + Number(Boolean(historyStudentId))
+  useFilterReset(clearFilters, activeFilterCount)
 
   async function submit(event) {
     event.preventDefault(); setBusy(true); setError(''); setMessage('')

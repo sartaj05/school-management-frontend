@@ -2,6 +2,7 @@ import { Building2, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, Edit3,
 import { useEffect, useState } from 'react'
 import { schoolApi, schoolLogoUrl } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import { useFilterReset } from './FilterResetContext'
 
 export default function SchoolDirectory({ rows, reload }) {
   const [selected, setSelected] = useState(null)
@@ -37,6 +38,15 @@ export default function SchoolDirectory({ rows, reload }) {
     // The timer intentionally reloads from the latest filter state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusTab, search, plan])
+
+  function clearFilters() {
+    setStatusTab('active')
+    setSearch('')
+    setPlan('all')
+    setPage(1)
+  }
+  const activeFilterCount = Number(statusTab !== 'active') + Number(Boolean(search.trim())) + Number(plan !== 'all')
+  useFilterReset(clearFilters, activeFilterCount)
 
   async function open(item, edit = false) {
     setBusy(true)
