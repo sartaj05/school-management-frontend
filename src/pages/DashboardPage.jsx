@@ -2,6 +2,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { Award, Banknote, BarChart3, BellRing, BookCheck, BookOpen, Building2, Bus, CalendarCheck, CalendarClock, CalendarDays, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, CircleDollarSign, ContactRound, Database, Edit3, FileText, Globe2, GraduationCap, HeartHandshake, LayoutDashboard, LibraryBig, Link2, LockKeyhole, LogOut, Menu, MessageCircle, Package, Plus, Power, PowerOff, Save, School, Search, Send, Settings, ShieldCheck, UserRound, UsersRound, Video, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { confirmPopup } from '../lib/confirmPopup'
 import Logo from '../components/Logo'
 import { schoolApi, schoolLogoUrl } from '../lib/api'
@@ -78,7 +79,18 @@ const recommendedDomain = (base, domains) => {
 }
 
 export default function DashboardPage({ session, onLogout, onProfileUpdated, language = 'en' }) {
-  const [page,setPage]=useState(() => ['Parent', 'Student'].includes(session?.user?.role) ? 'portal' : session?.user?.role === 'Driver' ? 'transport' : 'overview'), [mobile,setMobile]=useState(false), [data,setData]=useState(null), [error,setError]=useState(''), [loading,setLoading]=useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const defaultPage = ['Parent', 'Student'].includes(session?.user?.role) ? 'portal' : session?.user?.role === 'Driver' ? 'transport' : 'overview'
+  const page = searchParams.get('page') || defaultPage
+  const setPage = useCallback((nextPage, options) => {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      if (nextPage === defaultPage) next.delete('page')
+      else next.set('page', nextPage)
+      return next
+    }, options)
+  }, [defaultPage, setSearchParams])
+  const [mobile,setMobile]=useState(false), [data,setData]=useState(null), [error,setError]=useState(''), [loading,setLoading]=useState(false)
   const [formOpen,setFormOpen]=useState(false), [notice,setNotice]=useState(''), [resolvedPlan,setResolvedPlan]=useState('')
   const [featureMatrix,setFeatureMatrix]=useState(null), [rolePermissions,setRolePermissions]=useState(null)
   const user=session?.user || {}; const isSuper=user.role==='super_admin'; const isPortalUser=['Parent','Student'].includes(user.role); const isDemoSchool=String(user.school_domain||session?.school_domain||'').startsWith('eduflow_demo_')
@@ -229,7 +241,7 @@ function ParentForm({onDone}) {
   const [students,setStudents]=useState([]),[loadingStudents,setLoadingStudents]=useState(true)
   const [values,setValues]=useState({account_name:'',father_name:'',mother_name:'',student_id:'',relationship_type:'guardian',mobile:'+91',email:'',password:'',address:''})
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[loadError,setLoadError]=useState('')
-  useEffect(()=>{let active=true;schoolApi.students({per_page:200}).then(result=>{if(active)setStudents(result.data||[])}).catch(err=>{if(active)setLoadError(err.message)}).finally(()=>{if(active)setLoadingStudents(false)});return()=>{active=false}},[])
+  useEffect(()=>{let active=true;schoolApi.students({per_page:200}).then(result=>{if(active)setStudents(result.students||result.data||[])}).catch(err=>{if(active)setLoadError(err.message)}).finally(()=>{if(active)setLoadingStudents(false)});return()=>{active=false}},[])
   const field=(name,value)=>setValues(current=>({...current,[name]:value}))
   const activeStudents=students.filter(item=>item.status==='active')
   const valid=Boolean(values.account_name.trim()&&(values.father_name.trim()||values.mother_name.trim())&&values.student_id&&phoneOk(values.mobile)&&emailOk(values.email)&&values.password.length>=8)
