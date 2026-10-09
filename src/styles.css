@@ -677,3 +677,25 @@ input,select,textarea{max-width:100%}
   .operations-dashboard .operations-details>div{display:grid;grid-template-columns:minmax(0,1fr);gap:5px}
   .operations-dashboard .operations-details dd{max-width:100%;text-align:left}
 }
+
+.directory-filter-toolbar{display:grid;grid-template-columns:minmax(240px,1fr) minmax(145px,190px) minmax(150px,210px) auto;align-items:end;gap:12px;padding:18px 27px;border-bottom:1px solid #e7eff4;background:#fbfdff}
+.directory-filter-toolbar>label{display:grid;gap:6px;min-width:0;color:#536e81;font-size:11px;font-weight:700}
+.directory-filter-toolbar>label>input,.directory-filter-toolbar>label>select{width:100%;height:40px;min-width:0;border:1px solid #d5e5ee;border-radius:10px;background:#fff;padding:0 11px;color:#17354d;font:inherit}
+.directory-filter-toolbar .directory-search{display:flex;align-items:center;gap:9px;height:40px;padding:0 11px;border:1px solid #d5e5ee;border-radius:10px;background:#fff;color:#73889a}
+.directory-search input{width:100%;min-width:0;height:100%;border:0;outline:0;background:transparent;color:#17354d;font:inherit}
+.directory-filter-toolbar>label>select:focus,.directory-search:focus-within{border-color:#6366f1;box-shadow:0 0 0 3px #eef2ff}
+.directory-filter-toolbar .directory-clear{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid #d5e5ee;border-radius:10px;background:#fff;color:#475569;font-size:11px;font-weight:700;cursor:pointer}
+.directory-filter-toolbar .directory-clear:hover{border-color:#a5b4fc;color:#4338ca;background:#f5f6ff}
+.directory-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 27px;color:#71869a;font-size:11px}
+.directory-pagination>div{display:flex;align-items:center;gap:6px}
+.directory-pagination>div>span{padding:0 7px;color:#475569;font-weight:700;white-space:nowrap}
+.directory-pagination button{display:flex;align-items:center;justify-content:center;min-width:34px;height:34px;padding:5px;border:1px solid #d5e5ee;border-radius:9px;background:#fff;color:#475569;cursor:pointer}
+.directory-pagination button svg{width:15px;height:15px}
+.directory-pagination button:disabled{cursor:not-allowed;opacity:.45}
+.directory-loading{min-height:200px;padding:48px 20px}
+.exam-loading .exam-loading-icon{animation:exam-spin 1.1s linear infinite;color:#4f46e5}
+@keyframes exam-spin{to{transform:rotate(360deg)}}
+.profile-card .profile-badge,.header-user .profile-badge{flex:0 0 36px;color:#4338ca;background:#eef2ff}
+.profile-card .profile-badge img,.header-user .profile-badge img{width:100%;height:100%;object-fit:cover;display:block}
+@media(max-width:900px){.directory-filter-toolbar{grid-template-columns:minmax(200px,1fr) minmax(130px,180px)}.directory-filter-toolbar .directory-clear{justify-self:start}}
+@media(max-width:600px){.directory-filter-toolbar{grid-template-columns:1fr;padding:16px}.directory-filter-toolbar>label{width:100%}.directory-pagination{align-items:flex-start;flex-direction:column;padding:14px 16px}.directory-pagination>div{width:100%;justify-content:space-between}.directory-pagination>div>span{padding:0 2px}.directory-pagination button{flex:1}}
