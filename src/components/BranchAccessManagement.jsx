@@ -13,12 +13,15 @@ export default function BranchAccessManagement({ branches = [] }) {
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    if (!branchId && branches[0]?.id) {
-      const timer = setTimeout(() => setBranchId(String(branches[0].id)), 0)
-      return () => clearTimeout(timer)
+    const selectedBranchExists = branches.some(row => String(row.id) === branchId)
+    if (branchId && !selectedBranchExists) {
+      setRows([])
+      setBranchId(branches[0]?.id ? String(branches[0].id) : '')
+    } else if (!branchId && branches[0]?.id) {
+      setBranchId(String(branches[0].id))
     }
-    return undefined
   }, [branchId, branches])
+
   const load = useCallback(async () => {
     if (!branchId) return
     setBusy(true); setError('')
@@ -26,7 +29,7 @@ export default function BranchAccessManagement({ branches = [] }) {
   }, [branchId])
   useEffect(() => {
     const timer = setTimeout(() => { void load() }, 0)
-    return () => clearTimeout(timer)
+      return () => clearTimeout(timer)
   }, [load])
   async function save(event) {
     event.preventDefault(); setBusy(true); setError(''); setMessage('')
@@ -39,12 +42,30 @@ export default function BranchAccessManagement({ branches = [] }) {
   return <section className="data-panel branch-access-management">
     <div className="panel-title"><div><span>Branch permissions</span><h2>Staff access registry</h2></div><KeyRound /></div>
     <p className="branch-safety-note">The backend verifies the user and role inside the mapped school schema.</p>
-    <div className="field-grid three">
-      <label>Branch<select value={branchId} onChange={event => setBranchId(event.target.value)}><option value="">Select branch</option>{branches.map(row => <option key={row.id} value={row.id}>{row.branch_name} · {row.branch_code}</option>)}</select></label>
-      <form onSubmit={save}><label>Tenant user id<input required type="number" min="1" value={form.tenant_user_id} onChange={event => setForm({ ...form, tenant_user_id: event.target.value })} /></label><label>Role<select value={form.access_role} onChange={event => setForm({ ...form, access_role: event.target.value })}>{roles.map(role => <option key={role}>{role}</option>)}</select></label><button className="button button-small" disabled={busy || !branchId}><UserPlus size={15} />Save access</button></form>
-      <button className="refresh-button" onClick={load} disabled={busy || !branchId}><RefreshCw size={15} />Refresh</button>
+    <div className="branch-access-controls">
+      <label className="branch-access-branch">Branch
+        <select value={branchId} onChange={event => { setBranchId(event.target.value); setRows([]); setError('') }}>
+          <option value="">Select branch</option>
+          {branches.map(row => <option key={row.id} value={row.id}>{row.branch_name} · {row.branch_code}</option>)}
+        </select>
+      </label>
+      <form className="branch-access-form" onSubmit={save}>
+        <label>Tenant user ID<input required type="number" min="1" value={form.tenant_user_id} onChange={event => setForm({ ...form, tenant_user_id: event.target.value })} /></label>
+        <label>Role<select value={form.access_role} onChange={event => setForm({ ...form, access_role: event.target.value })}>{roles.map(role => <option key={role}>{role}</option>)}</select></label>
+        <button className="button button-small" disabled={busy || !branchId}><UserPlus size={15} />{busy ? 'Saving...' : 'Save access'}</button>
+      </form>
+      <button className="refresh-button branch-access-refresh" type="button" onClick={() => load()} disabled={busy || !branchId}>
+        <RefreshCw size={15} />{busy ? 'Refreshing...' : 'Refresh'}
+      </button>
     </div>
-    {error && <div className="form-error" role="alert">{error}</div>}{message && <div className="success-notice" role="status">{message}</div>}
-    {!rows.length ? <div className="empty-state"><KeyRound /><h3>No branch staff access</h3><p>Assign a verified tenant user to this branch.</p></div> : <div className="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><b>{row.user?.name || `User ${row.tenant_user_id}`}</b><small>{row.user?.email || 'Tenant user'}</small></td><td>{row.access_role}</td><td>{row.status}</td><td><button className="danger" onClick={() => revoke(row)} disabled={busy}><UserMinus size={14} />Revoke</button></td></tr>)}</tbody></table></div>}
+    {error && <div className="form-error branch-access-message" role="alert">{error}</div>}
+    {message && <div className="success-notice branch-access-message" role="status">{message}</div>}
+    {!branchId
+      ? <div className="empty-state branch-access-empty"><KeyRound /><h3>{branches.length ? 'Select a branch' : 'No branches available'}</h3><p>{branches.length ? 'Choose a branch to manage its staff access.' : 'Register a branch before assigning staff access.'}</p></div>
+      : busy && !rows.length
+        ? <div className="empty-state branch-access-empty"><RefreshCw /><h3>Loading branch access</h3><p>Please wait while staff permissions load.</p></div>
+        : !rows.length
+          ? <div className="empty-state branch-access-empty"><KeyRound /><h3>No branch staff access</h3><p>Assign a verified tenant user to this branch.</p></div>
+          : <div className="table-wrap"><table><thead><tr><th>User</th><th>Role</th><th>Status</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><b>{row.user?.name || `User ${row.tenant_user_id}`}</b><small>{row.user?.email || 'Tenant user'}</small></td><td>{row.access_role}</td><td>{row.status}</td><td><button className="danger" onClick={() => revoke(row)} disabled={busy}><UserMinus size={14} />Revoke</button></td></tr>)}</tbody></table></div>}
   </section>
 }

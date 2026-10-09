@@ -615,3 +615,65 @@ input,select,textarea{max-width:100%}
 .meeting-filter-toolbar select{min-height:42px;padding:0 12px;border:1px solid #d5e5ee;border-radius:10px;background:#fff;color:#1d3a50}
 @media(max-width:900px){.global-clear-filters{margin-inline:4px}.global-clear-filters span{display:none}}
 @media(max-width:600px){.global-clear-filters{width:38px;height:38px;padding:0}.global-clear-filters b{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 3px;font-size:9px}.meeting-filter-toolbar{align-items:stretch}.meeting-filter-toolbar>label{width:100%}.filter-actions{width:100%;justify-content:stretch}.filter-actions>button{flex:1}}
+
+/* Super Admin branch and maintenance layout refinements. */
+.branch-management{display:grid;gap:18px;margin:0 0 28px}
+.branch-management>.people-hero,.branch-management>.editor-card,.branch-management>.data-panel,.branch-management>.branch-summary{margin:0;min-width:0}
+.branch-management>.branch-safety-note{margin:0;padding:13px 16px;border:1px solid #dbe5f0;border-radius:12px;background:#fff;color:#64748b;line-height:1.5;overflow-wrap:anywhere}
+.branch-directory-panel,.branch-access-management{min-width:0;overflow:hidden}
+.branch-management .branch-directory-title{align-items:center;flex-wrap:nowrap;gap:18px}
+.branch-management .branch-directory-title>div:first-child{flex:1 1 auto;min-width:220px}
+.branch-management .branch-directory-title>.branch-directory-actions{flex:0 0 auto;flex-direction:row;align-items:flex-end;justify-content:flex-end;gap:12px;margin-left:auto}
+.branch-management .branch-group-filter{display:grid;grid-template-columns:auto minmax(190px,240px);align-items:center;gap:10px;white-space:nowrap;color:#536e81;font-size:11px;font-weight:700}
+.branch-management .branch-group-filter select{width:100%;min-width:0;min-height:42px;margin:0;padding:0 34px 0 12px;border:1px solid #d5e5ee;border-radius:9px;background:#fbfdff;color:#1d3a50;font:inherit;outline:none}
+.branch-management .branch-group-filter select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px #eef2ff}
+.branch-management .branch-directory-actions .refresh-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 14px;white-space:nowrap}
+.branch-management .branch-directory-empty{padding:38px 20px}
+.branch-directory-empty h3,.branch-access-empty h3{margin:12px 0 5px}
+.branch-directory-empty p,.branch-access-empty p{margin:0;line-height:1.5}
+.branch-access-management>.branch-safety-note{margin:0;padding:0 24px 0;line-height:1.55;overflow-wrap:anywhere}
+.branch-access-controls{display:grid;grid-template-columns:minmax(220px,.9fr) minmax(360px,1.45fr) auto;align-items:start;gap:14px;margin:16px 24px 20px}
+.branch-access-controls>label,.branch-access-form>label{display:grid;gap:7px;min-width:0;color:#536e81;font-size:11px;font-weight:700}
+.branch-access-controls input,.branch-access-controls select{width:100%;min-width:0;min-height:42px;margin:0;padding:0 12px;border:1px solid #d5e5ee;border-radius:9px;background:#fbfdff;color:#1d3a50;outline:none}
+.branch-access-controls input:focus,.branch-access-controls select:focus{border-color:#4f46e5;box-shadow:0 0 0 3px #eef2ff}
+.branch-access-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:12px}
+.branch-access-form>.button{grid-column:1/-1;justify-self:start;min-height:42px;white-space:nowrap}
+.branch-access-controls>.branch-access-refresh{align-self:start;justify-self:end;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 14px;white-space:nowrap}
+.branch-access-message{margin:0 24px 16px;overflow-wrap:anywhere}
+.branch-access-management>.branch-access-empty{padding:36px 18px 42px}
+.operations-dashboard{display:grid;gap:18px;margin-top:24px;min-width:0}
+.operations-dashboard>.operations-hero,.operations-dashboard>.operations-stat-grid,.operations-dashboard>.operations-columns,.operations-dashboard>.data-panel{min-width:0;margin-bottom:0}
+.operations-dashboard .operations-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:0}
+.operations-dashboard .data-panel{min-width:0;overflow:hidden}
+.operations-dashboard .operations-details,.operations-dashboard .operations-check-list{min-width:0;padding-right:24px;padding-left:24px}
+.operations-dashboard .operations-details>div{align-items:flex-start}
+.operations-dashboard .operations-details dd{max-width:68%;overflow-wrap:anywhere}
+.operations-dashboard .field-help{margin:14px 24px 20px;line-height:1.55;overflow-wrap:anywhere}
+.operations-dashboard code{white-space:normal;overflow-wrap:anywhere}
+.operations-dashboard .operations-readiness .operations-check-list{padding-top:4px;padding-bottom:14px}
+@media(max-width:900px){
+  .branch-management .branch-directory-title{align-items:flex-start;flex-wrap:wrap}
+  .branch-management .branch-directory-title>.branch-directory-actions{flex:1 1 100%;width:100%;margin-left:0}
+  .branch-access-controls{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);}
+  .branch-access-controls>.branch-access-refresh{grid-column:2;justify-self:start}
+  .operations-dashboard .operations-columns{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:600px){
+  .branch-management{gap:14px;margin-bottom:20px}
+  .branch-management .branch-directory-title{gap:12px}
+  .branch-management .branch-directory-title>.branch-directory-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:9px}
+  .branch-management .branch-group-filter{grid-template-columns:1fr;gap:6px;white-space:normal}
+  .branch-management .branch-directory-actions .refresh-button{width:auto;min-width:42px}
+  .branch-access-management>.branch-safety-note{padding:0 16px}
+  .branch-access-controls{grid-template-columns:minmax(0,1fr);gap:12px;margin:14px 16px 18px}
+  .branch-access-form{grid-template-columns:minmax(0,1fr)}
+  .branch-access-form>.button{grid-column:auto;width:100%;justify-content:center}
+  .branch-access-controls>.branch-access-refresh{grid-column:auto;justify-self:stretch;width:100%;justify-content:center}
+  .branch-access-message{margin-inline:16px}
+  .branch-access-management>.branch-access-empty{padding:28px 16px 32px}
+  .operations-dashboard{gap:14px;margin-top:18px}
+  .operations-dashboard .operations-details,.operations-dashboard .operations-check-list{padding-right:16px;padding-left:16px}
+  .operations-dashboard .field-help{margin:12px 16px 16px}
+  .operations-dashboard .operations-details>div{display:grid;grid-template-columns:minmax(0,1fr);gap:5px}
+  .operations-dashboard .operations-details dd{max-width:100%;text-align:left}
+}
