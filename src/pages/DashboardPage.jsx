@@ -156,7 +156,9 @@ function DashboardPageContent({ session, onLogout, onProfileUpdated, language = 
       else if(page==='parents') result=await schoolApi.parents()
       else if(page==='classes') result=await schoolApi.classes()
       else if(page==='schools') result=await schoolApi.schools()
-      else if(page==='users') result=await schoolApi.users(isSuper)
+      // Super Admin's directory owns its filters and loads its own paginated
+      // results. Avoid loading the same users endpoint again at page level.
+      else if(page==='users') result=isSuper?{}:await schoolApi.users(false)
       else if(page==='attendance') result=await schoolApi.attendance(today)
       else if(page==='attendanceReports') result=await schoolApi.attendanceReport()
       else if(page==='notifications'||page==='messages'||page==='analytics'||page==='staffHr'||page==='smartClassroom'||page==='maintenance'||page==='exams'||page==='fees'||page==='assignments'||page==='library'||page==='transport'||page==='inventory'||page==='leave'||page==='meetings'||page==='audit'||page==='hostel'||page==='scholarships'||page==='expenses'||page==='finance'||page==='payroll'||page==='portal'||page==='portalLinks'||page==='calendar'||page==='admissions'||page==='documents') result=sessionPlanKnown?{}:await schoolApi.dashboard()

@@ -40,7 +40,7 @@ export async function api(path, options = {}) {
       window.dispatchEvent(new Event('school-session-expired'))
     }
   }
-  if (!response.ok) throw new ApiError(data.error || data.message || 'Request failed. Please try again.', response.status, data)
+  if (!response.ok) throw new ApiError(data.error || data.message || data.msg || `Request failed (HTTP ${response.status}). Please try again.`, response.status, data)
   return data
 }
 
