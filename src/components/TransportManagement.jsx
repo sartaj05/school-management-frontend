@@ -325,7 +325,7 @@ export default function TransportManagement({ user }) {
           <label>Helper mobile<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Optional. If entered, use 10 digits starting with 6, 7, 8, or 9." value={vehicleForm.helper_mobile || ''} onChange={e => changeVehicle('helper_mobile', phoneValue(e.target.value))}/></label>
           <label>Status<select value={vehicleForm.status} onChange={e => changeVehicle('status', e.target.value)}><option value="active">Active</option><option value="maintenance">Maintenance</option><option value="inactive">Inactive</option></select></label>
         </div>
-        {vehicleForm.driver_mobile && !phoneOk(vehicleForm.driver_mobile) && <div className="form-error">Enter a valid Indian driver mobile number: 10 digits starting with 6, 7, 8, or 9.</div>}
+        {vehicleForm.driver_mobile && vehicleForm.driver_mobile !== '+91' && !phoneOk(vehicleForm.driver_mobile) && <div className="form-error">Enter a valid Indian driver mobile number: 10 digits starting with 6, 7, 8, or 9.</div>}
         {vehicleForm.helper_mobile && !phoneOk(vehicleForm.helper_mobile) && <div className="form-error">Enter a valid Indian helper mobile number: 10 digits starting with 6, 7, 8, or 9.</div>}
         <div className="student-row-actions"><button className="button button-small" disabled={busy||!phoneOk(vehicleForm.driver_mobile)||Boolean(vehicleForm.helper_mobile&&!phoneOk(vehicleForm.helper_mobile))}><Save size={16}/>{busy ? 'Saving...' : editingVehicle ? 'Update vehicle' : 'Add vehicle'}</button>{editingVehicle && <button type="button" onClick={() => { setEditingVehicle(null); setVehicleForm(emptyVehicle) }}>Cancel</button>}</div>
       </form>

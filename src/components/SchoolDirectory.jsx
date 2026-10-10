@@ -4,7 +4,7 @@ import { schoolApi, schoolLogoUrl } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
 import { useFilterReset } from './FilterResetContext'
 
-export default function SchoolDirectory({ rows, reload }) {
+export default function SchoolDirectory({ rows }) {
   const [selected, setSelected] = useState(null)
   const [editing, setEditing] = useState(false)
   const [imagePreview, setImagePreview] = useState('')
@@ -92,7 +92,6 @@ export default function SchoolDirectory({ rows, reload }) {
       setEditing(false)
       setMessage(result.message)
       await loadDirectory()
-      if (reload) await reload()
     } catch (requestError) {
       setError(requestError.message)
     } finally {
@@ -112,7 +111,6 @@ export default function SchoolDirectory({ rows, reload }) {
       setMessage(result.message)
       if (selected?.id === item.id) setSelected(current => ({ ...current, ...result.school }))
       await loadDirectory()
-      if (reload) await reload()
     } catch (requestError) {
       setError(requestError.message)
     } finally {

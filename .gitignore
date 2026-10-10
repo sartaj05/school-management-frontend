@@ -13,3 +13,8 @@ test-results/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Local development logs
+local-web*.log
+playwright-report/
+local-test-results/

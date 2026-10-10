@@ -12,8 +12,8 @@ const tabs = [
 
 const date = value => value ? new Date(value).toLocaleDateString() : '—'
 
-export default function ParentStudentPortal({ user }) {
-  const [me, setMe] = useState(null), [studentId, setStudentId] = useState(''), [tab, setTab] = useState('overview')
+export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
+  const [me, setMe] = useState(null), [studentId, setStudentId] = useState(''), [tab, setTab] = useState(initialTab)
   const [data, setData] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [revision, setRevision] = useState(0)
 
   useEffect(() => {

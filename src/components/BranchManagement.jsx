@@ -5,6 +5,11 @@ import BranchAccessManagement from './BranchAccessManagement'
 
 const emptyForm = { group_name: '', branch_code: '', branch_name: '', school_id: '' }
 
+// Consolidated totals include only active branches; the management directory
+// must keep inactive branches available so an administrator can reactivate them.
+const groupRows = (rows, group, totals = []) => rows.filter(row => row.group_name === group)
+  .map(row => ({ ...row, ...totals.find(total => total.id === row.id) }))
+
 export default function BranchManagement() {
   const [rows, setRows] = useState([])
   const [allRows, setAllRows] = useState([])
@@ -27,7 +32,7 @@ export default function BranchManagement() {
       if (selectedGroup) {
         const consolidated = await schoolApi.consolidatedBranches(selectedGroup)
         setSummary(consolidated.summary || null)
-        setRows(consolidated.data || branchRows.filter(row => row.group_name === selectedGroup))
+        setRows(groupRows(branchRows, selectedGroup, consolidated.data || []))
       } else { setRows(branchRows); setSummary(null) }
     } catch (requestError) { setError(requestError.message) }
     finally { setBusy(false) }
@@ -46,7 +51,7 @@ export default function BranchManagement() {
     try {
       const result = await schoolApi.consolidatedBranches(value)
       setSummary(result.summary || null)
-      setRows(result.data || allRows.filter(row => row.group_name === value))
+      setRows(groupRows(allRows, value, result.data || []))
     } catch (requestError) { setError(requestError.message) }
     finally { setBusy(false) }
   }

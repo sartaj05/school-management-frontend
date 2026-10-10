@@ -11,7 +11,7 @@ export default function DocumentExports() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const load = () => schoolApi.documents().then(result => setRows(result.data || [])).catch(requestError => setError(requestError.message))
-  useEffect(load, [])
+  useEffect(() => { void load() }, [])
   useFilterReset(() => setDate(defaultDate), Number(date !== defaultDate))
   async function attendance() {
     try { await schoolApi.downloadAttendanceCsv(date); setNotice('Attendance CSV download started.'); load() } catch (requestError) { setError(requestError.message) }

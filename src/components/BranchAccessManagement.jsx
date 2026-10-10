@@ -5,27 +5,21 @@ import { schoolApi } from '../lib/api'
 const roles = ['School Admin', 'Teacher', 'Accounts Staff', 'Driver', 'Hostel Staff']
 
 export default function BranchAccessManagement({ branches = [] }) {
-  const [branchId, setBranchId] = useState('')
-  const [rows, setRows] = useState([])
+  const [selectedBranchId, setBranchId] = useState('')
+  const branchId = branches.some(row => String(row.id) === selectedBranchId)
+    ? selectedBranchId : String(branches[0]?.id || '')
+  const [registry, setRegistry] = useState({ branchId: '', rows: [] })
+  const rows = registry.branchId === branchId ? registry.rows : []
+  const setRows = (nextRows) => setRegistry({ branchId, rows: nextRows })
   const [form, setForm] = useState({ tenant_user_id: '', access_role: 'School Admin' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
 
-  useEffect(() => {
-    const selectedBranchExists = branches.some(row => String(row.id) === branchId)
-    if (branchId && !selectedBranchExists) {
-      setRows([])
-      setBranchId(branches[0]?.id ? String(branches[0].id) : '')
-    } else if (!branchId && branches[0]?.id) {
-      setBranchId(String(branches[0].id))
-    }
-  }, [branchId, branches])
-
   const load = useCallback(async () => {
     if (!branchId) return
     setBusy(true); setError('')
-    try { const result = await schoolApi.branchAccess(branchId); setRows(result.data || []) } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
+    try { const result = await schoolApi.branchAccess(branchId); setRegistry({ branchId, rows: result.data || [] }) } catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }, [branchId])
   useEffect(() => {
     const timer = setTimeout(() => { void load() }, 0)

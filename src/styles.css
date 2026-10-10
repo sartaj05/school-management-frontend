@@ -684,6 +684,30 @@ input,select,textarea{max-width:100%}
   .operations-dashboard .operations-details dd{max-width:100%;text-align:left}
 }
 
+/* Keep titles readable when the sidebar, search and account share a header. */
+.dashboard-header{gap:16px}
+.dashboard-header>div:first-of-type{flex:1 1 180px}
+.dashboard-header h1{overflow-wrap:normal;word-break:normal}
+.dashboard-header .global-search{flex:1 1 240px;min-width:0;max-width:360px;margin:0}
+.dashboard-header .header-user{flex:0 1 210px;min-width:0}
+.dashboard-header .header-user b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(min-width:901px) and (max-width:1200px){
+  .dashboard-header{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,210px);height:auto;min-height:110px;padding-block:12px;gap:8px 16px}
+  .dashboard-header>div:first-of-type{grid-column:1;grid-row:1}
+  .dashboard-header .header-user{grid-column:2;grid-row:1}
+  .dashboard-header .global-search{grid-column:1/-1;grid-row:2;max-width:none;width:100%}
+  .dashboard-header .global-clear-filters{grid-column:1/-1;justify-self:start}
+}
+@media(max-width:900px){
+  .dashboard-header{display:grid;grid-template-columns:auto minmax(0,1fr) auto;height:auto;min-height:110px;padding-block:10px;gap:8px}
+  .dashboard-header>div:first-of-type{grid-column:2;grid-row:1}
+  .dashboard-header .mobile-nav{grid-column:1;grid-row:1;margin:0;padding:8px}
+  .dashboard-header .header-user{grid-column:3;grid-row:1;max-width:180px}
+  .dashboard-header .global-search{grid-column:1/-1;grid-row:2;max-width:none;width:100%;margin:0}
+  .dashboard-header .global-clear-filters{grid-column:1/-1;grid-row:3;justify-self:start}
+}
+@media(max-width:600px){.dashboard-header .header-user{max-width:36px}}
+
 .directory-filter-toolbar{display:grid;grid-template-columns:minmax(240px,1fr) minmax(145px,190px) minmax(150px,210px) auto;align-items:end;gap:12px;padding:18px 27px;border-bottom:1px solid #e7eff4;background:#fbfdff}
 .directory-filter-toolbar>label{display:grid;gap:6px;min-width:0;color:#536e81;font-size:11px;font-weight:700}
 .directory-filter-toolbar>label>input,.directory-filter-toolbar>label>select{width:100%;height:40px;min-width:0;border:1px solid #d5e5ee;border-radius:10px;background:#fff;padding:0 11px;color:#17354d;font:inherit}

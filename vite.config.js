@@ -6,6 +6,10 @@ export default defineConfig({
 
   server: {
     port: 5173,
+    watch: {
+      // Browser test traces include HTML; they must not trigger a page reload.
+      ignored: ['**/local-test-results/**', '**/test-results/**', '**/playwright-report/**'],
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:5000',
