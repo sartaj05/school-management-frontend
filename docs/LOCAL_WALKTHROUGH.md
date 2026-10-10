@@ -53,6 +53,31 @@ The backend demo flow also exercised admissions, attendance, fee receipt, financ
 
 These opt-in tests require `LOCAL_PORTAL_E2E=1` and the local passwords in environment variables. Synthetic create workflows add test records on each run. Keep the servers running and avoid editing React source during a visible form walkthrough.
 
+## Additional lifecycle checks
+
+The continuation added `e2e/local_lifecycles.spec.js`, using installed Chrome at desktop (1440 × 900, visible) and phone (390 × 844) sizes. These checks exercise persisted changes and the resulting role-to-role behavior:
+
+- Admin creates and edits a subject, assigns its teacher, creates/edits a timetable period, then archives those records.
+- Admin creates a hostel building, room and bed, allocates a student, records attendance, checks a visitor in/out, and releases the bed.
+- Admin records staff attendance, configures salary, generates January 2030 draft payroll and downloads the teacher payslip.
+- Teacher and Student request leave; Admin approves both, checks weekday attendance linkage and weekend exclusion, reviews history, then cancels both and verifies attendance restoration.
+- Teacher publishes availability; Parent books and cancels a meeting; Teacher cancels the synthetic slot and its future reminders.
+- Teacher submits a synthetic cash collection; Admin approves it; Student and Parent download the paid invoice receipt. No gateway or actual money transfer is involved.
+
+The leave screen now explains that balances charge calendar days; weekend/holiday exclusions govern attendance linkage. The backend adds an integration regression for a Friday–Monday request, including approval and cancellation. The fee approval queue now refreshes the invoice register and summary immediately after review; previously the register still displayed a pending invoice after a successful approval.
+
+All six scenarios passed at both sizes (12 successful scenario runs across the lifecycle and fee-specific runs). Final fee evidence is in ignored `local-test-results/fee-lifecycle-final/` and `local-test-results/fee-lifecycle-phone-final/`; the five phone workflows are in `local-test-results/lifecycles-phone/`. The continuation also passed all 11 leave integration tests, all 39 React tests, lint and production build.
+
+Run the lifecycle suite with the same environment variables described above:
+
+```powershell
+npx playwright test e2e/local_lifecycles.spec.js --headed --workers=1
+$env:LOCAL_PHONE_E2E = '1'
+npx playwright test e2e/local_lifecycles.spec.js --workers=1
+```
+
+These tests add synthetic records. Leave requests and meeting bookings are cancelled, and hostel beds released, at the end of successful runs. Payroll is a draft; the synthetic fee payment remains recorded for receipt testing. Interrupted runs can leave additional test records.
+
 ## Remaining environment-dependent verification
 
 Real payment settlement/refunds, external email/WhatsApp delivery, actual GPS/background tracking, camera/screen recording and media transcoding, MFA authenticator enrollment, and Flutter real-device behavior were not certified by these browser checks. Flutter analysis reported 17 informational findings; no Flutter runtime test or Flutter code change was made. No external notification or real-money transaction was sent during these UI workflows.

@@ -5,7 +5,7 @@ import { schoolApi } from '../lib/api'
 const today = new Date().toISOString().slice(0, 10)
 const methods = ['cash', 'upi', 'online', 'card', 'bank_transfer', 'cheque']
 
-export default function FeeCollectionRequests({ admin = false }) {
+export default function FeeCollectionRequests({ admin = false, onReviewed }) {
   const [options, setOptions] = useState([])
   const [requests, setRequests] = useState([])
   const [selectedInvoice, setSelectedInvoice] = useState('')
@@ -46,7 +46,7 @@ export default function FeeCollectionRequests({ admin = false }) {
   async function review(item, status) {
     const review_notes = status === 'rejected' ? window.prompt('Reason for rejection (optional):', '') || '' : ''
     setBusy(true); setError(''); setMessage('')
-    try { const result = await schoolApi.reviewFeeCollectionRequest(item.id, { status, review_notes }); setMessage(result.message); await load() }
+    try { const result = await schoolApi.reviewFeeCollectionRequest(item.id, { status, review_notes }); setMessage(result.message); await load(); await onReviewed?.() }
     catch (requestError) { setError(requestError.message) }
     finally { setBusy(false) }
   }
