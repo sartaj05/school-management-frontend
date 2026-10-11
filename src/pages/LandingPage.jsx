@@ -79,6 +79,8 @@ export default function LandingPage({ language = 'en' }) {
   const subtitle = language === 'en' ? (content?.landing_subtitle || copy('heroSubtitle')) : copy('heroSubtitle')
 
   const brandName = content?.school_name || 'EduFlow School Management'
+  const contactEmail = content?.contact_email || content?.support_email || 'hello@eduflow.com'
+  const contactPhone = content?.contact_phone || content?.support_phone || '+91 98765 43210'
   useEffect(() => {
     if (!selectedFeature && !selectedPlan && !showPlanComparison) return undefined
     const closeOnEscape = event => { if (event.key === 'Escape') { setSelectedFeature(null); setSelectedPlan(null); setShowPlanComparison(false) } }
@@ -120,15 +122,24 @@ export default function LandingPage({ language = 'en' }) {
 
       <section className="cta-section container"><div><span>EduFlow by WSI Gloabal</span><h2>Your next school day, organized.</h2><p>Talk to us about the right plan for your school.</p></div><Link className="button button-white" to="/contact">Contact our team <ArrowRight size={18} /></Link></section>
     </main>
-    <footer id="contact" className="footer container">
-      {brandLogo ? <span className="footer-logo-img"><img src={brandLogo} alt={`${brandName} logo`} /></span> : <Logo />}
-      <p>School management by WSI Gloabal.</p>
-      <div className="footer-contact">
-        <span><Mail size={14} />{content?.contact_email || content?.support_email || 'hello@eduflow.com'}</span>
-        <span><Phone size={14} />{content?.contact_phone || content?.support_phone || '+91 98765 43210'}</span>
-        <span><Clock size={14} />{content?.support_note || 'Technical support during school hours.'}</span>
+    <footer id="contact" className="landing-footer">
+      <div className="landing-footer-inner">
+        <div className="landing-footer-main">
+          <div className="landing-footer-brand">
+            <Link to="/" aria-label={`${brandName} home`}>
+              {brandLogo ? <img className="landing-footer-logo" src={brandLogo} alt={`${brandName} logo`} /> : <Logo />}
+            </Link>
+            <p>School management by <strong>WSI Gloabal.</strong></p>
+          </div>
+          <div className="landing-footer-contact">
+            <h2>Get in touch</h2>
+            <a href={`mailto:${contactEmail}`}><Mail size={17} aria-hidden="true" /><span>{contactEmail}</span></a>
+            <a href={`tel:${contactPhone.replace(/[^+\d]/g, '')}`}><Phone size={17} aria-hidden="true" /><span>{contactPhone}</span></a>
+            <p><Clock size={17} aria-hidden="true" /><span>{content?.support_note || 'Technical support during school hours.'}</span></p>
+          </div>
+        </div>
+        <div className="landing-footer-bottom"><small>© {new Date().getFullYear()} {brandName}</small></div>
       </div>
-      <small>© {new Date().getFullYear()} {brandName}</small>
     </footer>
     {selectedFeature && <div className="feature-modal" role="presentation" onMouseDown={() => setSelectedFeature(null)}><div className="feature-modal-card" role="dialog" aria-modal="true" aria-labelledby="feature-modal-title" onMouseDown={event => event.stopPropagation()}><button className="feature-modal-close" type="button" onClick={() => setSelectedFeature(null)} aria-label="Close feature details"><X size={19} /></button><div className="feature-modal-heading"><span className="feature-icon"><selectedFeature.Icon /></span><div><span>Feature and plan details</span><h2 id="feature-modal-title">{selectedFeature.title}</h2><p>{selectedFeature.details}</p></div></div><div className="feature-plan-grid">{planCatalog.map(plan => <article className={`feature-plan-card plan-${plan.name.toLowerCase()}`} key={plan.key || plan.name}><div><strong>{plan.name}</strong><small>{plan.version} plan</small></div>{selectedFeature.included.includes(plan.name) ? <CheckCircle2 className="plan-included" size={20} /> : <X className="plan-locked" size={20} />}<p>{selectedFeature.plans[plan.name]}</p><span>{plan.description}</span></article>)}</div><div className="feature-modal-section"><span>Related tools</span><div className="feature-related-list">{selectedFeature.related.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</div></div><div className="feature-tier-summary"><article><strong>Premium includes</strong>{premiumFeatures.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</article><article><strong>Enterprise includes</strong>{enterpriseFeatures.map(item => <span key={item}><CheckCircle2 size={14} />{item}</span>)}</article></div><Link className="button feature-modal-action" to="/login" onClick={() => setSelectedFeature(null)}>Open dashboard <ArrowRight size={16} /></Link></div></div>}
     {selectedPlan && <div className="feature-modal" role="presentation" onMouseDown={() => setSelectedPlan(null)}><div className="feature-modal-card plan-details-modal" role="dialog" aria-modal="true" aria-labelledby="plan-modal-title" onMouseDown={event => event.stopPropagation()}><button className="feature-modal-close" type="button" onClick={() => setSelectedPlan(null)} aria-label="Close plan details" title="Close plan details"><X size={19} /></button><div className="feature-modal-heading"><span className="feature-icon"><Sparkles /></span><div><span>Plan details</span><h2 id="plan-modal-title">{selectedPlan.name}</h2><p>{selectedPlan.description}</p></div></div><div className="feature-plan-grid plan-feature-box-grid">{planFeatureGroups(selectedPlan).map((items, index) => <article className={`feature-plan-card plan-${selectedPlan.name.toLowerCase()}`} key={`${selectedPlan.key || selectedPlan.name}-feature-group-${index}`}><div><strong>{selectedPlan.name}</strong><small>{selectedPlan.version} plan · Features {index * 5 + 1}-{index * 5 + items.length}</small></div><CheckCircle2 className="plan-included" size={20} /><p>Included features</p><div className="plan-feature-list">{items.map(item => <span key={item}><CheckCircle2 size={14} /> {item}</span>)}</div></article>)}</div><Link className="button feature-modal-action" to="/login" onClick={() => setSelectedPlan(null)}>Get started with {selectedPlan.name} <ArrowRight size={16} /></Link></div></div>}
