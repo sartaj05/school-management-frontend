@@ -1,0 +1,160 @@
+/* Dashboard visual refresh. Keep public pages and role permissions unchanged. */
+.app-shell {
+  --ink: #20243c;
+  --muted: #71768d;
+  --line: #e7e9f1;
+  --blue: #6554c0;
+  --deep: #5342a7;
+  --pale: #f0edfb;
+  background: #f7f8fc;
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+.app-shell .sidebar {
+  width: 252px;
+  padding: 28px 16px 18px;
+  background: #fff;
+  border-right: 1px solid var(--line);
+  box-shadow: none;
+}
+.app-shell .sidebar-head { padding: 0 12px 26px; }
+.app-shell .sidebar .logo { color: #25243d; gap: 10px; }
+.app-shell .sidebar .logo span { background: #6856c7; color: #fff; border-radius: 12px; }
+.app-shell .sidebar .logo strong { font-size: 23px; letter-spacing: -.8px; }
+.app-shell .sidebar-head > button { color: #62667c; }
+.sidebar-workspace { display: flex; align-items: center; gap: 10px; margin: 0 4px 22px; padding: 12px 10px; background: #f8f9fc; border: 1px solid var(--line); border-radius: 10px; }
+.sidebar-workspace > span { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 34px; background: #fff; border: 1px solid var(--line); border-radius: 9px; color: var(--blue); }
+.sidebar-workspace > div { min-width: 0; }
+.sidebar-workspace b,.sidebar-workspace small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-workspace b { font-size: 12px; font-weight: 700; }
+.sidebar-workspace small { margin-top: 4px; font-size: 10px; color: var(--muted); }
+.app-shell .sidebar nav { padding-right: 4px; gap: 18px; scrollbar-color: #d8d8e7 transparent; }
+.app-shell .sidebar-nav-section { gap: 4px; }
+.app-shell .sidebar-nav-section + .sidebar-nav-section { margin: 0; padding: 0; border: 0; }
+.app-shell .sidebar-nav-section-title { padding: 0 12px 6px; font-size: 9px; font-weight: 700; color: #85899d; letter-spacing: .1em; }
+.app-shell .sidebar nav button { min-height: 43px; padding: 10px 12px; gap: 10px; border-radius: 8px; font-size: 12px; font-weight: 600; color: #60667b; transition: background .15s, color .15s; }
+.app-shell .sidebar nav button > svg:first-child { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 1.8; }
+.app-shell .sidebar nav button:hover { background: #f7f5fc; color: #5342a7; }
+.app-shell .sidebar nav button.active { background: #eeebfa!important; color: #5b48b1!important; box-shadow: inset 3px 0 #7966cd; }
+.app-shell .sidebar nav button.active > svg:last-child { opacity: .65; width: 13px; }
+.app-shell .profile-card { border-color: var(--line); margin-top: 18px; padding: 18px 6px 0; }
+.app-shell .sidebar .profile-card b { color: #30354b; font-size: 11px; }
+.app-shell .sidebar .profile-card small { color: #787d91; margin-top: 3px; }
+.app-shell .sidebar .profile-card button { color: #767b91; }
+.app-shell .profile-badge { border: 1px solid #e5def7; border-radius: 50%; background: #f1edfa; color: #6652ad; }
+.app-shell .dashboard-main { margin-left: 252px; background: #f7f8fc; min-height: 100vh; }
+.app-shell .dashboard-header { padding-inline: 32px; border-color: var(--line); box-shadow: none; background: #fff; }
+.app-shell .dashboard-header small { font-size: 10px; color: #7d8196; }
+.app-shell .dashboard-header h1 { margin-top: 4px; font-size: 23px; letter-spacing: -.7px; color: #26283f; }
+.app-shell .dashboard-header .global-search { background: #f8f9fc; border: 1px solid #e9eaf2; border-radius: 9px; padding-block: 3px; }
+.app-shell .global-search input { font-size: 12px; border: 0; border-radius: 8px; background: transparent; }
+.app-shell .global-search:focus-within { border-color: #a595c8; }
+.app-shell .header-user { gap: 10px; }
+.app-shell .header-user b { font-size: 11px; }
+.app-shell .header-user small { margin-top: 3px; }
+.app-shell .dashboard-content { padding: 30px 32px 48px; max-width: 1600px; margin-inline: auto; }
+.app-shell .demo-only-banner { border: 1px solid #ebe3cc; background: #fffcf4; color: #816b34; border-radius: 9px; font-size: 11px; padding: 10px 14px; }
+
+.app-shell .overview-welcome { position: relative; display: flex; justify-content: space-between; gap: 28px; min-height: 274px; padding: 32px 38px; border: 1px solid #e8e2f6; border-radius: 16px; background: #eeebf8; box-shadow: none; color: var(--ink); }
+.app-shell .overview-welcome-copy { flex: 1; max-width: 660px; }
+.app-shell .overview-eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 9px; letter-spacing: .13em; color: #6b5b9e; font-weight: 800; }
+.overview-eyebrow > span { width: 6px; height: 6px; border-radius: 50%; background: #8871bf; }
+.app-shell .overview-welcome h2 { margin: 15px 0 12px; font: 800 clamp(27px,2.7vw,39px)/1.16 Manrope,sans-serif; letter-spacing: -1.4px; white-space: pre-line; color: #30294a; }
+.app-shell .overview-welcome p { max-width: 440px; font-size: 12px; line-height: 1.8; color: #756c89; }
+.overview-primary-action { display: inline-flex; align-items: center; gap: 14px; margin-top: 21px; padding: 11px 16px; border: 1px solid #6554b1; background: #6856b6; border-radius: 8px; color: #fff; font: 600 11px 'DM Sans',sans-serif; cursor: pointer; transition: background .15s; }
+.overview-primary-action:hover { background: #55429f; }
+.app-shell .overview-date-card { flex: 0 0 200px; width: 200px; max-width: 200px; padding: 22px 18px 0; border: 1px solid #fff; border-radius: 14px; background: rgba(255,255,255,.7); text-align: center; box-shadow: 0 10px 30px #5d418008; }
+.overview-date-icon { display: grid; place-items: center; width: 48px; height: 48px; margin: 0 auto 13px; background: #ebe6f7; color: #8773b5; border-radius: 13px; }
+.app-shell .overview-date-card > span { color: #898099; font: 600 9px 'DM Sans',sans-serif; text-transform: uppercase; letter-spacing: .12em; }
+.overview-date-card > b { display: block; margin-top: 6px; color: #453957; font: 800 21px Manrope,sans-serif; }
+.overview-date-card time { display: block; margin-top: 5px; font-size: 11px; color: #8a8098; }
+.overview-date-footer { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 14px 0; margin-top: 20px; border-top: 1px solid #eae4f1; font-size: 9px; color: #9487a6; }
+
+.app-shell .reference-stat-grid { gap: 16px; margin: 22px 0 30px; }
+.app-shell .reference-stat-grid article { position: relative; flex-direction: row-reverse; justify-content: space-between; gap: 10px; align-items: flex-start; min-height: 126px; padding: 22px; border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 2px 3px #29203e02; }
+.app-shell .reference-stat-grid article > span { width: 36px; height: 36px; flex-basis: 36px; border-radius: 10px; color: #7a60b5; background: #f0ebfa; }
+.app-shell .reference-stat-grid article:nth-child(2) > span { color: #479680; background: #eaf6f1; }
+.app-shell .reference-stat-grid article:nth-child(3) > span { color: #cc9646; background: #fcf3e4; }
+.app-shell .reference-stat-grid article:nth-child(4) > span { color: #658ec8; background: #edf3fc; }
+.app-shell .reference-stat-grid small { font-size: 11px; font-weight: 500; color: #7b8093; }
+.app-shell .reference-stat-grid b { font-size: 29px; letter-spacing: -.8px; margin: 10px 0 5px; font-weight: 800; }
+.app-shell .reference-stat-grid em { font-size: 10px; color: #8b8fa1; }
+.app-shell .dashboard-section-heading { margin-bottom: 16px; }
+.app-shell .dashboard-section-heading span { font-size: 9px; color: #9a92ad; }
+.app-shell .dashboard-section-heading h2 { font-size: 18px; margin-top: 5px; letter-spacing: -.4px; }
+.app-shell .dashboard-action-grid { gap: 14px; }
+.app-shell .dashboard-action-grid button { min-height: 86px; padding: 19px; border-radius: 11px; box-shadow: none; }
+.app-shell .dashboard-action-grid button > span { width: 36px; height: 36px; flex-basis: 36px; border: 0; border-radius: 10px; background: #f5f3fa; color: #817099; }
+.app-shell .dashboard-action-grid b { font-size: 12px; font-weight: 700; }
+.app-shell .dashboard-action-grid small { color: #9295a6; font-size: 10px; margin-top: 5px; }
+.app-shell .dashboard-action-grid button:hover { border-color: #c5b8e1; background: #fdfcff; box-shadow: 0 5px 15px #5e45700a; }
+
+/* Shared directories, forms and portal panels. */
+.app-shell .data-panel,.app-shell .editor-card,.app-shell .empty-panel { border-color: var(--line); border-radius: 12px; box-shadow: 0 2px 5px #23213e03; }
+.app-shell .panel-title { padding: 22px 24px; border-color: var(--line); }
+.app-shell .panel-title h2 { font-size: 18px; letter-spacing: -.4px; color: #303149; }
+.app-shell .panel-title span { color: #9b91ac; font-size: 9px; }
+.app-shell .panel-title > b { background: #f4f2fa; color: #807092; font-size: 10px; font-weight: 600; }
+.app-shell .table-wrap th { padding-block: 14px; background: #fafafd; color: #72768c; font-size: 10px; letter-spacing: .05em; font-weight: 700; border-color: #eff0f5; }
+.app-shell .table-wrap td { padding-block: 17px; color: #5e6379; font-size: 12px; border-color: #f0f1f6; }
+.app-shell .table-wrap td b { color: #404359; font-weight: 600; }
+.app-shell .table-wrap td small { color: #797e93; font-size: 10px; margin-top: 4px; }
+.app-shell .table-wrap tbody tr:hover { background: #fcfbff; }
+.app-shell .status-pill { font-size: 10px; border-radius: 6px; }
+.app-shell .field-grid input,.app-shell .field-grid select,.app-shell .field-grid textarea { border-color: #e0e2ec; border-radius: 8px; background: #fff; }
+.app-shell .field-grid input:focus,.app-shell .field-grid select:focus,.app-shell .field-grid textarea:focus { border-color: #9f8ccc; box-shadow: 0 0 0 3px #f0ecf8; }
+.app-shell .button { border-radius: 8px; box-shadow: none; }
+.app-shell .people-hero { border-radius: 14px; background: #eeebf8; border: 1px solid #e8e2f6; color: #413257; box-shadow: none; }
+.app-shell .people-hero h2 { color: #3c2f52; }
+.app-shell .people-hero p,.app-shell .people-hero span { color: #7c708e; }
+.app-shell .people-hero > svg { color: #a293bd; }
+.app-shell .portal-tabs { padding: 8px; background: #fff; border: 1px solid var(--line); border-radius: 12px; gap: 5px; }
+.app-shell .portal-tabs button { padding: 10px 12px; border-color: transparent; color: #70758a; font-weight: 600; }
+.app-shell .portal-tabs button.active,.app-shell .portal-tabs button:hover { border-color: #e7e0f4; background: #f1edfa; color: #6551a8; }
+.app-shell .stat-grid article { border: 1px solid var(--line); border-radius: 12px; box-shadow: none; }
+
+@media (min-width: 1600px) {
+  .app-shell .dashboard-content { padding-inline: 44px; }
+}
+@media (min-width: 901px) and (max-width: 1200px) {
+  .app-shell .dashboard-header { padding-inline: 24px; }
+  .app-shell .dashboard-content { padding: 24px; }
+  .app-shell .overview-welcome { padding: 28px; gap: 20px; }
+  .app-shell .overview-date-card { flex-basis: 170px; width: 170px; padding-inline: 12px; }
+}
+@media (max-width: 900px) {
+  .app-shell .sidebar { width: 260px; }
+  .app-shell .dashboard-main { margin-left: 0; }
+  .app-shell .dashboard-header { padding-inline: 20px; }
+  .app-shell .dashboard-content { padding: 24px 20px 36px; }
+  .app-shell .mobile-nav { border: 1px solid #e5e4ef; border-radius: 8px; background: #fff; color: #726488; }
+  .app-shell .overview-welcome { padding: 28px; }
+  .app-shell .sidebar.open { box-shadow: 16px 0 45px #27203620; }
+}
+@media (max-width: 600px) {
+  .app-shell .dashboard-header { padding-inline: 14px; }
+  .app-shell .dashboard-header h1 { font-size: 20px; }
+  .app-shell .dashboard-header .header-user { margin-right: 66px; }
+  .app-shell .header-user .profile-badge { display: grid; }
+  .app-shell .header-user > div { display: none; }
+  .app-shell .dashboard-content { padding: 18px 14px 30px; }
+  .app-shell .overview-welcome { display: block; min-height: 0; padding: 25px 22px; border-radius: 13px; }
+  .app-shell .overview-welcome h2 { font-size: 28px; letter-spacing: -.9px; }
+  .app-shell .overview-welcome p { font-size: 12px; }
+  .app-shell .overview-date-card { display: none; }
+  .app-shell .reference-stat-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; margin: 16px 0 24px; }
+  .app-shell .reference-stat-grid article { padding: 15px 12px; min-height: 134px; flex-direction: column; gap: 10px; }
+  .app-shell .reference-stat-grid article > span { width: 30px; height: 30px; flex-basis: 30px; border-radius: 8px; }
+  .app-shell .reference-stat-grid article > span svg { width: 16px; }
+  .app-shell .reference-stat-grid b { font-size: 25px; margin: 5px 0; }
+  .app-shell .reference-stat-grid small { font-size: 10px; }
+  .app-shell .reference-stat-grid em { font-size: 9px; }
+  .app-shell .dashboard-action-grid { grid-template-columns: minmax(0,1fr); gap: 10px; }
+  .app-shell .dashboard-action-grid button { padding: 15px; min-height: 72px; }
+  .app-shell .panel-title { padding: 18px; }
+  .app-shell .panel-title h2 { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .sidebar nav button,.overview-primary-action,.app-shell .dashboard-action-grid button { transition: none; }
+}
