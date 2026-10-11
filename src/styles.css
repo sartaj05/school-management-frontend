@@ -739,4 +739,8 @@ input,select,textarea{max-width:100%}
 .school-picker-options button > span:last-child {min-width:0;overflow-wrap:anywhere}
 .school-picker-options small {display:block;color:#746985;font-size:12px;margin-top:3px}
 .school-picker-options p {padding:8px;margin:0}
-@media(max-width:600px){.school-picker-options strong{font-size:14px}}
+.enrollment-limit-fields {border:1px solid #ded9ed;border-radius:12px;min-width:0;padding:16px;margin:8px 0;grid-column:1/-1}
+.enrollment-limit-fields legend {padding:0 6px;font-weight:600}
+.enrollment-limit-fields p {margin:0 0 16px;color:#746985}
+.class-limit-row {display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end;margin:14px 0}
+@media(max-width:600px){.class-limit-row {grid-template-columns:1fr}.enrollment-limit-fields{padding:12px}.school-picker-options strong{font-size:14px}}

@@ -1,3 +1,5 @@
+import EnrollmentLimitFields from '../components/EnrollmentLimitFields'
+import { enrollmentLimitPayload } from '../lib/enrollmentLimits'
 /* Dashboard loader effects intentionally synchronize remote API data. */
 /* eslint-disable react-hooks/set-state-in-effect */
 import { Award, Banknote, BarChart3, BellRing, BookCheck, BookOpen, Building2, Bus, CalendarCheck, CalendarClock, CalendarDays, ChevronFirst, ChevronLast, ChevronLeft, ChevronRight, CircleDollarSign, ContactRound, Database, Edit3, Eye, EyeOff, FileText, Globe2, GraduationCap, HeartHandshake, LayoutDashboard, LibraryBig, Link2, LockKeyhole, LogOut, Menu, MessageCircle, Package, Plus, Power, PowerOff, RotateCcw, Save, School, Search, Send, Settings, ShieldCheck, UserRound, UsersRound, Video, X } from 'lucide-react'
@@ -474,7 +476,7 @@ function SchoolForm({ onDone }) {
     setBusy(true)
     setError('')
     try {
-      const result = await schoolApi.createSchool(values)
+      const result = await schoolApi.createSchool({ ...values, ...enrollmentLimitPayload(values), classLimitRows: undefined })
       onDone(`${result.message || 'School created successfully.'} Next, create its School Admin from User Management.`)
     } catch (err) {
       setError(err.message)
@@ -490,6 +492,7 @@ function SchoolForm({ onDone }) {
       <label>Unique domain *<input required value={values.domain} onChange={event => field('domain', event.target.value.toLowerCase().replace(/\s+/g, '-'))} placeholder="green-valley" /><small className="field-help">{suggested ? `Domain already exists. Recommended: ${suggested}` : 'Used by staff when signing in.'}</small>{suggested && <button type="button" className="text-action" onClick={() => field('domain', suggested)}>Use recommended domain</button>}</label>
       <label>School login email *<input required type="email" value={values.adminEmail} onChange={event => field('adminEmail', event.target.value)} placeholder="office@school.com" /><small className="field-help">This email becomes the School Admin login email.</small></label>
       <label>Plan *<select required value={values.planSetup} onChange={event => field('planSetup', event.target.value)}><option value="">Select a plan</option><option>Trial</option><option>Standard</option><option>Premium</option><option>Enterprise</option></select></label>
+      <EnrollmentLimitFields values={values} onChange={setValues} />
       <label className="wide">School logo *<input required type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" onChange={event => field('logo', event.target.files[0])} /><small className="field-help">PNG, JPG or JPEG.</small></label>
     </div>
     {values.adminEmail && !emailOk(values.adminEmail) && <div className="form-error">Enter a valid school login email.</div>}
