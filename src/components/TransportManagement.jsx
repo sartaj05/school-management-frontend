@@ -73,11 +73,10 @@ export default function TransportManagement({ user }) {
     setError('')
     try {
       if (isDriver) {
-        const [driverData, readinessData] = await Promise.all([schoolApi.driverTransportStatus(), schoolApi.transportReadiness()])
+        const driverData = await schoolApi.driverTransportStatus()
         const assigned = driverData.data || []
         setVehicles(assigned)
         setLocations(assigned)
-        setReadiness(readinessData.data || {})
         setAlerts([])
         return
       }
