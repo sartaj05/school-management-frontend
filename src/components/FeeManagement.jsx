@@ -12,7 +12,7 @@ export default function FeeManagement({ user }) {
   const [structures, setStructures] = useState([]), [invoices, setInvoices] = useState([]), [classes, setClasses] = useState([]), [summary, setSummary] = useState({})
   const [form, setForm] = useState(empty), [status, setStatus] = useState('all'), [payment, setPayment] = useState(null)
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
-  async function load(selected = status) { setBusy(true); setError(''); try { const [a, b, c, d] = await Promise.all([schoolApi.feeStructures(), schoolApi.feeInvoices(selected), schoolApi.feeSummary(), schoolApi.classes()]); setStructures(a.data || []); setInvoices(b.data || []); setSummary(c.summary || {}); setClasses((d.data || []).filter(x => x.status === 'active')) } catch (e) { setError(e.message) } finally { setBusy(false) } }
+  async function load(selected = status) { setBusy(true); setError(''); try { const [a, b, c, d] = await Promise.all([schoolApi.feeStructures(), schoolApi.feeInvoices(selected), schoolApi.feeSummary(), schoolApi.feeStructureOptions()]); setStructures(a.data || []); setInvoices(b.data || []); setSummary(c.summary || {}); setClasses(d.data || []) } catch (e) { setError(e.message) } finally { setBusy(false) } }
   useEffect(() => { const timer = setTimeout(() => load('all'), 0); return () => clearTimeout(timer) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   function clearFilters() { setStatus('all'); load('all') }
   useFilterReset(clearFilters, Number(status !== 'all'))
