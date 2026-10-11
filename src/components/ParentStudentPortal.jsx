@@ -12,8 +12,8 @@ const tabs = [
 
 const date = value => value ? new Date(value).toLocaleDateString() : '—'
 
-export default function ParentStudentPortal({ user }) {
-  const [me, setMe] = useState(null), [studentId, setStudentId] = useState(''), [tab, setTab] = useState('overview')
+export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
+  const [me, setMe] = useState(null), [studentId, setStudentId] = useState(''), [tab, setTab] = useState(initialTab)
   const [data, setData] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [revision, setRevision] = useState(0)
 
   useEffect(() => {
@@ -103,7 +103,7 @@ function PortalFees({ rows, onChanged }) {
     }
     catch (e) { setError(e.message) } finally { setBusy(null) }
   }
-  return <section className="data-panel portal-action-panel"><div className="panel-title"><div><span>Account statements</span><h2>Fee payments</h2></div><b>{rows.length} invoices</b></div>{message && <div className="success-notice">{message}</div>}{error && <div className="form-error">{error}</div>}<div className="table-wrap"><table><thead><tr><th>Fee</th><th>Due</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.fee_name}<small>{row.status}</small></td><td>{date(row.due_date)}</td><td>₹{row.amount}</td><td>₹{row.paid_amount}</td><td><b>₹{row.balance}</b></td><td>{Number(row.balance) > 0 ? <button className="button button-small" onClick={() => pay(row)} disabled={busy === row.id}><CreditCard size={14} />{busy === row.id ? 'Opening…' : 'Pay securely'}</button> : <span className="status-pill">Paid</span>}{row.last_payment_id && <button className="button button-small button-ghost" onClick={() => schoolApi.downloadFeeReceipt(row.last_payment_id)}><Download size={14} />Receipt</button>}</td></tr>)}</tbody></table></div></section>
+  return <section className="data-panel portal-action-panel"><div className="panel-title"><div><span>Account statements</span><h2>Fee payments</h2></div><b>{rows.length} invoices</b></div>{message && <div className="success-notice">{message}</div>}{error && <div className="form-error">{error}</div>}<div className="table-wrap"><table><thead><tr><th>Fee</th><th>Due</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.fee_name}<small>{row.collection_status === 'pending_approval' ? `Teacher collection pending: ${row.pending_collection_amount}` : row.status}</small></td><td>{date(row.due_date)}</td><td>₹{row.amount}</td><td>₹{row.paid_amount}</td><td><b>₹{row.balance}</b>{Number(row.pending_collection_amount) > 0 && <small>Pending approval: ₹{row.pending_collection_amount}</small>}</td><td>{Number(row.balance) > 0 && row.collection_status !== 'pending_approval' ? <button className="button button-small" onClick={() => pay(row)} disabled={busy === row.id}><CreditCard size={14} />{busy === row.id ? 'Opening…' : 'Pay securely'}</button> : row.collection_status === 'pending_approval' ? <span className="status-pill">Awaiting approval</span> : <span className="status-pill">Paid</span>}{row.last_payment_id && <button className="button button-small button-ghost" onClick={() => schoolApi.downloadFeeReceipt(row.last_payment_id)}><Download size={14} />Receipt</button>}</td></tr>)}</tbody></table></div></section>
 }
 
 function PortalDocuments({ rows, studentId }) {

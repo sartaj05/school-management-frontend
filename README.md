@@ -44,3 +44,6 @@ npm.cmd run build
 
 Backend database setup, API contracts and server-side documentation are kept in
 the separate Flask repository.
+
+For deployment status and separate release work for each major capability, see
+the backend [feature deployment readiness matrix](../Flak-API---For-School-Management-System-app/docs/FEATURE_DEPLOYMENT_READINESS_MATRIX.md).

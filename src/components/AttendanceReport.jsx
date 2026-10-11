@@ -1,22 +1,24 @@
 import { BarChart3, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
 
 const iso = date => date.toISOString().slice(0, 10)
 const defaultTo = iso(new Date())
 const defaultFrom = iso(new Date(Date.now() - 29 * 86400000))
+const defaultFilters = { from_date: defaultFrom, to_date: defaultTo, class_name: 'All', section: 'All' }
 
 export default function AttendanceReport({ initialReport }) {
-  const [filters, setFilters] = useState({ from_date: defaultFrom, to_date: defaultTo, class_name: 'All', section: 'All' })
+  const [filters, setFilters] = useState(defaultFilters)
   const [report, setReport] = useState(initialReport)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
-  async function load(page = 1) {
+  async function load(page = 1, selectedFilters = filters) {
     setBusy(true)
     setError('')
     try {
-      const query = new URLSearchParams({ ...filters, page: String(page), per_page: '25' })
+      const query = new URLSearchParams({ ...selectedFilters, page: String(page), per_page: '25' })
       setReport(await schoolApi.attendanceReport(query.toString()))
     } catch (err) {
       setError(err.message)
@@ -26,6 +28,12 @@ export default function AttendanceReport({ initialReport }) {
   }
 
   const field = (name, value) => setFilters(current => ({ ...current, [name]: value }))
+  function clearFilters() {
+    setFilters(defaultFilters)
+    load(1, defaultFilters)
+  }
+  const activeFilterCount = Number(filters.from_date !== defaultFilters.from_date) + Number(filters.to_date !== defaultFilters.to_date) + Number(filters.class_name !== 'All') + Number(filters.section !== 'All')
+  useFilterReset(clearFilters, activeFilterCount)
   const summary = report?.summary || {}
   const students = report?.student_summary || []
   const history = report?.data || []

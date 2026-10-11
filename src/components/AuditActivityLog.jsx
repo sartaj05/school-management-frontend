@@ -1,8 +1,10 @@
 import { Activity, Filter, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
 
 const weekStart = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 16)
+const defaultFilters = { action: 'all', entity_type: '', actor_role: '', actor_id: '', search: '', from: weekStart, to: '' }
 
 function when(value) {
   return value ? new Date(value).toLocaleString() : '-'
@@ -13,7 +15,7 @@ export default function AuditActivityLog() {
   const [rows, setRows] = useState([])
   const [total, setTotal] = useState(0)
   const [offset, setOffset] = useState(0)
-  const [filters, setFilters] = useState({ action: 'all', entity_type: '', actor_role: '', actor_id: '', search: '', from: weekStart, to: '' })
+  const [filters, setFilters] = useState(defaultFilters)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [refresh, setRefresh] = useState(0)
@@ -45,6 +47,13 @@ export default function AuditActivityLog() {
     setFilters(current => ({ ...current, [name]: value }))
     setOffset(0)
   }
+
+  function clearFilters() {
+    setFilters(defaultFilters)
+    setOffset(0)
+  }
+  const activeFilterCount = Number(filters.action !== 'all') + Number(Boolean(filters.entity_type)) + Number(Boolean(filters.actor_role)) + Number(Boolean(filters.actor_id)) + Number(Boolean(filters.search)) + Number(filters.from !== weekStart) + Number(Boolean(filters.to))
+  useFilterReset(clearFilters, activeFilterCount)
 
   const actionCounts = Object.fromEntries((summary.actions || []).map(item => [item.action, item.count]))
 

@@ -2,19 +2,15 @@ import { Bed, Building2, ClipboardCheck, LogOut, Plus, RefreshCw, Save, UserRoun
 import { useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import { normalizeIndiaMobile as phoneValue } from '../lib/indiaMobile'
 
 const today = new Date().toISOString().slice(0, 10)
-const phoneValue = value => {
-  const digits = String(value || '').replace(/\D/g, '')
-  const normalized = digits.startsWith('91') ? digits.slice(0, 12) : `91${digits.slice(0, 10)}`
-  return normalized.length <= 2 ? '+91' : `+${normalized}`
-}
 const emptyBuilding = { name: '', code: '', gender: 'mixed', warden_user_id: '', address: '', status: 'active' }
 const emptyRoom = { building_id: '', room_no: '', floor: '', capacity: 4, monthly_fee: 0, notes: '', status: 'active' }
 const emptyBed = { room_id: '', bed_no: '', status: 'available' }
-const emptyAllocation = { student_id: '', bed_id: '', start_date: today, guardian_contact: '+91', emergency_contact: '+91', notes: '' }
+const emptyAllocation = { student_id: '', bed_id: '', start_date: today, guardian_contact: '', emergency_contact: '', notes: '' }
 const emptyAttendance = { student_id: '', attendance_date: today, meal_period: 'night', status: 'present', remarks: '' }
-const emptyVisitor = { student_id: '', visitor_name: '', relation: '', mobile: '+91', purpose: '' }
+const emptyVisitor = { student_id: '', visitor_name: '', relation: '', mobile: '', purpose: '' }
 
 export default function HostelManagement() {
   const [summary, setSummary] = useState({})

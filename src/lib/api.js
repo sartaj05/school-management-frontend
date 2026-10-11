@@ -40,7 +40,7 @@ export async function api(path, options = {}) {
       window.dispatchEvent(new Event('school-session-expired'))
     }
   }
-  if (!response.ok) throw new ApiError(data.error || data.message || 'Request failed. Please try again.', response.status, data)
+  if (!response.ok) throw new ApiError(data.error || data.message || data.msg || `Request failed (HTTP ${response.status}). Please try again.`, response.status, data)
   return data
 }
 
@@ -48,7 +48,12 @@ export async function downloadApi(path, filename) {
   const token = sessionStorage.getItem('school_access_token')
   const response = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
   if (!response.ok) { const data = await response.json().catch(() => ({})); throw new ApiError(data.message || 'Download failed.', response.status, data) }
-  const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href=url; link.download=filename; link.target='_blank'; link.click(); URL.revokeObjectURL(url)
+  const url = URL.createObjectURL(await response.blob())
+  const link = document.createElement('a')
+  link.href = url; link.download = filename
+  document.body.appendChild(link); link.click(); link.remove()
+  // Keep the blob alive until the browser has started reading the download.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export async function blobApi(path) {
@@ -74,6 +79,12 @@ async function refreshAccessToken(refreshToken) {
 
 export const schoolApi = {
   schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values) }),
+  mfaStatus: () => api('/auth/mfa/status'),
+  mfaSetup: () => api('/auth/mfa/setup', { method: 'POST' }),
+  mfaEnable: (code) => api('/auth/mfa/enable', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaDisable: (code) => api('/auth/mfa/disable', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaRegenerateRecoveryCodes: (code) => api('/auth/mfa/recovery/regenerate', { method: 'POST', body: JSON.stringify({ code }) }),
+  mfaAdminReset: (schoolId, userId) => api(`/super-admin/schools/${schoolId}/users/${userId}/mfa/reset`, { method: 'POST' }),
   publicContent: () => api('/public/content'),
   publicPlans: () => api('/public/plans'),
   updatePublicContent: (values) => api('/public/content', { method: 'PUT', body: values instanceof FormData ? values : toFormData(values) }),
@@ -81,16 +92,20 @@ export const schoolApi = {
   forgotPassword: (values) => api('/auth/forgot-password', { method: 'POST', body: JSON.stringify(values) }),
   resetPassword: (values) => api('/auth/reset-password', { method: 'POST', body: JSON.stringify(values) }),
   logout: (refreshToken) => api('/auth/logout', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${refreshToken}` } }),
+  logoutAccess: (accessToken) => api('/auth/logout/access', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${accessToken}` } }),
   profile: () => api('/auth/profile'),
   updateProfile: (values) => api('/auth/profile', { method: 'PUT', body: JSON.stringify(values) }),
   sessions: () => api('/auth/sessions'),
   revokeSession: (sessionId) => api(`/auth/sessions/${sessionId}`, { method: 'DELETE' }),
   superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
   dashboard: () => api('/dashboard/home'),
+  globalSearch: (query) => api(`/search?q=${encodeURIComponent(query)}`),
   featureAccess: () => api('/school/feature-access'),
   syncCheckpoint: () => api('/sync/checkpoint'),
   academicYears: () => api('/academic-years'),
+  academicYearEnrollments: year => api(`/academic-years/${encodeURIComponent(year)}/enrollments`),
   createAcademicYear: (values) => api('/academic-years', { method: 'POST', body: JSON.stringify(values) }),
+  archiveAcademicYear: (year) => api(`/academic-years/${encodeURIComponent(year)}/archive`, { method: 'PATCH' }),
   promoteStudents: (values) => api('/academic-years/promote', { method: 'POST', body: JSON.stringify(values) }),
   academicEnrollments: (year) => api(`/academic-years/${encodeURIComponent(year)}/enrollments`),
   people: () => api('/master/people'),
@@ -98,23 +113,37 @@ export const schoolApi = {
   settings: () => api('/master/settings'),
   schools: () => api('/school/list'),
   superAdminSchools: (filters = {}) => api(`/super-admin/schools?${new URLSearchParams(filters)}`),
+  schoolAdminOptions: () => api('/super-admin/schools/admin-options'),
   school: (schoolId) => api(`/school/${schoolId}`),
   schoolSubscription: (schoolId) => api(`/super-admin/schools/${schoolId}/subscription`),
   updateSchoolSubscription: (schoolId, values) => api(`/super-admin/schools/${schoolId}/subscription`, { method: 'PATCH', body: JSON.stringify(values) }),
   updateSchool: (schoolId, values) => api(`/school/${schoolId}`, { method: 'PUT', body: values instanceof FormData ? values : JSON.stringify(values) }),
   updateSchoolStatus: (schoolId, status) => api(`/school/${schoolId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   createSchool: (values) => api('/school/setup', { method: 'POST', body: toFormData(values) }),
+  branches: (filters = {}) => api('/branches?' + new URLSearchParams(filters)),
+  createBranch: (values) => api('/branches', { method: 'POST', body: JSON.stringify(values) }),
+  updateBranchStatus: (branchId, status) => api('/branches/' + branchId + '/status', { method: 'PATCH', body: JSON.stringify({ status }) }),
+  branchAccess: (branchId) => api('/branches/' + branchId + '/access'),
+  saveBranchAccess: (branchId, values) => api('/branches/' + branchId + '/access', { method: 'POST', body: JSON.stringify(values) }),
+  revokeBranchAccess: (branchId, accessId) => api('/branches/' + branchId + '/access/' + accessId, { method: 'DELETE' }),
+  branchScope: () => api('/branches/my-scope'),
+  consolidatedBranches: (groupName) => api('/branches/consolidated?group_name=' + encodeURIComponent(groupName)),
   students: (filters = {}) => api(`/student/all?${new URLSearchParams(filters)}`),
+  studentDirectoryPage: ({ q = '', search = '', status = '', class_name = '', page = 1, per_page = 10 } = {}) => api(`/student/all?${new URLSearchParams({ q: q || search, status, class_name, page, per_page })}`),
   student: (studentId) => api(`/student/${studentId}`),
   updateStudent: (studentId, values) => api(`/student/${studentId}`, { method: 'PUT', body: JSON.stringify(values) }),
   deleteStudent: (studentId) => api(`/student/${studentId}`, { method: 'DELETE' }),
   teachers: (filters = {}) => api(`/teacher/all?${new URLSearchParams(filters)}`),
+  teacherDirectoryPage: ({ q = '', search = '', status = '', department = '', page = 1, per_page = 10 } = {}) => api(`/teacher/all?${new URLSearchParams({ q: q || search, status, department, page, per_page })}`),
+  teacherProfilePhoto: () => blobApi('/teacher/profile-photo'),
   teacher: (teacherId) => api(`/teacher/${teacherId}`),
   updateTeacher: (teacherId, values) => api(`/teacher/${teacherId}`, { method: 'PUT', body: JSON.stringify(values) }),
   deleteTeacher: (teacherId) => api(`/teacher/${teacherId}`, { method: 'DELETE' }),
   parents: (filters = {}) => api(`/parent/all?${new URLSearchParams(filters)}`),
+  parentDirectoryPage: ({ q = '', search = '', status = '', page = 1, per_page = 100 } = {}) => api(`/parent/all?${new URLSearchParams({ q: q || search, status, page, per_page })}`),
   parent: (parentId) => api(`/parent/${parentId}`),
   updateParent: (parentId, values) => api(`/parent/${parentId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  createParentPortalAccount: (parentId, values) => api(`/parent/${parentId}/portal-account`, { method: 'POST', body: JSON.stringify(values) }),
   deleteParent: (parentId) => api(`/parent/${parentId}`, { method: 'DELETE' }),
   parentStudents: (parentId) => api(`/parent/${parentId}/students`),
   studentParents: (studentId) => api(`/parent/students/${studentId}/parents`),
@@ -142,6 +171,8 @@ export const schoolApi = {
   users: (superAdmin = false, filters = {}) => api(superAdmin ? `/super-admin/users?${new URLSearchParams(filters)}` : '/users'),
   updateUser: (userId, values) => api(`/super-admin/users/${userId}`, { method: 'PUT', body: JSON.stringify(values) }),
   updateUserStatus: (userId, values) => api(`/super-admin/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
+  updateTenantUser: (userId, values) => api(`/users/${userId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  updateTenantUserStatus: (userId, values) => api(`/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
   createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values) }),
   createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values) }),
   createTeacher: (values) => api('/teacher/create', { method: 'POST', body: toFormData(values) }),
@@ -152,9 +183,17 @@ export const schoolApi = {
   markAttendance: (values) => api('/attendance/mark', { method: 'POST', body: JSON.stringify(values) }),
   sendNotification: (type, values) => api(`/notifications/${type}`, { method: 'POST', body: JSON.stringify(values) }),
   notificationHistory: (limit = 50) => api(`/notifications/all?limit=${limit}`),
+  notificationPreferences: () => api('/notifications/preferences'),
+  saveNotificationPreferences: (values) => api('/notifications/preferences', { method: 'PATCH', body: JSON.stringify(values) }),
   notificationsByUser: (userId) => api(`/notifications/user?user_id=${encodeURIComponent(userId)}`),
-  notificationQueue: (status = 'all', page = 1) => api(`/notifications/queue?status=${encodeURIComponent(status)}&page=${page}&per_page=25`),
+  notificationQueue: (status = 'all', page = 1, perPage = 25, channel = 'all', search = '') => api(`/notifications/queue?status=${encodeURIComponent(status)}&page=${page}&per_page=${perPage}&channel=${encodeURIComponent(channel)}&search=${encodeURIComponent(search)}`),
+  notificationDeliveryAttempts: (notificationId) => api(`/notifications/queue/${notificationId}/attempts`),
   notificationAnalytics: (days = 30) => api(`/notifications/analytics?days=${encodeURIComponent(days)}`),
+  notificationTemplates: () => api('/notifications/templates'),
+  notificationRecipients: (query = '', role = '') => api(`/notifications/recipients?limit=100&query=${encodeURIComponent(query)}&role=${encodeURIComponent(role)}`),
+  notificationProviderHealth: () => api('/notifications/providers/health'),
+  notificationProviderTest: (values) => api('/notifications/providers/test', { method: 'POST', body: JSON.stringify(values) }),
+  saveNotificationTemplate: (values) => api('/notifications/templates', { method: 'POST', body: JSON.stringify(values) }),
   queueNotification: (values) => api('/notifications/queue', { method: 'POST', body: JSON.stringify(values) }),
   retryNotification: (notificationId) => api(`/notifications/queue/${notificationId}/retry`, { method: 'POST' }),
   cancelNotification: (notificationId) => api(`/notifications/queue/${notificationId}/cancel`, { method: 'POST' }),
@@ -169,15 +208,23 @@ export const schoolApi = {
   examStudents: (examId, subjectId) => api(`/exams/${examId}/students?subject_id=${encodeURIComponent(subjectId)}`),
   saveExamMarks: (examId, values) => api(`/exams/${examId}/marks`, { method: 'PUT', body: JSON.stringify(values) }),
   examReportCards: (examId, studentId = '') => api(`/exams/${examId}/report-cards${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
+  feeStructureOptions: () => api('/fees/structure-options'),
   feeStructures: () => api('/fees/structures'),
   createFeeStructure: (values) => api('/fees/structures', { method: 'POST', body: JSON.stringify(values) }),
   generateFeeInvoices: (structureId) => api(`/fees/structures/${structureId}/generate`, { method: 'POST' }),
   feeInvoices: (status = 'all') => api(`/fees/invoices?status=${encodeURIComponent(status)}`),
   recordFeePayment: (invoiceId, values) => api(`/fees/invoices/${invoiceId}/payments`, { method: 'POST', body: JSON.stringify(values) }),
   refundFeePayment: (paymentId, values = {}) => api(`/fees/payments/${paymentId}/refund`, { method: 'POST', body: JSON.stringify(values) }),
+  createFeeGatewayOrder: (invoiceId) => api(`/fees/invoices/${invoiceId}/gateway/order`, { method: 'POST' }),
+  verifyFeeGatewayPayment: (invoiceId, values) => api(`/fees/invoices/${invoiceId}/gateway/verify`, { method: 'POST', body: JSON.stringify(values) }),
+  downloadAdminFeeReceipt: (paymentId) => downloadApi(`/fees/payments/${paymentId}/receipt`, `fee-receipt-${paymentId}.html`),
   feePayments: (invoiceId) => api(`/fees/invoices/${invoiceId}/payments`),
   queueFeeReminder: (invoiceId, values) => api(`/fees/invoices/${invoiceId}/reminder`, { method: 'POST', body: JSON.stringify(values) }),
   feeSummary: () => api('/fees/summary'),
+  feeCollectionOptions: () => api('/fees/collection-options'),
+  feeCollectionRequests: (status = 'all') => api(`/fees/collection-requests?status=${encodeURIComponent(status)}`),
+  submitFeeCollectionRequest: values => api('/fees/collection-requests', { method: 'POST', body: JSON.stringify(values) }),
+  reviewFeeCollectionRequest: (requestId, values) => api(`/fees/collection-requests/${requestId}/review`, { method: 'PATCH', body: JSON.stringify(values) }),
   assignments: (status = 'all') => api(`/assignments?status=${encodeURIComponent(status)}`),
   createAssignment: (values) => api('/assignments', { method: 'POST', body: JSON.stringify(values) }),
   updateAssignment: (assignmentId, values) => api(`/assignments/${assignmentId}`, { method: 'PUT', body: JSON.stringify(values) }),
@@ -226,9 +273,20 @@ export const schoolApi = {
   updateCalendarEvent: (eventId, values) => api(`/calendar/events/${eventId}`, { method: 'PUT', body: JSON.stringify(values) }),
   cancelCalendarEvent: (eventId) => api(`/calendar/events/${eventId}/cancel`, { method: 'POST' }),
   submitAdmission: (values) => api('/admissions/apply', { method: 'POST', body: JSON.stringify(values) }),
-  admissionApplications: (status = 'all') => api(`/admissions/applications?status=${encodeURIComponent(status)}`),
+  admissionPublicStatus: (values) => api('/admissions/public-status', { method: 'POST', body: JSON.stringify(values) }),
+  admissionApplications: (status = 'all', filters = {}) => {
+    const params = new URLSearchParams({ status, ...filters })
+    Object.keys(filters).forEach(key => { if (!filters[key]) params.delete(key) })
+    return api(`/admissions/applications?${params.toString()}`)
+  },
+  admissionSummary: () => api('/admissions/summary'),
   updateAdmissionApplication: (applicationId, values) => api(`/admissions/applications/${applicationId}`, { method: 'PUT', body: JSON.stringify(values) }),
+  admissionFollowUps: (applicationId) => api(`/admissions/applications/${applicationId}/follow-ups`),
+  addAdmissionFollowUp: (applicationId, values) => api(`/admissions/applications/${applicationId}/follow-ups`, { method: 'POST', body: JSON.stringify(values) }),
   documents: () => api('/documents/history'),
+  documentTemplates: (documentType = '') => api(`/documents/templates${documentType ? `?document_type=${encodeURIComponent(documentType)}` : ''}`),
+  createDocumentTemplate: (values) => api('/documents/templates', { method: 'POST', body: JSON.stringify(values) }),
+  updateDocumentTemplate: (id, values) => api(`/documents/templates/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
   downloadAttendanceCsv: (attendanceDate) => downloadApi(`/documents/attendance.csv?attendance_date=${encodeURIComponent(attendanceDate)}`, `attendance-${attendanceDate}.csv`),
   openReportCard: (examId, studentId) => downloadApi(`/documents/report-cards/${examId}/students/${studentId}`, `report-card-${examId}-${studentId}.html`),
   staffAttendance: (attendanceDate) => api(`/payroll/attendance?attendance_date=${encodeURIComponent(attendanceDate)}`),
@@ -239,6 +297,7 @@ export const schoolApi = {
   runPayroll: (values) => api('/payroll/runs', { method:'POST', body:JSON.stringify(values) }),
   payslips: (month) => api(`/payroll/payslips?payroll_month=${encodeURIComponent(month)}`),
   transportSummary: () => api('/transport/summary'),
+  transportReadiness: () => api('/transport/readiness'),
   transportVehicles: () => api('/transport/vehicles'),
   createTransportVehicle: (values) => api('/transport/vehicles', { method: 'POST', body: JSON.stringify(values) }),
   updateTransportVehicle: (vehicleId, values) => api(`/transport/vehicles/${vehicleId}`, { method: 'PUT', body: JSON.stringify(values) }),
@@ -253,6 +312,10 @@ export const schoolApi = {
   deleteTransportAssignment: (assignmentId) => api(`/transport/assignments/${assignmentId}`, { method: 'DELETE' }),
   transportLocations: () => api('/transport/locations'),
   transportLocationsBatch: (values) => api('/transport/locations/batch', { method: 'POST', body: JSON.stringify(values) }),
+  transportAlerts: (limit = 20) => api(`/transport/alerts?limit=${encodeURIComponent(limit)}`),
+  driverTransportStatus: () => api('/transport/driver/status'),
+  driverTransportLocationsBatch: (values) => api('/transport/driver/locations/batch', { method: 'POST', body: JSON.stringify(values) }),
+  driverTransportHeartbeat: (values) => api('/transport/driver/heartbeat', { method: 'POST', body: JSON.stringify(values) }),
   pruneTransportLocations: (days = 90) => api(`/transport/locations/prune?days=${encodeURIComponent(days)}`, { method: 'POST' }),
   updateTransportLocation: (vehicleId, values) => api(`/transport/vehicles/${vehicleId}/location`, { method: 'POST', body: JSON.stringify(values) }),
   inventoryOptions: () => api('/inventory/options'),
@@ -346,6 +409,7 @@ export const schoolApi = {
   createLeaveHoliday: (values) => api('/leave/holidays', { method: 'POST', body: JSON.stringify(values) }),
   deleteLeaveHoliday: (id) => api(`/leave/holidays/${id}`, { method: 'DELETE' }),
   smartClassroomOptions: () => api('/smart-classroom/options'),
+  smartClassroomCapabilities: () => api('/smart-classroom/capabilities'),
   smartClassroomSessions: (filters = {}) => api(`/smart-classroom/sessions?${new URLSearchParams(filters)}`),
   createSmartClassroomSession: (values) => api('/smart-classroom/sessions', { method: 'POST', body: JSON.stringify(values) }),
   updateSmartClassroomSession: (id, values) => api(`/smart-classroom/sessions/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
@@ -361,6 +425,7 @@ export const schoolApi = {
   createHrReview: (values) => api('/hr/reviews', { method: 'POST', body: JSON.stringify(values) }),
   hrSalaryHistory: (teacherId = '') => api(`/hr/salary-history${teacherId ? `?teacher_id=${encodeURIComponent(teacherId)}` : ''}`),
   upgradeAllSchools: () => api('/admin/upgrade-all-schools', { method: 'POST' }),
+  operationsStatus: () => api('/admin/operations/status'),
   onboardingPreview: (entity, file) => { const body = new FormData(); body.append('entity', entity); body.append('file', file); return api('/onboarding/preview', { method: 'POST', body }) },
   onboardingImport: (entity, file) => { const body = new FormData(); body.append('entity', entity); body.append('file', file); return api('/onboarding/import', { method: 'POST', body }) },
   onboardingTemplate: (entity) => downloadApi(`/onboarding/template?entity=${encodeURIComponent(entity)}`, `${entity}-template.csv`),

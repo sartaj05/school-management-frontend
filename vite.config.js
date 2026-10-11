@@ -6,6 +6,10 @@ export default defineConfig({
 
   server: {
     port: 5173,
+    watch: {
+      // Browser test traces include HTML; they must not trigger a page reload.
+      ignored: ['**/local-test-results/**', '**/test-results/**', '**/playwright-report/**'],
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:5000',
@@ -15,6 +19,22 @@ export default defineConfig({
   },
 
   build: {
-    chunkSizeWarningLimit: 700,
+    // Keep the authenticated shell and each feature module in separate
+    // browser-cacheable chunks. DashboardPage owns many school modules, so a
+    // single entry chunk would otherwise grow past Vite's warning threshold.
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) return 'vendor'
+          const componentPath = id.split('/src/components/')[1]
+          if (componentPath) {
+            const componentName = componentPath.split('/')[0].replace(/\.jsx?$/, '').toLowerCase()
+            return `feature-${componentName}`
+          }
+          return undefined
+        },
+      },
+    },
+    chunkSizeWarningLimit: 500,
   },
 })

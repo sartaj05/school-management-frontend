@@ -1,6 +1,7 @@
 import { BadgePercent, CheckCircle2, CircleDollarSign, FileCheck2, Plus, RefreshCw, Save, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
 import { confirmPopup } from '../lib/confirmPopup'
 
 const year = new Date().getFullYear()
@@ -52,6 +53,8 @@ export default function ScholarshipManagement() {
   // Initial load intentionally starts with all scholarship applications.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { const timer = setTimeout(() => load('all'), 0); return () => clearTimeout(timer) }, [])
+  function clearFilters() { setStatus('all'); load('all') }
+  useFilterReset(clearFilters, Number(status !== 'all'))
 
   async function saveProgram(event) {
     event.preventDefault(); setBusy(true); setError(''); setMessage('')

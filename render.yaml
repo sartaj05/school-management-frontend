@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: eduflow-school-portal
+    runtime: static
+    branch: sartaj
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://eduflow-api-20hb.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

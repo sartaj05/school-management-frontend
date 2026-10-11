@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: sartaj05/Flak-API---For-School-Management-System-app
+          ref: sartaj
+          path: Flak-API---For-School-Management-System-app
       - uses: actions/setup-node@v4
         with:
           node-version: 22

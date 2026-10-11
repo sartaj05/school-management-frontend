@@ -2,6 +2,7 @@
 import { Award, BriefcaseBusiness, FileText, Save, Star, UsersRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { useFilterReset } from './FilterResetContext'
 
 const today = new Date().toISOString().slice(0, 10)
 const emptyDocument = { teacher_id: '', document_type: 'Identity', title: '', document_url: '', issued_on: '', expires_on: '', notes: '' }
@@ -24,6 +25,7 @@ export default function StaffHRManagement({ user }) {
   useEffect(() => { load() }, [])
   const selectedStaff = staff.find(item => String(item.teacher_id) === String(selected))
   const choose = value => { setSelected(value); setTab('overview'); load(value) }
+  useFilterReset(() => choose(''), Number(Boolean(selected)))
   const save = async (action, values, reset) => { setSaving(true); setError(''); setNotice(''); try { const result = await action(values); setNotice(result.message); reset(); await load() } catch (err) { setError(err.message) } finally { setSaving(false) } }
   const field = (setter, name, value) => setter(current => ({ ...current, [name]: value }))
   const teacherOptions = <label>Staff member<select required value={document.teacher_id || contract.teacher_id || review.teacher_id || selected} onChange={event => { const value = event.target.value; setDocument(current => ({ ...current, teacher_id: value })); setContract(current => ({ ...current, teacher_id: value })); setReview(current => ({ ...current, teacher_id: value })); setSelected(value) }}><option value="">Select staff member</option>{staff.map(item => <option key={item.teacher_id} value={item.teacher_id}>{item.full_name}</option>)}</select></label>

@@ -1,17 +1,12 @@
 import { CheckCircle2, ClipboardList, Plus, Save, Truck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { schoolApi } from '../lib/api'
+import { normalizeIndiaMobile as phoneValue } from '../lib/indiaMobile'
 
 const today = new Date().toISOString().slice(0, 10)
-const emptySupplier = { name: '', contact_person: '', mobile: '+91', email: '', gst_number: '', address: '' }
+const emptySupplier = { name: '', contact_person: '', mobile: '', email: '', gst_number: '', address: '' }
 const emptyOrder = { po_number: `PO-${today.replaceAll('-', '')}`, supplier_id: '', order_date: today, expected_date: '', notes: '' }
 const emptyLine = { item_id: '', quantity: 1, unit_cost: 0, tax_rate: 0, notes: '' }
-
-const phoneValue = value => {
-  const digits = String(value || '').replace(/\D/g, '')
-  const normalized = digits.startsWith('91') ? digits.slice(0, 12) : `91${digits.slice(0, 10)}`
-  return normalized.length <= 2 ? '+91' : `+${normalized}`
-}
 
 export default function InventoryPurchaseManagement() {
   const [summary, setSummary] = useState({})
