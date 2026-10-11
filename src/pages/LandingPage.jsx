@@ -1,4 +1,4 @@
-import { ArrowRight, BarChart3, BellRing, BookOpen, CalendarCheck, CheckCircle2, Clock, Mail, Phone, Quote, ShieldCheck, Sparkles, UserCheck, UsersRound, Video, WalletCards, X } from 'lucide-react'
+import { ArrowRight, BarChart3, BellRing, BookOpen, CalendarCheck, CheckCircle2, Clock, Mail, Phone, ShieldCheck, Sparkles, UserCheck, UsersRound, Video, WalletCards, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PublicLayout from '../components/PublicLayout'
@@ -46,14 +46,6 @@ const planFeatureGroups = plan => {
   return Array.from({ length: Math.ceil(labels.length / 5) }, (_, index) => labels.slice(index * 5, index * 5 + 5))
 }
 
-const numericValue = value => {
-  const number = Number(value)
-  return Number.isFinite(number) ? number : 0
-}
-
-const countValue = value => numericValue(value).toLocaleString()
-const percentValue = value => `${numericValue(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
-
 export default function LandingPage({ language = 'en' }) {
   const [content, setContent] = useState(null)
   const [planCatalog, setPlanCatalog] = useState(defaultPlans)
@@ -80,40 +72,13 @@ export default function LandingPage({ language = 'en' }) {
   }, [])
 
   const apiBase = import.meta.env.VITE_API_BASE_URL || '/api/v1'
-  const heroImage = content?.landing_image_path ? `${apiBase}/school/uploads/${encodeURIComponent(content.landing_image_path)}` : ''
   const storyImage = content?.story_image_path ? `${apiBase}/school/uploads/${encodeURIComponent(content.story_image_path)}` : ''
   const brandLogo = content?.brand_logo_path ? schoolLogoUrl(content.brand_logo_path) : ''
   const copy = key => translateText(language, key)
   const title = language === 'en' ? (content?.landing_title || copy('heroTitle')) : copy('heroTitle')
   const subtitle = language === 'en' ? (content?.landing_subtitle || copy('heroSubtitle')) : copy('heroSubtitle')
 
-  const chartLabels = ['M', 'T', 'W', 'T', 'F']
-  const summary = content?.summary || {}
-  const attendanceValue = numericValue(summary.attendance_today)
-  const alertsToday = numericValue(summary.alerts_today)
-  const connectedLearners = numericValue(summary.student_registrations)
-  const liveAttendance = attendanceValue
   const brandName = content?.school_name || 'EduFlow School Management'
-  const platformRows = [
-    { label: 'User logins', value: summary.user_logins, note: copy('activeUserAccounts'), icon: UsersRound },
-    { label: 'Student register', value: summary.student_registrations, note: copy('registeredStudents'), icon: UserCheck },
-    { label: 'Schools live', value: summary.schools, note: copy('activeCampuses'), icon: BookOpen },
-  ]
-  const summaryRows = [
-    { label: copy('attendanceToday'), value: percentValue(attendanceValue), tone: 'mint', icon: CalendarCheck },
-    { label: copy('classes'), value: countValue(summary.classes), tone: 'sky', icon: BookOpen },
-    { label: copy('alerts'), value: countValue(alertsToday), tone: 'amber', icon: BellRing },
-  ]
-  const weekRows = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((fallbackDay, index) => {
-    const row = Array.isArray(summary.week) ? summary.week[index] || {} : {}
-    return {
-      day: row.day || fallbackDay,
-      attendance: percentValue(row.attendance),
-      classes: countValue(row.classes),
-      alerts: countValue(row.alerts),
-    }
-  })
-
   useEffect(() => {
     if (!selectedFeature && !selectedPlan && !showPlanComparison) return undefined
     const closeOnEscape = event => { if (event.key === 'Escape') { setSelectedFeature(null); setSelectedPlan(null); setShowPlanComparison(false) } }
@@ -126,80 +91,38 @@ export default function LandingPage({ language = 'en' }) {
   }, [selectedFeature, selectedPlan, showPlanComparison])
 
   return <PublicLayout language={language}>
-    <main>
+    <main className="landing-refresh">
       <section className="hero container">
         <div className="hero-copy">
-          <div className="eyebrow"><Sparkles size={15} /> {copy('simplerDay')}</div>
-          <h1>{title.split(' ').slice(0, 3).join(' ')}<br /><span>{title.split(' ').slice(3).join(' ') || 'flows beautifully.'}</span></h1>
+          <div className="eyebrow"><Sparkles size={15} /> EduFlow by WSI Gloabal</div>
+          <h1>{title}</h1>
           <p>{subtitle}</p>
-          <div className="hero-actions"><Link className="button" to="/login">{copy('exploreDashboard')} <ArrowRight size={18} /></Link><Link className="text-link" to="/admissions/apply">{copy('applyAdmission')}</Link></div>
-          <div className="trust-row"><span><CheckCircle2 /> {copy('easyToUse')}</span><span><CheckCircle2 /> {copy('secureAccess')}</span><span><CheckCircle2 /> {copy('worksEverywhere')}</span></div>
+          <div className="hero-actions"><Link className="button" to="/login">{copy('exploreDashboard')} <ArrowRight size={18} /></Link><a className="text-link" href="#plans">Find your plan <ArrowRight size={16}/></a></div>
+          <div className="trust-row"><span><CheckCircle2 /> Role-based access</span><span><CheckCircle2 /> Desktop and mobile</span></div>
         </div>
-        <div className="hero-visual" aria-label="Live school dashboard summary preview">
-          <div className="dashboard-preview hero-asset-card">
-            <div className="brand-strip">
-              <span>{brandLogo ? <img src={brandLogo} alt={`${brandName} logo`} /> : <Logo />}</span>
-              <small>{copy('liveSummary')}</small>
-            </div>
-            {heroImage && <img className="landing-school-image" src={heroImage} alt={`${brandName} school`} />}
-            <div className="dynamic-preview-shell">
-              <div className="landing-summary-table">
-                <div className="landing-summary-head"><span>Metric</span><span>Total</span><span>Status</span></div>
-                {platformRows.map(({ label, value, note, icon: Icon }) => (
-                  <div className="landing-summary-row" key={label}>
-                    <span><Icon size={16} />{label}</span>
-                    <strong>{countValue(value)}</strong>
-                    <small>{note}</small>
-                  </div>
-                ))}
-              </div>
-              <div className="summary-table-panel">
-                {summaryRows.map(({ label, value, tone, icon: Icon }) => (
-                  <div key={label} className={`summary-row ${tone}`}>
-                    <span className="summary-icon"><Icon /></span>
-                    <div className="summary-meta">
-                      <strong>{value}</strong>
-                      <small>{label}</small>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="dynamic-chart-card">
-                <div className="chart-header">
-                  <span>Current week</span>
-                  <div className="chart-toggle" />
-                </div>
-                <div className="week-table" aria-label="Current week overview">
-                  {weekRows.map((row, index) => (
-                    <div className="week-row" key={row.day}>
-                      <b>{chartLabels[index]}</b>
-                      <span>{row.attendance}</span>
-                      <div className="day-popover">
-                        <strong>{row.day}</strong>
-                        <small>{row.classes} {copy('classes').toLowerCase()}</small>
-                        <small>{row.alerts} {copy('alerts').toLowerCase()}</small>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="float-card float-two"><span className="mini-icon coral"><BellRing /></span><div><b>{countValue(alertsToday)}</b><small>{copy('alertsToday')}</small></div></div>
-        </div>
+        <figure className="product-workspace-preview">
+          <div className="product-preview-heading"><span>YOUR SCHOOL, CONNECTED</span><b>One place for the school day</b></div>
+          <LiveSchoolSummary summary={content?.summary} />
+          <figcaption>Live school summary <span>Updated from your school records</span></figcaption>
+        </figure>
       </section>
 
-      <section id="features" className="section container"><div className="section-heading"><span>Everything in one place</span><h2>Less administration.<br />More education.</h2><p>Click any feature to see what each plan includes.</p></div><div className="feature-grid">{features.map(feature => { const { Icon, title, text } = feature; return <button className="feature-card feature-card-button" type="button" key={title} onClick={() => setSelectedFeature(feature)} aria-label={`View plan details for ${title}`}><span className="feature-icon"><Icon /></span><h3>{title}</h3><p>{text}</p><span className="feature-card-link">View plan details <ArrowRight size={15} /></span></button> })}</div></section>
+      <section className="role-introduction container" aria-label="Connected school roles"><span>Built for your whole school</span><p>School administrators <i>/</i> Teachers <i>/</i> Students <i>/</i> Parents</p></section>
 
-      <section id="plans" className="section container plan-section"><div className="section-heading"><span>Plans that grow with you</span><h2>Choose the right operating level.</h2><p>Every plan starts with a calm school workspace. Premium adds policy-aware staff operations, while Enterprise adds private classroom recording.</p></div><div className="plan-showcase">{planCatalog.map(plan => <article className={`plan-showcase-card plan-${plan.name.toLowerCase()}`} key={plan.key || plan.name}><span className="plan-badge">{plan.version} plan</span><h3>{plan.name}</h3><p>{plan.description}</p><ul>{(plan.highlights || planHighlights[plan.name] || []).map(item => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul><button className="text-link plan-explore" type="button" onClick={() => { setShowPlanComparison(false); setSelectedPlan(plan) }}>Explore {plan.name} <ArrowRight size={15} /></button></article>)}</div><div className="plan-section-actions"><button className="button button-ghost plan-compare-button" type="button" onClick={() => { setSelectedPlan(null); setShowPlanComparison(true) }}><Sparkles size={16} />Compare plans <ArrowRight size={16} /></button></div></section>
+      <section id="features" className="section container"><div className="section-heading"><span>Everything in one place</span><h2>Less administration.<br />More education.</h2><p>Explore the tools that support your school’s daily work.</p></div><div className="feature-grid">{features.map(feature => { const { Icon, title, text } = feature; return <button className="feature-card feature-card-button" type="button" key={title} onClick={() => setSelectedFeature(feature)} aria-label={`View plan details for ${title}`}><span className="feature-icon"><Icon /></span><h3>{title}</h3><p>{text}</p><span className="feature-card-link">View plan details <ArrowRight size={15} /></span></button> })}</div></section>
 
-      <section id="about" className="story-section"><div className="container story-grid"><div className="story-art" aria-label="A connected digital school campus">{storyImage ? <img className="story-school-photo" src={storyImage} alt={`${brandName} campus`} /> : <><div className="campus-glow"/><div className="campus-cloud cloud-one"/><div className="campus-cloud cloud-two"/><div className="campus-sun"><Sparkles/></div><div className="campus-card campus-card-top"><UsersRound/><span><b>{connectedLearners.toLocaleString()}</b><small>Connected learners</small></span></div><div className="campus-card campus-card-bottom"><CalendarCheck/><span><b>{Math.round(liveAttendance)}% today</b><small>Live attendance</small></span></div><div className="school-building"><div className="building-flag"/><div className="building-roof"/><div className="building-body"><div className="building-title"><Logo/><small>Learning campus</small></div><div className="building-windows"><span/><span/><span/><span/></div><div className="building-door"/></div><div className="campus-tree tree-one"><i/><span/></div><div className="campus-tree tree-two"><i/><span/></div><div className="campus-path"/><div className="ground"/></div></>}</div><div className="story-copy"><span className="section-kicker">Designed around people</span><h2>Technology that feels human.</h2><p>EduFlow is designed to quietly support your team-not get in its way. Clear screens, useful information and fewer repetitive tasks mean more time for what matters.</p><blockquote><Quote/><p>For the first time, our team can see what is happening across the school without chasing spreadsheets.</p><footer>- School Administrator</footer></blockquote></div></div></section>
+      <section id="plans" className="section container plan-section"><div className="section-heading"><span>Plans that grow with you</span><h2>Choose the right operating level.</h2><p>Start with everyday school management. Add staff operations in Premium, or choose Enterprise for the complete feature set.</p></div><div className="plan-showcase">{planCatalog.map(plan => <article className={`plan-showcase-card plan-${plan.name.toLowerCase()}`} key={plan.key || plan.name}><span className="plan-badge">{plan.version} plan</span><h3>{plan.name}</h3><p>{plan.description}</p><ul>{(plan.highlights || planHighlights[plan.name] || []).map(item => <li key={item}><CheckCircle2 size={15} />{item}</li>)}</ul><button className="text-link plan-explore" type="button" onClick={() => { setShowPlanComparison(false); setSelectedPlan(plan) }}>Explore {plan.name} <ArrowRight size={15} /></button></article>)}</div><div className="plan-section-actions"><p className="trial-plan-note"><b>Trial access</b> Explore the same core modules as Standard. Contact us to arrange your school workspace.</p><button className="button button-ghost plan-compare-button" type="button" onClick={() => { setSelectedPlan(null); setShowPlanComparison(true) }}><Sparkles size={16} />Compare plans <ArrowRight size={16} /></button></div></section>
 
-      <section className="cta-section container"><div><span>Ready for a calmer school day?</span><h2>Bring your whole school together.</h2><p>Sign in to connect with your existing school management API.</p></div><Link className="button button-white" to="/login">Open dashboard <ArrowRight size={18} /></Link></section>
+      <section id="about" className="connected-school-section container">
+        <div className="connected-school-photo"><img src={storyImage || '/images/family-workspace-preview.png'} alt={storyImage ? `${brandName} campus` : 'EduFlow family portal with the selected child’s school information'} loading="lazy" /></div>
+        <div className="connected-school-copy"><span className="section-kicker">A connected school day</span><h2>Every role has a clear next step.</h2><p>School records become useful when the right people can act on them.</p><ol><li><b>Admin prepares the school</b><span>Connect people, classes and access.</span></li><li><b>Teachers manage daily learning</b><span>Record attendance, publish work and share feedback.</span></li><li><b>Families stay informed</b><span>Review the timetable, results, fees and messages.</span></li></ol><Link to="/admissions/apply" className="text-link">Apply for admission <ArrowRight size={16}/></Link></div>
+      </section>
+
+      <section className="cta-section container"><div><span>EduFlow by WSI Gloabal</span><h2>Your next school day, organized.</h2><p>Talk to us about the right plan for your school.</p></div><Link className="button button-white" to="/contact">Contact our team <ArrowRight size={18} /></Link></section>
     </main>
     <footer id="contact" className="footer container">
       {brandLogo ? <span className="footer-logo-img"><img src={brandLogo} alt={`${brandName} logo`} /></span> : <Logo />}
-      <p>Helping schools do their best work.</p>
+      <p>School management by WSI Gloabal.</p>
       <div className="footer-contact">
         <span><Mail size={14} />{content?.contact_email || content?.support_email || 'hello@eduflow.com'}</span>
         <span><Phone size={14} />{content?.contact_phone || content?.support_phone || '+91 98765 43210'}</span>
@@ -211,4 +134,20 @@ export default function LandingPage({ language = 'en' }) {
     {selectedPlan && <div className="feature-modal" role="presentation" onMouseDown={() => setSelectedPlan(null)}><div className="feature-modal-card plan-details-modal" role="dialog" aria-modal="true" aria-labelledby="plan-modal-title" onMouseDown={event => event.stopPropagation()}><button className="feature-modal-close" type="button" onClick={() => setSelectedPlan(null)} aria-label="Close plan details" title="Close plan details"><X size={19} /></button><div className="feature-modal-heading"><span className="feature-icon"><Sparkles /></span><div><span>Plan details</span><h2 id="plan-modal-title">{selectedPlan.name}</h2><p>{selectedPlan.description}</p></div></div><div className="feature-plan-grid plan-feature-box-grid">{planFeatureGroups(selectedPlan).map((items, index) => <article className={`feature-plan-card plan-${selectedPlan.name.toLowerCase()}`} key={`${selectedPlan.key || selectedPlan.name}-feature-group-${index}`}><div><strong>{selectedPlan.name}</strong><small>{selectedPlan.version} plan · Features {index * 5 + 1}-{index * 5 + items.length}</small></div><CheckCircle2 className="plan-included" size={20} /><p>Included features</p><div className="plan-feature-list">{items.map(item => <span key={item}><CheckCircle2 size={14} /> {item}</span>)}</div></article>)}</div><Link className="button feature-modal-action" to="/login" onClick={() => setSelectedPlan(null)}>Get started with {selectedPlan.name} <ArrowRight size={16} /></Link></div></div>}
     {showPlanComparison && <div className="feature-modal" role="presentation" onMouseDown={() => setShowPlanComparison(false)}><div className="feature-modal-card plan-details-modal" role="dialog" aria-modal="true" aria-labelledby="compare-plans-title" onMouseDown={event => event.stopPropagation()}><button className="feature-modal-close" type="button" onClick={() => setShowPlanComparison(false)} aria-label="Close plan comparison" title="Close plan comparison"><X size={19} /></button><div className="feature-modal-heading"><span className="feature-icon"><Sparkles /></span><div><span>Plan comparison</span><h2 id="compare-plans-title">Compare all plans</h2><p>Review every included feature by plan, side by side.</p></div></div><div className="feature-plan-grid">{planCatalog.map(plan => <article className={`feature-plan-card plan-${plan.name.toLowerCase()}`} key={plan.key || plan.name}><div><strong>{plan.name}</strong><small>{plan.version} plan</small></div><CheckCircle2 className="plan-included" size={20} /><p>All included features</p><div className="plan-feature-list">{planFeatureLabels(plan).map(item => <span key={item}><CheckCircle2 size={14} /> {item}</span>)}</div></article>)}</div></div></div>}
   </PublicLayout>
+}
+
+function LiveSchoolSummary({ summary }) {
+  const count = value => Number.isFinite(Number(value)) ? Number(value).toLocaleString() : '—'
+  const percent = value => Number.isFinite(Number(value)) ? `${Number(value).toLocaleString(undefined, { maximumFractionDigits: 1 })}%` : '—'
+  const totals = [
+    ['User logins', summary?.user_logins, 'Active user accounts', UsersRound],
+    ['Student register', summary?.student_registrations, 'Registered students', UserCheck],
+    ['Schools live', summary?.schools, 'Active campuses', BookOpen],
+  ]
+  return <div className="school-live-summary" aria-label="Live school dashboard summary">
+    <div className="live-summary-brand"><Logo/><span>Live summary</span></div>
+    <div className="live-summary-totals">{totals.map(([label,value,note,Icon])=><div key={label}><span><Icon size={17}/>{label}</span><strong>{count(value)}</strong><small>{note}</small></div>)}</div>
+    <div className="live-summary-daily"><div><CalendarCheck size={20}/><strong>{percent(summary?.attendance_today)}</strong><span>Attendance today</span></div><div><BookOpen size={20}/><strong>{count(summary?.classes)}</strong><span>Classes</span></div><div><BellRing size={20}/><strong>{count(summary?.alerts_today)}</strong><span>Alerts today</span></div></div>
+    <div className="live-summary-week"><b>Current week</b><div>{['Monday','Tuesday','Wednesday','Thursday','Friday'].map((day,i)=>{const row=summary?.week?.[i];return <div key={day} title={row ? `${row.day || day}: ${count(row.classes)} classes, ${count(row.alerts)} alerts` : 'Awaiting school summary'}><span>{(row?.day||day).slice(0,3)}</span><strong>{percent(row?.attendance)}</strong></div>})}</div></div>
+  </div>
 }

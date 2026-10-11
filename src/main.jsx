@@ -5,6 +5,7 @@ import App from './App.jsx'
 import { ConfirmationDialogHost } from './components/ConfirmationDialog.jsx'
 import './styles.css'
 import './dashboard-design.css'
+import './landing-design.css'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode><BrowserRouter><App /><ConfirmationDialogHost /></BrowserRouter></StrictMode>,
