@@ -48,7 +48,12 @@ export async function downloadApi(path, filename) {
   const token = sessionStorage.getItem('school_access_token')
   const response = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
   if (!response.ok) { const data = await response.json().catch(() => ({})); throw new ApiError(data.message || 'Download failed.', response.status, data) }
-  const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href=url; link.download=filename; link.target='_blank'; link.click(); URL.revokeObjectURL(url)
+  const url = URL.createObjectURL(await response.blob())
+  const link = document.createElement('a')
+  link.href = url; link.download = filename
+  document.body.appendChild(link); link.click(); link.remove()
+  // Keep the blob alive until the browser has started reading the download.
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export async function blobApi(path) {
