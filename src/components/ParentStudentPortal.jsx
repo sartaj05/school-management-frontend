@@ -1,8 +1,8 @@
+import { openFeePayment } from '../lib/feePayment'
 /* eslint-disable react-hooks/set-state-in-effect */
 import { BookCheck, CalendarCheck, CircleDollarSign, LibraryBig, Award, UserRound, Download, Send, CreditCard, FileText, Bell, CheckCheck, MessageCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
-import { confirmPopup } from '../lib/confirmPopup'
 
 const tabs = [
   ['overview', 'Overview', UserRound], ['attendance', 'Attendance', CalendarCheck],
@@ -82,28 +82,8 @@ function PortalAssignments({ rows, onChanged }) {
 }
 
 function PortalFees({ rows, onChanged }) {
-  const [busy, setBusy] = useState(null), [message, setMessage] = useState(''), [error, setError] = useState('')
-  async function loadRazorpay() {
-    if (window.Razorpay) return
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script'); script.src = 'https://checkout.razorpay.com/v1/checkout.js'; script.onload = resolve; script.onerror = () => reject(new Error('Could not load Razorpay checkout.')); document.body.appendChild(script)
-    })
-  }
-  async function pay(row) {
-    if (!await confirmPopup({ title: `Pay ${row.fee_name}?`, message: `Open secure Razorpay checkout for ₹${row.balance}.`, confirmLabel: 'Continue to payment', tone: 'primary' })) return
-    setBusy(row.id); setError(''); setMessage('')
-    try {
-      const order = await schoolApi.createPortalFeeOrder(row.id); await loadRazorpay()
-      await new Promise((resolve, reject) => {
-        const checkout = new window.Razorpay({ key: order.key_id, amount: order.amount, currency: order.currency, name: 'EduFlow', description: row.fee_name, order_id: order.order_id,
-          handler: async response => { try { const result = await schoolApi.verifyPortalFeePayment(row.id, response); setMessage(`${result.message} Payment ID: ${result.gateway_payment_id}`); onChanged(); resolve() } catch (e) { reject(e) } },
-          modal: { ondismiss: resolve } })
-        checkout.on('payment.failed', response => reject(new Error(response.error?.description || 'Payment failed.'))); checkout.open()
-      })
-    }
-    catch (e) { setError(e.message) } finally { setBusy(null) }
-  }
-  return <section className="data-panel portal-action-panel"><div className="panel-title"><div><span>Account statements</span><h2>Fee payments</h2></div><b>{rows.length} invoices</b></div>{message && <div className="success-notice">{message}</div>}{error && <div className="form-error">{error}</div>}<div className="table-wrap"><table><thead><tr><th>Fee</th><th>Due</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.fee_name}<small>{row.collection_status === 'pending_approval' ? `Teacher collection pending: ${row.pending_collection_amount}` : row.status}</small></td><td>{date(row.due_date)}</td><td>₹{row.amount}</td><td>₹{row.paid_amount}</td><td><b>₹{row.balance}</b>{Number(row.pending_collection_amount) > 0 && <small>Pending approval: ₹{row.pending_collection_amount}</small>}</td><td>{Number(row.balance) > 0 && row.collection_status !== 'pending_approval' ? <button className="button button-small" onClick={() => pay(row)} disabled={busy === row.id}><CreditCard size={14} />{busy === row.id ? 'Opening…' : 'Pay securely'}</button> : row.collection_status === 'pending_approval' ? <span className="status-pill">Awaiting approval</span> : <span className="status-pill">Paid</span>}{row.last_payment_id && <button className="button button-small button-ghost" onClick={() => schoolApi.downloadFeeReceipt(row.last_payment_id)}><Download size={14} />Receipt</button>}</td></tr>)}</tbody></table></div></section>
+  useEffect(() => { const c = new BroadcastChannel('school-fee-updates'); c.onmessage = onChanged; return () => c.close() }, [onChanged])
+  return <section className="data-panel portal-action-panel"><div className="panel-title"><div><span>Account statements</span><h2>Fee payments</h2></div><b>{rows.length} invoices</b></div><div className="table-wrap"><table><thead><tr><th>Fee</th><th>Due</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.fee_name}<small>{row.collection_status === 'pending_approval' ? `Payment verification pending: ${row.pending_collection_amount}` : row.status}</small></td><td>{date(row.due_date)}</td><td>₹{row.amount}</td><td>₹{row.paid_amount}</td><td><b>₹{row.balance}</b>{Number(row.pending_collection_amount) > 0 && <small>Pending approval: ₹{row.pending_collection_amount}</small>}</td><td>{Number(row.balance) > 0 && row.collection_status !== 'pending_approval' ? <button className="button button-small" onClick={() => openFeePayment(row.id)}><CreditCard size={14} />Pay fee</button> : row.collection_status === 'pending_approval' ? <span className="status-pill">Awaiting approval</span> : <span className="status-pill">Paid</span>}{row.last_payment_id && <button className="button button-small button-ghost" onClick={() => schoolApi.downloadFeeReceipt(row.last_payment_id)}><Download size={14} />Receipt</button>}</td></tr>)}</tbody></table></div></section>
 }
 
 function PortalDocuments({ rows, studentId }) {

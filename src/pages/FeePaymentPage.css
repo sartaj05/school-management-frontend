@@ -1,0 +1,13 @@
+.fee-checkout{min-height:100dvh;background:#f5f3fc;padding:clamp(16px,4vw,56px);color:#2d2748}
+.fee-checkout header{max-width:720px;margin:0 auto 28px;display:flex;gap:16px;justify-content:space-between;flex-wrap:wrap}
+.fee-checkout-dialog{max-width:620px;margin:auto;background:white;border:1px solid #e5dff3;border-radius:24px;padding:clamp(20px,4vw,40px);box-shadow:0 16px 60px #4028770d}
+.fee-checkout-dialog h1{font-size:clamp(24px,4vw,34px);line-height:1.2;margin:8px 0 24px}
+.fee-checkout-eyebrow{color:#7156b7;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:12px}
+.fee-checkout-dialog label{display:flex;flex-direction:column;gap:8px;margin:20px 0;font-weight:600}
+.fee-checkout-dialog input,.fee-checkout-dialog select,.fee-checkout-dialog textarea{width:100%;min-width:0;border:1px solid #d9d2e9;border-radius:10px;padding:12px;font:inherit;background:white;color:inherit;box-sizing:border-box}
+.fee-checkout-dialog p{line-height:1.6;overflow-wrap:anywhere}.fee-checkout-dialog button,.fee-checkout-dialog .button{min-height:44px;white-space:normal}
+.fee-bank-details{background:#f5f3fc;padding:20px;border-radius:16px;overflow-wrap:anywhere}.fee-bank-details code{font-size:16px}
+.fee-checkout-actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}
+
+.fee-checkout-actions>button:not(.button){border:1px solid #d9d2e9;border-radius:10px;padding:10px 20px;background:white;color:inherit;font:inherit}
+@media(max-width:600px){.fee-checkout header{padding-right:64px}.fee-checkout header>span{display:none}}
