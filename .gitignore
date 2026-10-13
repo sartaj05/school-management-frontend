@@ -18,3 +18,4 @@ Thumbs.db
 local-web*.log
 playwright-report/
 local-test-results/
+/local-*.log

@@ -1,3 +1,4 @@
+import FeeInstallments from '../components/FeeInstallments'
 import PaymentStatus from '../components/PaymentStatus'
 import UpiQr from '../components/UpiQr'
 import { useEffect, useRef, useState } from 'react'
@@ -59,5 +60,5 @@ export default function FeePaymentPage() {
       <label>Payment proof (optional, PDF or image, max 5 MB)<input type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" disabled={busy} onChange={e => uploadProof(e.target.files[0])} /></label>{proof && <p role="status">Attached: {proof.original_filename} <button type="button" disabled={busy} onClick={() => setProof(null)}>Remove attachment</button></p>}
       <label>Payment date<input type="date" required value={date} onChange={e => setDate(e.target.value)} /></label><label>{method === 'cash' ? 'Receipt reference (optional)' : 'Transaction reference / UTR'}<input required={method !== 'cash'} minLength={method !== 'cash' ? 4 : undefined} maxLength={100} value={reference} onChange={e => setReference(e.target.value)} /></label><label>Notes (optional)<textarea maxLength={2000} value={notes} onChange={e => setNotes(e.target.value)} /></label>
       <div className="fee-checkout-actions"><button type="button" disabled={busy} onClick={() => { setStep(1); setError('') }}>Back</button><button className="button" disabled={busy || !configured}>{busy ? 'Saving…' : method === 'cash' && cashStaff ? 'Confirm cash received' : 'Submit for verification'}</button></div></form>}
-  </section><div style={{maxWidth:620,margin:'auto'}}><PaymentStatus invoice={invoice || initialId} refreshKey={result}/></div></main>
+  </section><div style={{maxWidth:620,margin:'auto'}}><FeeInstallments invoice={invoice || initialId} refreshKey={result}/><PaymentStatus invoice={invoice || initialId} refreshKey={result}/></div></main>
 }
