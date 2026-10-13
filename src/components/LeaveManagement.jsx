@@ -1,3 +1,4 @@
+import LeaveDelivery from './LeaveDelivery'
 import { CalendarCheck, CalendarClock, Save, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { downloadApi, schoolApi } from '../lib/api'
@@ -182,6 +183,7 @@ export default function LeaveManagement({ user, premium = false }) {
     </>}
     {review && <section className="editor-card"><div className="panel-title"><h2>Request #{review.id}: {review.person_name}</h2><button disabled={busy} onClick={() => setReview(null)}>Close</button></div><p>{review.start_date} to {review.end_date} · {review.status}</p><p>{review.reason}</p>
       {canDecide && <form onSubmit={event => { event.preventDefault(); mutate(() => schoolApi.updateLeaveStatus(review.id, { status: decision, notes }), () => setReview(null)) }}><div className="field-grid"><label>Decision<select value={decision} onChange={e => setDecision(e.target.value)}>{admin && review.person_type === 'staff' && review.status === 'pending' && <><option value="approved">Approve</option><option value="rejected">Reject</option></>}<option value="cancelled">Cancel request</option></select></label><label>Decision note<textarea required={decision === 'rejected'} maxLength="2000" value={notes} onChange={e => setNotes(e.target.value)} /></label></div><button className="button button-small" disabled={busy}>Confirm decision</button></form>}
+      {review.person_type === 'student' && <LeaveDelivery key={review.id} requestId={review.id}/>}
       <h3>History</h3>{history.map(item => <p key={item.id}><b>{item.action}</b> · {new Date(item.created_at).toLocaleString()} · User #{item.actor_id}<br />{item.notes}</p>)}
     </section>}
     {!!adjustments.length && <section className="editor-card"><h3>Allowance history (latest 100 changes, all years)</h3>{adjustments.map(item => <p key={item.id}>{item.notes}<br /><small>{new Date(item.created_at).toLocaleString()} · User #{item.actor_id}</small></p>)}</section>}
