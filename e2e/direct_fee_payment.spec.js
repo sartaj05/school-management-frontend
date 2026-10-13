@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 async function setup(context, { staff = true, settings = {}, inject = true } = {}) {
+  await context.route('**/api/v1/fees/invoices/*/payment-status', r => r.fulfill({json:{success:true,data:[],recorded_payments:[],balance:1000}}))
   if (inject) await context.addInitScript(({staff}) => {
     sessionStorage.setItem('school_access_token','test-only-token')
     sessionStorage.setItem('school_session',JSON.stringify({user:{id:1,role:staff?'School Admin':'Parent'}}))
