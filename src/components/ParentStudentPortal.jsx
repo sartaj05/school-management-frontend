@@ -1,3 +1,4 @@
+import MyChildren from './MyChildren'
 import { openFeePayment } from '../lib/feePayment'
 /* eslint-disable react-hooks/set-state-in-effect */
 import { BookCheck, CalendarCheck, CircleDollarSign, LibraryBig, Award, UserRound, Download, Send, CreditCard, FileText, Bell, CheckCheck, MessageCircle } from 'lucide-react'
@@ -29,7 +30,9 @@ export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
     const methods = { overview: schoolApi.portalOverview, attendance: schoolApi.portalAttendance, timetable: schoolApi.portalTimetable, assignments: schoolApi.portalAssignments, results: schoolApi.portalResults, fees: schoolApi.portalFees, library: schoolApi.portalLibraryLoans, documents: schoolApi.portalDocuments, notifications: schoolApi.portalNotifications, messages: schoolApi.messageThreads, calendar: schoolApi.calendarEvents }
     setLoading(true); setError(''); setData(null)
     const portalRequest = ['calendar', 'notifications', 'messages'].includes(tab) ? methods[tab]() : methods[tab](studentId)
-    portalRequest.then(setData).catch(e => setError(e.message)).finally(() => setLoading(false))
+    let active = true
+    portalRequest.then(r => { if(active) setData(r) }).catch(e => { if(active) setError(e.message) }).finally(() => { if(active) setLoading(false) })
+    return () => { active = false }
   }, [tab, studentId, revision])
 
   if (loading && !me) return <div className="loading-grid"><i/><i/><i/></div>
@@ -39,6 +42,7 @@ export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
   const children = me?.children || []
   return <>
     <section className="people-hero"><div><span>{me?.account?.role} portal</span><h2>My school information</h2><p>View records, submit homework, pay fees, and download school documents.</p></div><UserRound/></section>
+    {me?.account?.role === 'Parent' && tab === 'overview' && <MyChildren onSelect={(id,nextTab) => {setStudentId(id);setTab(nextTab);setRevision(v=>v+1)}} />}
     {children.length > 1 && <label className="portal-child-picker">Viewing student<select value={studentId} onChange={e => setStudentId(e.target.value)}>{children.map(child => <option key={child.id} value={child.id}>{child.first_name} {child.last_name || ''} · {child.class_name} {child.section || ''}</option>)}</select></label>}
     <div className="portal-tabs">{tabs.map(([key,label,Icon]) => <button key={key} className={tab===key?'active':''} onClick={() => setTab(key)}><Icon size={16}/>{label}</button>)}</div>
     {error && <div className="api-notice"><b>Could not load portal data.</b><span>{error}</span></div>}
