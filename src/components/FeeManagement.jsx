@@ -1,3 +1,4 @@
+import PaymentAdjustments from './PaymentAdjustments'
 import BankReconciliation from './BankReconciliation'
 import FeeDues from './FeeDues'
 import { openFeePayment } from '../lib/feePayment'
@@ -30,6 +31,7 @@ export default function FeeManagement({ user }) {
   return <div className="fee-management">
     <FeeDues />
     <BankReconciliation user={user} />
+    <PaymentAdjustments user={user} />
     {user?.role === 'School Admin' && <SchoolPaymentSettings />}
     <div className="stat-grid compact">{[['Billed', summary.total_billed || 0], ['Collected', summary.total_collected || 0], ['Outstanding', summary.total_outstanding || 0], ['Overdue', summary.overdue_count || 0]].map(([label, value]) => <article key={label}><small>{label}</small><b>{label === 'Overdue' ? value : Number(value).toLocaleString()}</b><span>{label === 'Overdue' ? 'invoices' : 'total amount'}</span></article>)}</div>
     <form className="editor-card" onSubmit={create}><div className="editor-heading"><CircleDollarSign /><div><h3>Create fee structure</h3><p>Define the fee, class, amount and payment deadline.</p></div></div><div className="field-grid three"><label>Fee name *<input required value={form.name} onChange={e => field('name', e.target.value)} /></label><label>Class *<select required value={form.class_id} onChange={e => field('class_id', e.target.value)}><option value="">Select class</option>{classes.map(x => <option key={x.id} value={x.id}>{x.class_name}</option>)}</select></label><label>Academic year *<input required value={form.academic_year} onChange={e => field('academic_year', e.target.value)} /></label><label>Amount *<input required type="number" min="0.01" step="0.01" value={form.amount} onChange={e => field('amount', e.target.value)} /></label><label>Due date *<input required type="date" value={form.due_date} onChange={e => field('due_date', e.target.value)} /></label><label>Description<input value={form.description} onChange={e => field('description', e.target.value)} /></label></div><button className="button button-small" disabled={busy}><Plus />Create fee</button></form>
