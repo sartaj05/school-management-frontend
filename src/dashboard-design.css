@@ -158,3 +158,12 @@
 @media (prefers-reduced-motion: reduce) {
   .app-shell .sidebar nav button,.overview-primary-action,.app-shell .dashboard-action-grid button { transition: none; }
 }
+.school-directory .school-capacity-cell{min-width:145px}
+.school-directory .school-class-capacity-cell{min-width:185px;max-width:280px}
+.school-class-limit-summary details{margin-top:9px;font-size:11px}
+.school-class-limit-summary summary{color:#6856b6;cursor:pointer;line-height:1.6;width:fit-content}
+.school-class-limit-summary summary:focus-visible{outline:2px solid #6856b6;outline-offset:3px;border-radius:3px}
+.school-class-limit-summary ul{list-style:none;margin:8px 0 0;padding:9px 11px;background:#f5f2fa;border-radius:8px}
+.school-class-limit-summary li{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:3px 0}
+.school-class-limit-summary li span{overflow-wrap:anywhere;min-width:0}
+.school-class-limit-summary li strong{color:#514567;font-weight:600;white-space:nowrap}

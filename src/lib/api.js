@@ -50,7 +50,9 @@ export async function downloadApi(path, filename) {
   if (!response.ok) { const data = await response.json().catch(() => ({})); throw new ApiError(data.message || 'Download failed.', response.status, data) }
   const url = URL.createObjectURL(await response.blob())
   const link = document.createElement('a')
-  link.href = url; link.download = filename
+  const disposition = response.headers.get('content-disposition') || ''
+  const storedName = disposition.match(/filename="?([^";]+)"?/i)?.[1]?.split(/[\\/]/).pop()?.replace(/[\r\n]/g, '')
+  link.href = url; link.download = storedName || filename
   document.body.appendChild(link); link.click(); link.remove()
   // Keep the blob alive until the browser has started reading the download.
   setTimeout(() => URL.revokeObjectURL(url), 1000)
@@ -217,7 +219,7 @@ export const schoolApi = {
   refundFeePayment: (paymentId, values = {}) => api(`/fees/payments/${paymentId}/refund`, { method: 'POST', body: JSON.stringify(values) }),
   createFeeGatewayOrder: (invoiceId) => api(`/fees/invoices/${invoiceId}/gateway/order`, { method: 'POST' }),
   verifyFeeGatewayPayment: (invoiceId, values) => api(`/fees/invoices/${invoiceId}/gateway/verify`, { method: 'POST', body: JSON.stringify(values) }),
-  downloadAdminFeeReceipt: (paymentId) => downloadApi(`/fees/payments/${paymentId}/receipt`, `fee-receipt-${paymentId}.html`),
+  downloadAdminFeeReceipt: (paymentId) => downloadApi(`/fees/payments/${paymentId}/receipt?format=pdf`, `fee-receipt-${paymentId}.pdf`),
   feePayments: (invoiceId) => api(`/fees/invoices/${invoiceId}/payments`),
   queueFeeReminder: (invoiceId, values) => api(`/fees/invoices/${invoiceId}/reminder`, { method: 'POST', body: JSON.stringify(values) }),
   feeSummary: () => api('/fees/summary'),
@@ -254,7 +256,7 @@ export const schoolApi = {
   portalPayFee: (invoiceId, values = {}) => api(`/portal/fees/${invoiceId}/pay`, { method: 'POST', body: JSON.stringify(values) }),
   createPortalFeeOrder: (invoiceId) => api(`/portal/fees/${invoiceId}/gateway/order`, { method: 'POST' }),
   verifyPortalFeePayment: (invoiceId, values) => api(`/portal/fees/${invoiceId}/gateway/verify`, { method: 'POST', body: JSON.stringify(values) }),
-  downloadFeeReceipt: (paymentId) => downloadApi(`/portal/fees/payments/${paymentId}/receipt`, `fee-receipt-${paymentId}.html`),
+  downloadFeeReceipt: (paymentId) => downloadApi(`/portal/fees/payments/${paymentId}/receipt?format=pdf`, `fee-receipt-${paymentId}.pdf`),
   portalLibraryLoans: (studentId) => api(`/portal/library-loans${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
   portalDocuments: (studentId) => api(`/portal/documents${studentId ? `?student_id=${encodeURIComponent(studentId)}` : ''}`),
   portalNotifications: (limit = 50) => api(`/portal/notifications?limit=${encodeURIComponent(limit)}`),
@@ -266,7 +268,7 @@ export const schoolApi = {
   createMessageThread: (values) => api('/messages/threads', { method: 'POST', body: JSON.stringify(values) }),
   sendMessage: (threadId, values) => api(`/messages/threads/${threadId}/messages`, { method: 'POST', body: JSON.stringify(values) }),
   markMessageThreadRead: (threadId) => api(`/messages/threads/${threadId}/read`, { method: 'PATCH' }),
-  downloadPortalReportCard: (examId, studentId) => downloadApi(`/documents/report-cards/${examId}/students/${studentId}`, `report-card-${examId}-${studentId}.html`),
+  downloadPortalReportCard: (examId, studentId) => downloadApi(`/documents/report-cards/${examId}/students/${studentId}?format=pdf`, `report-card-${examId}-${studentId}.pdf`),
   calendarEvents: (filters = '') => api(`/calendar/events${filters ? `?${filters}` : ''}`),
   calendarEvent: (eventId) => api(`/calendar/events/${eventId}`),
   createCalendarEvent: (values) => api('/calendar/events', { method: 'POST', body: JSON.stringify(values) }),
@@ -288,7 +290,7 @@ export const schoolApi = {
   createDocumentTemplate: (values) => api('/documents/templates', { method: 'POST', body: JSON.stringify(values) }),
   updateDocumentTemplate: (id, values) => api(`/documents/templates/${id}`, { method: 'PATCH', body: JSON.stringify(values) }),
   downloadAttendanceCsv: (attendanceDate) => downloadApi(`/documents/attendance.csv?attendance_date=${encodeURIComponent(attendanceDate)}`, `attendance-${attendanceDate}.csv`),
-  openReportCard: (examId, studentId) => downloadApi(`/documents/report-cards/${examId}/students/${studentId}`, `report-card-${examId}-${studentId}.html`),
+  openReportCard: (examId, studentId) => downloadApi(`/documents/report-cards/${examId}/students/${studentId}?format=pdf`, `report-card-${examId}-${studentId}.pdf`),
   staffAttendance: (attendanceDate) => api(`/payroll/attendance?attendance_date=${encodeURIComponent(attendanceDate)}`),
   markStaffAttendance: (values) => api('/payroll/attendance', { method:'POST', body:JSON.stringify(values) }),
   salaryStructures: () => api('/payroll/salary-structures'),
@@ -434,6 +436,7 @@ export const schoolApi = {
   downloadReportCsv: (report, filters = {}) => downloadApi(`/reports/export.csv?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`, `${report}-report.csv`),
   downloadReportXlsx: (report, filters = {}) => downloadApi(`/reports/export.xlsx?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`, `${report}-report.xlsx`),
   downloadReportPdf: (report, filters = {}) => downloadApi(`/reports/export.pdf?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`, `${report}-report.pdf`),
+  reportPdfBlob: (report, filters = {}) => blobApi(`/reports/export.pdf?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`),
   reportHtml: (report, filters = {}) => blobApi(`/reports/export.html?report=${encodeURIComponent(report)}&${new URLSearchParams(filters)}`),
   scheduledReports: () => api('/scheduled-reports'),
   createScheduledReport: (values) => api('/scheduled-reports', { method: 'POST', body: JSON.stringify(values) }),

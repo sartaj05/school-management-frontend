@@ -1,0 +1,16 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>School operations workflow tests</title></head><body><main id="test" style="padding:16px;max-width:1100px;margin:auto"></main><script type="module">
+import React from 'react'
+import {createRoot} from 'react-dom/client'
+import FeeDues from '/src/components/FeeDues.jsx'
+import BankReconciliation from '/src/components/BankReconciliation.jsx'
+import PaymentAdjustments from '/src/components/PaymentAdjustments.jsx'
+import MyChildren from '/src/components/MyChildren.jsx'
+import PromotionWizard from '/src/components/PromotionWizard.jsx'
+import AuditChanges from '/src/components/AuditChanges.jsx'
+import {ConfirmationDialogHost as ConfirmationDialog} from '/src/components/ConfirmationDialog.jsx'
+import '/src/styles.css'
+const module=new URLSearchParams(location.search).get('module')
+const components={dues:FeeDues,bank:BankReconciliation,adjustments:PaymentAdjustments,children:MyChildren,promotion:PromotionWizard,audit:AuditChanges}
+const props={user:{role:'School Admin'},years:[{id:1,year_label:'2025',status:'active'},{id:2,year_label:'2026',status:'active'}],onSelect:(id,tab)=>{document.getElementById('selection').textContent=`Selected ${id}: ${tab}`},details:{changes:[{field:'paid_amount',before:300,after:200},{field:'status',before:'pending',after:'approved'}]}}
+createRoot(document.getElementById('test')).render(React.createElement(React.Fragment,null,React.createElement(components[module],props),React.createElement('p',{id:'selection'}),React.createElement(ConfirmationDialog)))
+</script></body></html>

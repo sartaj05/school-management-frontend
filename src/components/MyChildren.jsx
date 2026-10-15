@@ -1,0 +1,8 @@
+import { useEffect, useState } from 'react'
+import { api } from '../lib/api'
+export default function MyChildren({onSelect}) {
+  const [rows,setRows]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(true)
+  async function load(){setBusy(true);setError('');try{const r=await api('/portal/children-dashboard');setRows(r.data||[])}catch(e){setError(e.message)}finally{setBusy(false)}}
+  useEffect(()=>{const t=setTimeout(load,0);return()=>clearTimeout(t)},[])
+  return <section className="data-panel"><div className="panel-title"><h2>My Children</h2><button disabled={busy} onClick={load}>Refresh family overview</button></div>{error&&<p role="alert">{error}</p>}{busy&&<p>Loading children…</p>}<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,260px),1fr))',gap:16}}>{rows.map(r=><article className="editor-card" key={r.id}><h3>{r.first_name} {r.last_name}</h3><p>{r.class_name} · {r.section} · {r.admission_no}</p><p><b>Fee balance:</b> INR {r.fee_balance}<br/>Earliest outstanding due: {r.next_due||'None'}</p><p><b>Attendance (30 days):</b> {r.attendance_percentage==null?'No records':`${r.attendance_percentage}%`}<br/><b>Homework pending:</b> {r.homework_pending}</p><h4>Recent leave</h4>{r.leave_updates.length?r.leave_updates.map((l,i)=><p key={i}>{l.start_date} — {l.end_date}: {l.status}</p>):<p>No leave notices.</p>}<div className="student-row-actions">{[['overview','Open child'],['fees','Fees'],['attendance','Attendance'],['assignments','Homework']].map(([tab,label])=><button key={tab} onClick={()=>onSelect(String(r.id),tab)}>{label}</button>)}</div></article>)}</div>{!busy&&!rows.length&&!error&&<p>No active children linked. Contact School Admin.</p>}</section>
+}

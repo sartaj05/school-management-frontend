@@ -1,0 +1,8 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Leave component test</title></head><body><div id="leave-test"></div><script type="module">
+import React from 'react'
+import { createRoot } from 'react-dom/client'
+import LeaveManagement from '/src/components/LeaveManagement.jsx'
+import '/src/styles.css'
+const role = new URLSearchParams(location.search).get('role') || 'School Admin'
+createRoot(document.getElementById('leave-test')).render(React.createElement(LeaveManagement, { user: {role}, premium: true }))
+</script></body></html>

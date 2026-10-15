@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dashboard charts</title></head><body><main id="test" style="padding:16px;max-width:1100px;margin:auto"></main><script type="module">
+import React from 'react'
+import {createRoot} from 'react-dom/client'
+import DashboardPieCharts from '/src/components/DashboardPieCharts.jsx'
+import '/src/styles.css'
+const role=new URLSearchParams(location.search).get('role')
+const data={
+  super_admin:[{key:'status',title:'School status',subtitle:'All registered schools',items:[{label:'Active',value:12},{label:'Inactive',value:3}]},{key:'plans',title:'Schools by plan',subtitle:'Current plan for every registered school',items:[{label:'Trial',value:2},{label:'Standard',value:6},{label:'Premium',value:5},{label:'Enterprise',value:2}]}],
+  admin:[{key:'attendance',title:"Today's attendance",subtitle:'All active students',items:[{label:'Present',value:321},{label:'Absent',value:19},{label:'Late',value:7},{label:'Not marked',value:3}]},{key:'accounts',title:'Active portal accounts',subtitle:'Login accounts grouped by role',items:[{label:'School Admin',value:2},{label:'Teacher',value:21},{label:'Student',value:350},{label:'Parent',value:300},{label:'Accounts Staff',value:3},{label:'Hostel Staff',value:2},{label:'Driver',value:4}]}],
+  teacher:[{key:'attendance',title:"Today's attendance",subtitle:'Your assigned classes',items:[{label:'Present',value:29},{label:'Absent',value:1},{label:'Late',value:0},{label:'Not marked',value:0}]},{key:'subjects',title:'Weekly teaching periods',subtitle:'Your active timetable, grouped by subject',items:[{label:'Mathematics',value:18},{label:'Science',value:6}]}],
+  empty:[{key:'empty',title:"Today's attendance",subtitle:'Your assigned classes',items:[{label:'Present',value:0},{label:'Absent',value:0}]}]
+}
+createRoot(document.getElementById('test')).render(React.createElement(DashboardPieCharts,{charts:data[role]}))
+</script></body></html>
