@@ -15,8 +15,13 @@ export class ApiError extends Error {
 let refreshPromise = null
 
 export async function api(path, options = {}) {
-  const { retry = true, ...fetchOptions } = options
+  const { retry = true, accountScope, ...fetchOptions } = options
   const token = sessionStorage.getItem('school_access_token')
+  if (accountScope) {
+    let currentScope
+    try { const c = JSON.parse(atob(token.split('.')[1].replaceAll('-', '+').replaceAll('_', '/'))); currentScope = `${c.schema_context}:${c.sub}` } catch { /* Signed out. */ }
+    if (currentScope !== accountScope) throw new ApiError('School account changed. Reopen this draft.', 409)
+  }
   const isForm = fetchOptions.body instanceof FormData
   const response = await fetch(`${API_BASE}${path}`, {
     ...fetchOptions,
@@ -32,8 +37,9 @@ export async function api(path, options = {}) {
     try {
       if (!refreshPromise) refreshPromise = refreshAccessToken(refreshToken).finally(() => { refreshPromise = null })
       await refreshPromise
-      return api(path, { ...fetchOptions, retry: false })
+      return api(path, { ...fetchOptions, accountScope, retry: false })
     } catch {
+      if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed. Reopen this draft.', 409)
       sessionStorage.removeItem('school_access_token')
       sessionStorage.removeItem('school_refresh_token')
       sessionStorage.removeItem('school_session')
@@ -72,6 +78,7 @@ async function refreshAccessToken(refreshToken) {
   })
   const data = await response.json().catch(() => ({}))
   if (!response.ok) throw new ApiError(data.error || data.message || 'Your session has expired.', response.status, data)
+  if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed during session refresh.', 409)
   sessionStorage.setItem('school_access_token', data.token)
   sessionStorage.setItem('school_refresh_token', data.refresh_token)
   const session = JSON.parse(sessionStorage.getItem('school_session') || '{}')

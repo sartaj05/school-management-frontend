@@ -1,3 +1,4 @@
+import { attachmentMeta, uploadAttachment, clearAttachment } from './offlineAttachments'
 import { api } from './api'
 
 export function draftScope() {
@@ -18,11 +19,22 @@ export async function submitDraft(key, path, payload) {
   // Keep the original body and operation ID when the response was lost.
   const previous = savedDrafts()[key]
   if (previous?.queued && JSON.stringify(previous.payload) !== JSON.stringify(payload)) throw new Error('A previous submission is waiting. Retry it from Offline drafts before sending changes.')
-  const row = previous?.queued ? previous : { path, payload, operationId: crypto.randomUUID(), queued: true }
+  const row = previous?.queued ? previous : { path, payload, operationId: crypto.randomUUID(), queued: true, attachment: attachmentMeta(key) }
   saveDraft(key, row)
   try {
-    const result = await api(row.path, { method: 'POST', headers: { 'X-Client-Operation-Id': row.operationId }, body: JSON.stringify(row.payload) })
-    if (draftScope() === owner) saveDraft(key, null)
+    if (row.attachment && !row.resolvedPayload) {
+      const fields = await uploadAttachment(row.attachment)
+      if (draftScope() !== owner) throw new Error('Account changed during upload.')
+      row.resolvedPayload = { ...row.payload, ...fields }
+      saveDraft(key, row)
+    }
+    if (draftScope() !== owner) throw new Error('Account changed before submission.')
+    const result = await api(row.path, { method: 'POST', accountScope: owner, headers: { 'X-Client-Operation-Id': row.operationId }, body: JSON.stringify(row.resolvedPayload || row.payload) })
+    if (draftScope() === owner) {
+      saveDraft(key, null)
+      // A confirmed submission must not be replayed if local cleanup fails.
+      clearAttachment(key, owner).catch(() => {})
+    }
     return result
   } catch (e) {
     if (draftScope() !== owner) throw e
