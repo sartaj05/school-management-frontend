@@ -1,6 +1,7 @@
 import PaymentAdjustments from './PaymentAdjustments'
 import BankReconciliation from './BankReconciliation'
 import FeeDues from './FeeDues'
+import FeeReminderRules from './FeeReminderRules'
 import { openFeePayment } from '../lib/feePayment'
 import SchoolPaymentSettings from './SchoolPaymentSettings'
 import { BellRing, CircleDollarSign, Download, Plus, Receipt, RotateCcw, Save } from 'lucide-react'
@@ -30,6 +31,7 @@ export default function FeeManagement({ user }) {
   async function remind(item) { if (!await confirmPopup({ title: `Queue reminder for ${item.student_name}?`, message: `Outstanding balance: ${item.balance}`, confirmLabel: 'Queue reminder', tone: 'primary' })) return; setBusy(true); try { const result = await schoolApi.queueFeeReminder(item.id, {}); setMessage(result.message) } catch (e) { setError(e.message) } finally { setBusy(false) } }
   return <div className="fee-management">
     <FeeDues />
+    {user?.role === 'School Admin' && <FeeReminderRules />}
     <BankReconciliation user={user} />
     <PaymentAdjustments user={user} />
     {user?.role === 'School Admin' && <SchoolPaymentSettings />}
