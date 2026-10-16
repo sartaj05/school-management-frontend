@@ -1,3 +1,4 @@
+import IssuedDocuments from './IssuedDocuments'
 import MyChildren from './MyChildren'
 import OfflineDrafts from './OfflineDrafts'
 import { savedDrafts, saveDraft, submitDraft } from '../lib/offlineDrafts'
@@ -64,7 +65,7 @@ function PortalData({ tab, data, unreadCount, studentId, user, onChanged }) {
   const rows = Array.isArray(data) ? data : []
   if (tab === 'assignments') return <PortalAssignments key={studentId} studentId={studentId} rows={rows} onChanged={onChanged}/>
   if (tab === 'fees') return <PortalFees rows={rows} onChanged={onChanged}/>
-  if (tab === 'documents') return <PortalDocuments rows={rows} studentId={studentId}/>
+  if (tab === 'documents') return <><IssuedDocuments key={studentId} studentId={studentId}/><PortalDocuments rows={rows} studentId={studentId}/></>
   if (tab === 'notifications') return <PortalNotifications rows={rows} unreadCount={unreadCount} onChanged={onChanged}/>
   if (tab === 'messages') return <PortalMessages rows={rows} studentId={studentId} user={user} onChanged={onChanged}/>
   if (!rows.length) return <section className="empty-state"><BookCheck/><h3>No records found</h3><p>There is no information to display for this student yet.</p></section>
