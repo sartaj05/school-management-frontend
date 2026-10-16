@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Connected features test</title></head><body><main id="test" style="padding:16px;max-width:1100px;margin:auto"></main><script type="module">
+import React from 'react'
+import {createRoot} from 'react-dom/client'
+import ApprovalInbox from '/src/components/ApprovalInbox.jsx'
+import FeeReminderRules from '/src/components/FeeReminderRules.jsx'
+import IssuedDocuments from '/src/components/IssuedDocuments.jsx'
+import OfflineDrafts from '/src/components/OfflineDrafts.jsx'
+import {ConfirmationDialogHost} from '/src/components/ConfirmationDialog.jsx'
+import '/src/styles.css'
+const module = new URLSearchParams(location.search).get('module')
+const components = {inbox:ApprovalInbox,reminders:FeeReminderRules,documents:IssuedDocuments,offline:OfflineDrafts}
+createRoot(document.getElementById('test')).render(React.createElement(React.Fragment,null,React.createElement(components[module],{admin:true}),React.createElement(ConfirmationDialogHost)))
+</script></body></html>

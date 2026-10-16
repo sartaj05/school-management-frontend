@@ -1,4 +1,6 @@
 import TeacherSubstitutions from './TeacherSubstitutions'
+import OfflineDrafts from './OfflineDrafts'
+import { savedDrafts, saveDraft, submitDraft } from '../lib/offlineDrafts'
 import LeaveDelivery from './LeaveDelivery'
 import { CalendarCheck, CalendarClock, Save, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -34,6 +36,9 @@ export default function LeaveManagement({ user, premium = false }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const person = people.find(item => `${item.person_type}:${item.person_id}` === selected)
+  const draftKey = `leave:${selected}`
+  function saveLocalLeave() { try { if (savedDrafts()[draftKey]?.queued) throw new Error('Retry or recover the queued submission before editing.'); saveDraft(draftKey, form); setNotice('Leave draft saved on this device.') } catch (e) { setError(e.message) } }
+  function restoreLocalLeave() { const saved = savedDrafts()[draftKey]; if (saved) setForm(saved.payload || saved); else setNotice('No saved draft for this person.') }
   const validYear = /^\d{4}$/.test(year) && Number(year) >= 2000 && Number(year) <= 2100
   function clearFilters() {
     setYear(String(currentYear))
@@ -113,7 +118,7 @@ export default function LeaveManagement({ user, premium = false }) {
   function submit(event) {
     event.preventDefault()
     if (!person) return
-    mutate(() => schoolApi.createLeaveRequest({ ...form, person_type: person.person_type, person_id: person.person_id }), () => {
+    mutate(() => submitDraft(draftKey, '/leave/requests', { ...form, person_type: person.person_type, person_id: person.person_id }), () => {
       setYear(form.start_date.slice(0, 4)); setOffset(0); setStatus('all'); setForm({ ...form, reason: '' })
     })
   }
@@ -160,6 +165,8 @@ export default function LeaveManagement({ user, premium = false }) {
 
   return <>
     <section className="people-hero"><div><span>School operations</span><h2>Leave management</h2><p>Employee leave requires School Admin approval. Student leave informs linked parents, assigned class teachers and School Admin without approval.</p></div><CalendarCheck /></section>
+    <OfflineDrafts onChanged={() => setRefresh(v => v + 1)} />
+    {person && <div className="page-actions"><button disabled={busy} onClick={saveLocalLeave}>Save leave draft</button><button disabled={busy} onClick={restoreLocalLeave}>Restore leave draft</button></div>}
     {premium && ['School Admin','Teacher'].includes(user.role) && <TeacherSubstitutions/>}
     {error && <div className="form-error" role="alert">{error}</div>}
     {notice && <div className="success-notice" role="status">{notice}</div>}
