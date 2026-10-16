@@ -21,6 +21,7 @@ test('School Admin can approve employee leave and only cancel a student notice',
 })
 
 test('student form sends leave information with no approval language',async({page})=>{
+  await page.addInitScript(() => sessionStorage.setItem('school_access_token', `header.${btoa(JSON.stringify({sub:'2',schema_context:'school_test'}))}.signature`))
   await page.route('**/api/v1/leave/**',r=>{
     const path=new URL(r.request().url()).pathname
     let json={data:[]}
