@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mobileSchoolLink } from './schoolLinks.js'
+import { mobileSchoolLink } from '../src/lib/schoolLinks.js'
 const jwt = `x.${btoa(JSON.stringify({ schema_context: 'school_a' }))}.x`
 test('school links include tenant and record without credentials', () => {
   assert.equal(mobileSchoolLink('fees', 8, jwt), 'eduflow://open/fees?school=school_a&invoice=8')
