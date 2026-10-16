@@ -1,3 +1,4 @@
+import OpenInApp from '../components/OpenInApp'
 import FeeInstallments from '../components/FeeInstallments'
 import PaymentStatus from '../components/PaymentStatus'
 import UpiQr from '../components/UpiQr'
@@ -46,7 +47,7 @@ export default function FeePaymentPage() {
     } catch (e) { setError(e.message) } finally { setBusy(false); submitting.current = false }
   }
   const configured = method === 'cash' || (method === 'upi' ? Boolean(settings.upi_id) : Boolean(settings.account_number))
-  return <main className="fee-checkout"><header><Link to="/dashboard">← EduFlow dashboard</Link><span>School fee payment</span></header><section className="fee-checkout-dialog" role="dialog" aria-labelledby="payment-heading">
+  return <main className="fee-checkout"><header><Link to="/dashboard">← EduFlow dashboard</Link><span>School fee payment</span></header><OpenInApp destination="fees" id={invoice || initialId}/><section className="fee-checkout-dialog" role="dialog" aria-labelledby="payment-heading">
     <p className="fee-checkout-eyebrow">{result ? 'Submission complete' : `Step ${step} of 2`}</p><h1 id="payment-heading" ref={heading} tabIndex={-1}>{result ? (result.status === 'pending' ? 'Awaiting school verification' : 'Cash payment recorded') : step === 1 ? 'Choose your fee' : 'Choose how to pay'}</h1>
     {error && <p role="alert" className="form-error">{error}</p>}
     {result ? <><p role="status">{result.message}</p><p>{selected?.fee_name} · ₹{Number(amount).toFixed(2)}</p><Link className="button" to="/dashboard">Return to dashboard</Link></> : step === 1 ? <form onSubmit={next}>

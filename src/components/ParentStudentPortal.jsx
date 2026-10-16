@@ -1,3 +1,4 @@
+import OpenInApp from './OpenInApp'
 import IssuedDocuments from './IssuedDocuments'
 import MyChildren from './MyChildren'
 import OfflineDrafts from './OfflineDrafts'
@@ -47,6 +48,7 @@ export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
     <section className="people-hero"><div><span>{me?.account?.role} portal</span><h2>My school information</h2><p>View records, submit homework, pay fees, and download school documents.</p></div><UserRound/></section>
     <OfflineDrafts onChanged={() => setRevision(v => v + 1)} />
     {me?.account?.role === 'Parent' && tab === 'overview' && <MyChildren onSelect={(id,nextTab) => {setStudentId(id);setTab(nextTab);setRevision(v=>v+1)}} />}
+    <OpenInApp destination="child" id={studentId}/>
     {children.length > 1 && <label className="portal-child-picker">Viewing student<select value={studentId} onChange={e => setStudentId(e.target.value)}>{children.map(child => <option key={child.id} value={child.id}>{child.first_name} {child.last_name || ''} · {child.class_name} {child.section || ''}</option>)}</select></label>}
     <div className="portal-tabs">{tabs.map(([key,label,Icon]) => <button key={key} className={tab===key?'active':''} onClick={() => setTab(key)}><Icon size={16}/>{label}</button>)}</div>
     {error && <div className="api-notice"><b>Could not load portal data.</b><span>{error}</span></div>}
