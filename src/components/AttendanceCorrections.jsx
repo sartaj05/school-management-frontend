@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api } from '../lib/api'
 
-export default function AttendanceCorrections({ user, initialDate, initialRecord }) {
+export default function AttendanceCorrections({ user, initialDate, initialRecord, studentId, correctionId }) {
   const role=user?.role || JSON.parse(sessionStorage.getItem('school_session') || '{}')?.user?.role
   const writer=['School Admin','Teacher'].includes(role)
   const [date,setDate]=useState(initialDate || new Date().toLocaleDateString('en-CA'))
   const [records,setRecords]=useState([]),[rows,setRows]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false)
   const [form,setForm]=useState({attendance_id:'',status:'present',remarks:'',reason:''}),[notes,setNotes]=useState({})
-  const load=async()=>{try{setRows((await api('/attendance/corrections')).data)}catch(e){setError(e.message)}}
-  useEffect(()=>{const timer=setTimeout(()=>{load();if(initialRecord) recordsForDate()},0);return()=>clearTimeout(timer)},[])
+  const load=async()=>{try{setRows((await api(`/attendance/corrections?${new URLSearchParams({...studentId?{student_id:studentId}:{},...correctionId?{id:correctionId}:{}})}`)).data)}catch(e){setError(e.message)}}
+  useEffect(()=>{const timer=setTimeout(()=>{load();if(initialRecord) recordsForDate()},0);return()=>clearTimeout(timer)},[]) // eslint-disable-line react-hooks/exhaustive-deps
   async function recordsForDate(){setBusy(true);setError('');try{setRecords((await api(`/attendance/correction-records?date=${date}`)).data);setForm(f=>({...f,attendance_id:initialRecord ? String(initialRecord) : ''}))}catch(e){setError(e.message)}finally{setBusy(false)}}
   async function submit(e){e.preventDefault();setBusy(true);setError('');try{await api('/attendance/corrections',{method:'POST',body:JSON.stringify({...form,attendance_id:Number(form.attendance_id)})});setForm(f=>({...f,reason:'',attendance_id:''}));await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
   async function review(row,status){setBusy(true);setError('');try{await api(`/attendance/corrections/${row.id}/review`,{method:'POST',body:JSON.stringify({status,review_notes:notes[row.id]})});await load()}catch(e){setError(e.message)}finally{setBusy(false)}}

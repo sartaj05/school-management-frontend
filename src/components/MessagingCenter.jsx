@@ -4,9 +4,9 @@ import { api, downloadApi, schoolApi } from '../lib/api'
 
 
 
-export default function MessagingCenter({user,studentId}) {
+export default function MessagingCenter({user,studentId,initialThreadId}) {
 
-  const [rows,setRows]=useState([]),[selected,setSelected]=useState(null),[thread,setThread]=useState(null)
+  const [rows,setRows]=useState([]),[selected,setSelected]=useState(initialThreadId || null),[thread,setThread]=useState(null)
 
   const [students,setStudents]=useState([]),[recipients,setRecipients]=useState([]),[chosenStudent,setStudent]=useState('')
 
