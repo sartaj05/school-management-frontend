@@ -1,6 +1,21 @@
 import {test,expect} from '@playwright/test'
 import {Buffer} from 'node:buffer'
 
+test('family notification opens only its correction record without approval controls',async({page})=>{
+  let selectedId
+  await page.route('**/api/v1/attendance/corrections?*',r=>{
+    selectedId=new URL(r.request().url()).searchParams.get('id')
+    return r.fulfill({json:{data:[{id:8,student_name:'Ananya',attendance_date:'2026-10-17',class_name:'Grade 1',section:'A',original:{status:'absent'},proposed:{status:'present'},reason:'Register mistake',review_notes:'Verified',status:'approved'}]}})
+  })
+  await page.goto('/e2e/next_workflows_harness.html?module=notification&role=Parent')
+  await page.getByRole('button',{name:'Open record'}).click()
+  await expect(page.getByText('Grade 1 A: absent → present · approved')).toBeVisible()
+  expect(selectedId).toBe('8')
+  await expect(page.getByRole('button',{name:'Request correction'})).toHaveCount(0)
+  await page.getByRole('button',{name:'Close record'}).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
 for(const width of [390,1440]) {
   test(`action inbox replies and attendance decisions at ${width}`,async({page})=>{
     await page.setViewportSize({width,height:900})
