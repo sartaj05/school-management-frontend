@@ -48,7 +48,7 @@ export default function MessagingCenter({user,studentId,initialThreadId}) {
     refreshRef.current=refresh;refresh();const timer=setInterval(refresh,15000)
     return()=>{live=false;clearInterval(timer);refreshRef.current=null}
   },[selected,load,user?.id])
-  async function older(){setBusy(true);try{const r=await api(`/messages/threads/${selected}?before_id=${thread.messages[0].id}`);const next={...thread,...r.data,messages:[...new Map([...r.data.messages,...thread.messages].map(m=>[m.id,m])).values()].sort((a,b)=>a.id-b.id)};threadRef.current=next;setThread(next)}catch(e){setError(e.message)}finally{setBusy(false)}}
+  async function older(){setBusy(true);try{const r=await api(`/messages/threads/${selected}?before_id=${thread.messages[0].id}`);const current=threadRef.current || thread;const next={...current,...r.data,messages:[...new Map([...r.data.messages,...current.messages].map(m=>[m.id,m])).values()].sort((a,b)=>a.id-b.id)};threadRef.current=next;setThread(next)}catch(e){setError(e.message)}finally{setBusy(false)}}
 
   async function upload(file){if(!file)return;setBusy(true);setError('');try{const data=new FormData();data.append('file',file);data.append('category','message');const r=await api('/documents/files',{method:'POST',body:data});setAttachment(r.file)}catch(e){setError(e.message)}finally{setBusy(false)}}
 
