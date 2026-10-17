@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, downloadApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import BulkDocuments from './BulkDocuments'
 
 export default function IssuedDocuments({ admin = false, studentId }) {
   const [rows, setRows] = useState([]), [options, setOptions] = useState({ students: [], exams: [] }), [busy, setBusy] = useState(false), [message, setMessage] = useState('')
@@ -31,6 +32,7 @@ export default function IssuedDocuments({ admin = false, studentId }) {
   const field = (key, value) => setForm(f => ({ ...f, [key]: value }))
   const student = options.students.find(s => String(s.id) === String(form.student_id))
   return <section className="data-panel"><h2>Verified school documents</h2><p>Issued PDFs keep their original content. Scan the QR to check current validity. Public verification shows masked student details.</p>{message && <p role="status">{message}</p>}
+    {admin && <BulkDocuments options={options}/>}
     {admin && <form onSubmit={issue}><div className="field-grid">
       <label>Student<select required value={form.student_id} onChange={e => { field('student_id', e.target.value); field('exam_id', '') }}><option value="">Select student</option>{options.students.map(s => <option key={s.id} value={s.id}>{s.name} · {s.class_name} {s.section}</option>)}</select></label>
       <label>Document type<select value={form.document_type} onChange={e => {field('document_type', e.target.value); field('template_id','')}}><option value="certificate">Certificate</option><option value="report_card">Report card</option></select></label>
