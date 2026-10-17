@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from 'react'
-import {api,downloadApi} from '../lib/api'
+import {api,downloadApi,blobApi} from '../lib/api'
 
 export default function BulkDocuments({options}) {
   const [form,setForm]=useState({class_name:'',section:'',document_type:'certificate',template_id:'',exam_id:'',title:'',body:''})
@@ -13,7 +13,7 @@ export default function BulkDocuments({options}) {
   const load=async()=>{try{setJobs((await api('/documents/issued/batches')).data)}catch(e){setError(e.message)}}
   useEffect(()=>{let live=true;const load=()=>{if(!document.hidden)api('/documents/issued/batches').then(r=>{if(live)setJobs(r.data)}).catch(e=>{if(live)setError(e.message)})};load();const t=setInterval(load,5000);return()=>{live=false;clearInterval(t)}},[])
   useEffect(()=>()=>{if(preview)URL.revokeObjectURL(preview)},[preview])
-  async function sample(){setBusy(true);setError('');try{const r=await fetch(`${import.meta.env.VITE_API_BASE_URL||'/api/v1'}/documents/issued/batches/preview`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${sessionStorage.getItem('school_access_token')}`},body:fingerprint});if(!r.ok)throw new Error((await r.json()).message||'Preview failed');setPreview(URL.createObjectURL(await r.blob()));setPreviewKey(fingerprint)}catch(e){setError(e.message)}finally{setBusy(false)}}
+  async function sample(){setBusy(true);setError('');try{const blob=await blobApi('/documents/issued/batches/preview',{method:'POST',body:fingerprint});setPreview(URL.createObjectURL(blob));setPreviewKey(fingerprint)}catch(e){setError(e.message)}finally{setBusy(false)}}
   async function queue(){if(busy)return;setBusy(true);setError('');if(attempt.current?.key!==fingerprint)attempt.current={key:fingerprint,id:crypto.randomUUID()};try{await api('/documents/issued/batches',{method:'POST',headers:{'X-Client-Operation-Id':attempt.current.id},body:fingerprint});attempt.current=null;setPreviewKey('');await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
   async function details(id){try{setItems(old=>({...old,[id]:null}));const r=await api(`/documents/issued/batches/${id}`);setItems(old=>({...old,[id]:r.data}))}catch(e){setError(e.message)}}
   async function retry(id){setBusy(true);try{await api(`/documents/issued/batches/${id}/retry`,{method:'POST'});await load();await details(id)}catch(e){setError(e.message)}finally{setBusy(false)}}

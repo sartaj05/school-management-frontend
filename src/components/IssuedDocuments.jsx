@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, downloadApi } from '../lib/api'
+import { api, downloadApi, blobApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
 import BulkDocuments from './BulkDocuments'
 
@@ -17,9 +17,8 @@ export default function IssuedDocuments({ admin = false, studentId }) {
   async function preview() {
     setBusy(true)
     try {
-      const r = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/documents/issued/preview`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${sessionStorage.getItem('school_access_token')}`},body:JSON.stringify({...form,student_id:Number(form.student_id),exam_id:Number(form.exam_id),template_id:form.template_id ? Number(form.template_id) : null})})
-      if (!r.ok) throw new Error((await r.json()).message || 'Preview failed')
-      const url=URL.createObjectURL(await r.blob()); setPreviewUrl(old=>{if(old) URL.revokeObjectURL(old); return url})
+      const blob = await blobApi('/documents/issued/preview', {method:'POST',body:JSON.stringify({...form,student_id:Number(form.student_id),exam_id:Number(form.exam_id),template_id:form.template_id ? Number(form.template_id) : null})})
+      const url=URL.createObjectURL(blob); setPreviewUrl(old=>{if(old) URL.revokeObjectURL(old); return url})
     } catch(e) {setMessage(e.message)} finally {setBusy(false)}
   }
   const [previewUrl,setPreviewUrl]=useState('')
