@@ -4,7 +4,7 @@ import { api, downloadApi } from '../lib/api'
 export default function MyPayslips({ admin=false, queryId, payslipId }) {
   const [slips,setSlips]=useState([]),[queries,setQueries]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false)
   const [selected,setSelected]=useState(''),[question,setQuestion]=useState(''),[answers,setAnswers]=useState({})
-  async function load(){try{if(!admin)setSlips((await api('/payroll/mine')).data);setQueries((await api('/payroll/queries')).data)}catch(e){setError(e.message)}}
+  async function load(){try{if(!admin)setSlips((await api(`/payroll/mine${payslipId?'?id='+payslipId:''}`)).data);setQueries((await api(`/payroll/queries${queryId?'?id='+queryId:''}`)).data)}catch(e){setError(e.message)}}
   useEffect(()=>{const timer=setTimeout(load,0);return()=>clearTimeout(timer)},[admin]) // eslint-disable-line react-hooks/exhaustive-deps
   async function send(path,body){setBusy(true);setError('');try{await api(path,{method:'POST',body:JSON.stringify(body)});setQuestion('');await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
   return <section className="data-panel"><h2>{admin?'Employee salary questions':'My payslips'}</h2><button disabled={busy} onClick={load}>Refresh payslips and questions</button>{error&&<p role="alert">{error}</p>}
