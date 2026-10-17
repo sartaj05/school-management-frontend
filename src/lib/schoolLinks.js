@@ -8,3 +8,16 @@ export function mobileSchoolLink(destination, id, token = sessionStorage.getItem
     return `eduflow://open/${destination}?${query}`
   } catch { return null }
 }
+
+export function schoolLinkFallback(customLink) {
+  if(!customLink?.startsWith('eduflow://open/'))return null
+  const parsed=new URL(customLink)
+  return `/app${parsed.pathname}${parsed.search}`
+}
+
+export function configuredSchoolLink(customLink, host=import.meta.env?.VITE_APP_LINK_HOST) {
+  const fallback=schoolLinkFallback(customLink)
+  if(!fallback)return null
+  if(!host || !/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/i.test(host) || /(?:example|invalid|localhost)/i.test(host))return customLink
+  return `https://${host}${fallback}`
+}
