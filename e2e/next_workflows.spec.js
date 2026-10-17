@@ -6,7 +6,7 @@ test('parent starts a conversation using linked children, not staff student acce
   await page.route('**/api/v1/**',r=>{
     const url=r.request().url()
     if(url.includes('/student/all')){staffRequest=true;return r.fulfill({status:403,json:{message:'Forbidden'}})}
-    if(url.includes('/portal/me'))return r.fulfill({json:{children:[{id:1,first_name:'Ananya',class_name:'Grade 1',section:'A'}]}})
+    if(url.includes('/messages/students'))return r.fulfill({json:{data:[{id:1,first_name:'Ananya',class_name:'Grade 1',section:'A'}]}})
     if(url.includes('/messages/recipients'))return r.fulfill({json:{data:[{id:7,name:'Priya',role:'Teacher'}]}})
     if(r.request().method()==='POST'){const data=r.request().postDataJSON();expect(data.student_id).toBe(1);expect(data.recipient_user_id).toBe(7);expect(r.request().headers()['x-client-operation-id']).toBeTruthy();created=true;return r.fulfill({json:{thread_id:9}})}
     if(url.endsWith('/threads/9'))return r.fulfill({json:{data:{thread:{id:9,subject:'Progress'},messages:[]}}})
@@ -21,7 +21,7 @@ for(const width of [390,1440]) {
     await page.setViewportSize({width,height:900});let rows=[]
     await page.route('**/api/v1/attendance/**',async route=>{
       const req=route.request(),url=req.url()
-      if(url.includes('correction-records'))return route.fulfill({json:{data:[{id:1,student_name:'Ananya',class_name:'Grade 1',section:'A',status:'absent'}]}})
+      if(url.includes('correction-records'))return route.fulfill({json:{data:[{id:1,student_name:'Ananya',class_name:'Grade 1',section:'A',status:'Absent'}]}})
       if(req.method()==='POST'&&url.endsWith('/review')){expect(req.postDataJSON()).toEqual({status:'approved',review_notes:'Checked register'});rows[0].status='approved';return route.fulfill({json:{success:true}})}
       if(req.method()==='POST'){const b=req.postDataJSON();expect(b.status).toBe('present');rows=[{id:1,student_name:'Ananya',attendance_date:'2026-10-17',class_name:'Grade 1',section:'A',original:{status:'absent'},proposed:{status:b.status},reason:b.reason,status:'pending'}];return route.fulfill({json:{success:true}})}
       return route.fulfill({json:{data:rows}})
@@ -38,7 +38,7 @@ for(const width of [390,1440]) {
   test(`messages attach PDF and reuse retry ID at ${width}`,async({page})=>{
     await page.setViewportSize({width,height:900});let attempts=[],sent=false
     await page.route('**/api/v1/**',r=>{
-      const u=r.request().url(),method=r.request().method()
+      const u=new URL(r.request().url()).pathname,method=r.request().method()
       if(u.includes('/student/all'))return r.fulfill({json:{data:[]}})
       if(u.endsWith('/documents/files'))return r.fulfill({json:{file:{id:8,original_filename:'note.pdf'}}})
       if(u.endsWith('/read'))return r.fulfill({json:{success:true}})
