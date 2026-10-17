@@ -1,4 +1,5 @@
 import {test,expect} from '@playwright/test'
+import { Buffer } from 'node:buffer'
 
 test('parent starts a conversation using linked children, not staff student access',async({page})=>{
   let staffRequest=false,created=false
