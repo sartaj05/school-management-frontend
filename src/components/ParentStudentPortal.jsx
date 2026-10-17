@@ -1,3 +1,4 @@
+import MessagingCenter from './MessagingCenter'
 import HomeworkHistory from './HomeworkHistory'
 import OfflineAttachment from './OfflineAttachment'
 import OpenInApp from './OpenInApp'
@@ -131,34 +132,8 @@ function PortalNotifications({ rows, unreadCount = 0, onChanged }) {
   return <section className="data-panel portal-notifications"><div className="panel-title"><div><span>School communication</span><h2>Notification inbox</h2></div><div className="portal-notification-toolbar"><b>{unreadCount} unread</b>{unreadCount > 0 && <button className="button button-small" onClick={markAllRead} disabled={busy === 'all'}><CheckCheck size={14}/>{busy === 'all' ? 'Updating…' : 'Mark all read'}</button>}</div></div>{error && <div className="form-error">{error}</div>}{!rows.length ? <div className="empty-state"><Bell/><h3>Your inbox is clear</h3><p>School announcements and reminders will appear here.</p></div> : <div className="portal-notification-list">{rows.map(row => <article key={row.id} className={row.is_read ? 'portal-notification' : 'portal-notification unread'}><span className="portal-notification-icon"><Bell size={17}/></span><div className="portal-notification-copy"><div><b>{row.title}</b>{!row.is_read && <span className="portal-unread-badge">New</span>}</div><p>{row.message}</p><small>{date(row.created_at)}{row.status ? ` · ${row.status}` : ''}</small></div>{!row.is_read && <button className="button button-small" onClick={() => markRead(row.id)} disabled={busy === row.id}>{busy === row.id ? 'Saving…' : 'Mark read'}</button>}</article>)}</div>}</section>
 }
 
-function PortalMessages({ rows, studentId, user, onChanged }) {
-  const [selected, setSelected] = useState(null), [thread, setThread] = useState(null), [recipients, setRecipients] = useState([])
-  const [form, setForm] = useState({ recipient_user_id: '', subject: '', body: '' }), [reply, setReply] = useState('')
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
-
-  useEffect(() => {
-    schoolApi.messageRecipients(studentId).then(result => setRecipients(result.data || [])).catch(error => setError(error.message))
-  }, [studentId])
-
-  useEffect(() => {
-    if (!selected) { setThread(null); return }
-    schoolApi.messageThread(selected).then(result => { setThread(result.data); schoolApi.markMessageThreadRead(selected).catch(() => {}) }).catch(error => setError(error.message))
-  }, [selected])
-
-  async function start(event) {
-    event.preventDefault(); setBusy(true); setError(''); setMessage('')
-    try { const result = await schoolApi.createMessageThread({ ...form, student_id: studentId, recipient_user_id: Number(form.recipient_user_id) }); setMessage(result.message); setForm({ recipient_user_id: '', subject: '', body: '' }); onChanged() }
-    catch (error) { setError(error.message) } finally { setBusy(false) }
-  }
-
-  async function sendReply(event) {
-    event.preventDefault(); if (!reply.trim()) return
-    setBusy(true); setError('')
-    try { await schoolApi.sendMessage(selected, { body: reply }); setReply(''); const result = await schoolApi.messageThread(selected); setThread(result.data); onChanged() }
-    catch (error) { setError(error.message) } finally { setBusy(false) }
-  }
-
-  return <section className="data-panel portal-messages"><div className="panel-title"><div><span>Two-way school communication</span><h2>Parent–teacher messages</h2></div><b>{rows.length} conversations</b></div>{error && <div className="form-error">{error}</div>}{message && <div className="success-notice">{message}</div>}<div className="message-layout"><div className="message-thread-list">{!rows.length ? <div className="empty-state"><MessageCircle/><h3>No conversations yet</h3><p>Start a conversation with an available teacher.</p></div> : rows.map(row => <button key={row.id} className={selected === row.id ? 'message-thread active' : 'message-thread'} onClick={() => setSelected(row.id)}><span><b>{row.subject}</b><small>{row.student_name}</small></span>{Number(row.unread_count) > 0 && <em>{row.unread_count}</em>}<small>{row.last_message || 'No messages yet'}</small></button>)}</div><div className="message-conversation">{thread ? <><div className="message-conversation-head"><div><span>{thread.thread.student_name}</span><h3>{thread.thread.subject}</h3></div><small>{thread.thread.status}</small></div><div className="message-bubbles">{thread.messages.map(item => <article key={item.id} className={item.sender_user_id === Number(user?.id) ? 'message-bubble own' : 'message-bubble'}><b>{item.sender_name || item.sender_role}</b><p>{item.body}</p><small>{date(item.created_at)}</small></article>)}</div><form className="message-reply" onSubmit={sendReply}><textarea required rows="2" value={reply} onChange={event => setReply(event.target.value)} placeholder="Reply to this conversation"/><button className="button button-small" disabled={busy}><Send size={14}/>{busy ? 'Sending…' : 'Send reply'}</button></form></> : <form className="message-compose" onSubmit={start}><div className="editor-heading"><MessageCircle/><div><h3>Start a conversation</h3><p>Ask a teacher about attendance, homework, exams, or school activities.</p></div></div><label>Teacher<select required value={form.recipient_user_id} onChange={event => setForm({ ...form, recipient_user_id: event.target.value })}><option value="">Choose a teacher</option>{recipients.map(row => <option key={row.id} value={row.id}>{row.name} · {row.role}</option>)}</select></label><label>Subject<input required maxLength="180" value={form.subject} onChange={event => setForm({ ...form, subject: event.target.value })} placeholder="Question about homework"/></label><label>Message<textarea required maxLength="2000" rows="5" value={form.body} onChange={event => setForm({ ...form, body: event.target.value })} placeholder="Write your message"/></label><button className="button button-small" disabled={busy}>{busy ? 'Starting…' : 'Start conversation'}</button></form>}</div></div></section>
+function PortalMessages({ studentId,user }) {
+  return <MessagingCenter key={studentId} studentId={studentId} user={user}/>
 }
 
 function headers(tab) {
