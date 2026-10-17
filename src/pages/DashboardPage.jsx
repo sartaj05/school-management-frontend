@@ -25,6 +25,7 @@ import SchoolDirectory from '../components/SchoolDirectory'
 import SubjectDirectory from '../components/SubjectDirectory'
 import TimetableDirectory from '../components/TimetableDirectory'
 import TeacherClassAssignmentDirectory from '../components/TeacherClassAssignmentDirectory'
+import AttendanceCorrections from '../components/AttendanceCorrections'
 import AttendanceReport from '../components/AttendanceReport'
 import NotificationQueue from '../components/NotificationQueue'
 import NotificationPreferences from '../components/NotificationPreferences'
@@ -571,8 +572,10 @@ function Attendance({ initialData, setError, setNotice }) {
   const [section, setSection] = useState('All')
   const [busy, setBusy] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [correction, setCorrection] = useState(null)
+  const [showCorrections, setShowCorrections] = useState(false)
   const summary = data?.summary || {}
-  const rows = data?.data || []
+  const rows = (data?.data || []).map(row => ({...row, status: row.status?.toLowerCase()}))
   const activeFilterCount = Number(date !== today) + Number(className !== 'All') + Number(section !== 'All')
 
   async function filter(event) {
@@ -600,22 +603,24 @@ function Attendance({ initialData, setError, setNotice }) {
   async function save() {
     setBusy(true); setError('')
     try {
-      const result = await schoolApi.markAttendance({ attendance_date: date, class_name: className === 'All' ? (rows[0]?.class_name || 'All') : className, section: section === 'All' ? (rows[0]?.section || 'All') : section, students: rows.map(row => ({ student_id: row.student_id, student_name: row.student_name, status: row.status || 'Present', remarks: row.remarks || '' })) })
+      const result = await schoolApi.markAttendance({ attendance_date: date, class_name: className === 'All' ? (rows[0]?.class_name || 'All') : className, section: section === 'All' ? (rows[0]?.section || 'All') : section, students: rows.map(row => ({ student_id: row.student_id, student_name: row.student_name, status: row.status || 'present', remarks: row.remarks || '' })) })
       setNotice(result.message || 'Attendance saved successfully.')
       setData(await schoolApi.attendance(date, className, section))
       setDirty(false)
-    } catch (err) { setError(err.message) }
+    } catch (err) { setError(err.message); if(err.data?.code === 'ATTENDANCE_CORRECTION_REQUIRED') setCorrection(err.data) }
     finally { setBusy(false) }
   }
 
   return <>
+    {correction && <button onClick={()=>setShowCorrections(true)}>Request correction</button>}
+    {showCorrections && <AttendanceCorrections initialDate={date} initialRecord={correction?.attendance_id}/>}
     <form className="attendance-filter" onSubmit={filter}>
       <label>Date<input type="date" value={date} onChange={event => setDate(event.target.value)} required /></label>
       <label>Class<input value={className} onChange={event => setClassName(event.target.value)} placeholder="All" /></label>
       <label>Section<input value={section} onChange={event => setSection(event.target.value)} placeholder="All" /></label>
       <button className="button button-small" disabled={busy}>{busy ? 'Loading...' : 'Load students'}</button>
     </form>
-    <div className="stat-grid compact">{[['Students', summary.total_students ?? rows.length], ['Present', rows.filter(row => row.status === 'Present').length], ['Absent', rows.filter(row => row.status === 'Absent').length], ['Pending', rows.filter(row => !row.status).length]].map(([label, value]) => <article key={label}><small>{label}</small><b>{value}</b><span>{date}</span></article>)}</div>
-    <section className="data-panel"><div className="panel-title"><div><span>Daily register</span><h2>Mark attendance</h2></div>{rows.length > 0 && <button className="button button-small" onClick={save} disabled={busy}><Save size={16} />{busy ? 'Saving...' : 'Save attendance'}</button>}</div>{rows.length === 0 ? <div className="empty-state"><CalendarCheck /><h3>No students found</h3><p>Choose a class and section, then load students.</p></div> : <div className="attendance-list">{rows.map(row => <div className="attendance-row" key={row.student_id}><div><b>{row.student_name}</b><small>{row.admission_no} - {row.class_name} {row.section}</small></div><div className="status-options"><button className={row.status === 'Present' ? 'present active' : 'present'} onClick={() => changeStatus(row.student_id, 'Present')}>Present</button><button className={row.status === 'Absent' ? 'absent active' : 'absent'} onClick={() => changeStatus(row.student_id, 'Absent')}>Absent</button></div></div>)}</div>}</section>
+    <div className="stat-grid compact">{[['Students', summary.total_students ?? rows.length], ['Present', rows.filter(row => row.status === 'present').length], ['Absent', rows.filter(row => row.status === 'absent').length], ['Pending', rows.filter(row => !row.status).length]].map(([label, value]) => <article key={label}><small>{label}</small><b>{value}</b><span>{date}</span></article>)}</div>
+    <section className="data-panel"><div className="panel-title"><div><span>Daily register</span><h2>Mark attendance</h2></div>{rows.length > 0 && <button className="button button-small" onClick={save} disabled={busy}><Save size={16} />{busy ? 'Saving...' : 'Save attendance'}</button>}</div>{rows.length === 0 ? <div className="empty-state"><CalendarCheck /><h3>No students found</h3><p>Choose a class and section, then load students.</p></div> : <div className="attendance-list">{rows.map(row => <div className="attendance-row" key={row.student_id}><div><b>{row.student_name}</b><small>{row.admission_no} - {row.class_name} {row.section}</small></div><div className="status-options"><button className={row.status === 'present' ? 'present active' : 'present'} onClick={() => changeStatus(row.student_id, 'present')}>Present</button><button className={row.status === 'absent' ? 'absent active' : 'absent'} onClick={() => changeStatus(row.student_id, 'absent')}>Absent</button></div></div>)}</div>}</section>
   </>
 }
