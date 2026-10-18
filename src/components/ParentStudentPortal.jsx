@@ -1,4 +1,5 @@
 import ExamCorrections from './ExamCorrections'
+import StudentSupport from './StudentSupport'
 import AttendanceCorrections from './AttendanceCorrections'
 import NotificationRecord from './NotificationRecord'
 import MessagingCenter from './MessagingCenter'
@@ -59,6 +60,7 @@ export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
     <div className="portal-tabs">{tabs.map(([key,label,Icon]) => <button key={key} className={tab===key?'active':''} onClick={() => setTab(key)}><Icon size={16}/>{label}</button>)}</div>
     {error && <div className="api-notice"><b>Could not load portal data.</b><span>{error}</span></div>}
     {tab==='results'&&<ExamCorrections key={studentId} user={user} studentId={studentId}/>}
+      {tab==='overview'&&<StudentSupport key={studentId} user={user} studentId={studentId}/>}
       {tab==='attendance'&&<AttendanceCorrections key={studentId} user={user} studentId={studentId}/>}
     {loading ? <div className="loading-grid"><i/><i/><i/></div> : <PortalData tab={tab} data={data?.data} unreadCount={data?.unread_count} studentId={studentId} user={user} onChanged={() => setRevision(value => value + 1)} />}
   </>
