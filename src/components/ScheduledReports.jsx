@@ -1,3 +1,4 @@
+import {confirmPopup} from '../lib/confirmPopup'
 import { CalendarClock, History, Mail, PauseCircle, Plus, Send, Smartphone } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { schoolApi } from '../lib/api'
@@ -22,6 +23,7 @@ export default function ScheduledReports() {
   const [rows, setRows] = useState([])
   const [runs, setRuns] = useState({})
   const [form, setForm] = useState(empty)
+  const [editing, setEditing] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -65,7 +67,8 @@ export default function ScheduledReports() {
     setError('')
     setMessage('')
     try {
-      const result = await schoolApi.createScheduledReport({
+      const save = editing ? values => schoolApi.updateScheduledReport(editing, values) : schoolApi.createScheduledReport
+      const result = await save({
         ...form,
         weekday: Number(form.weekday),
         day_of_month: Number(form.day_of_month),
@@ -74,6 +77,7 @@ export default function ScheduledReports() {
       })
       setMessage(result.message)
       setForm(empty)
+      setEditing(null)
       await load()
     } catch (requestError) {
       setError(requestError.message)
@@ -82,7 +86,20 @@ export default function ScheduledReports() {
     }
   }
 
+  function edit(row) {
+    setEditing(row.id)
+    setForm({...empty,...row,run_at:String(row.run_at).slice(0,5),email_recipients:(row.email_recipients||[]).join(', '),whatsapp_recipients:(row.whatsapp_recipients||[]).join(', '),filters:{...row.filters}})
+  }
+
+  async function resume(id) {
+    setBusy(true);setError('')
+    try {await schoolApi.updateScheduledReport(id,{is_active:true});setMessage('Scheduled report resumed.');await load()}
+    catch(e){setError(e.message)}finally{setBusy(false)}
+  }
+
   async function runNow(id) {
+    const row=rows.find(item=>item.id===id)
+    if(!await confirmPopup({title:'Deliver report now?',message:`This sends ${row.report_key} to ${[...(row.email_recipients||[]),...(row.whatsapp_recipients||[])].join(', ')}.`,confirmLabel:'Send report',tone:'primary'})) return
     setBusy(true)
     setError('')
     try {
@@ -133,7 +150,7 @@ export default function ScheduledReports() {
 
       <section className="data-panel scheduled-editor">
         <div className="panel-title">
-          <div><span>New schedule</span><h2>Automate a report</h2></div>
+          <div><span>{editing ? `Edit schedule #${editing}` : 'New schedule'}</span><h2>Automate a report</h2></div>
           <b>{rows.filter(row => row.is_active).length} active</b>
         </div>
         <form className="scheduled-form" onSubmit={create}>
@@ -200,7 +217,7 @@ export default function ScheduledReports() {
             <input value={form.filters.section || ''} onChange={event => filter('section', event.target.value)} placeholder="All sections" />
           </label>}
           <div className="scheduled-actions">
-            <button className="button button-small" disabled={busy}><Plus size={16} />{busy ? 'Saving...' : 'Create schedule'}</button>
+            <button className="button button-small" disabled={busy}><Plus size={16} />{busy ? 'Saving...' : editing ? 'Save schedule' : 'Create schedule'}</button>{editing&&<button type="button" disabled={busy} onClick={()=>{setEditing(null);setForm(empty)}}>Cancel editing</button>}
           </div>
         </form>
         {error && <div className="form-error scheduled-message">{error}</div>}
@@ -222,7 +239,7 @@ export default function ScheduledReports() {
               <td><small>{[...(row.email_recipients || []), ...(row.whatsapp_recipients || [])].join(', ') || '—'}</small></td>
               <td>{row.next_run_at ? new Date(row.next_run_at + 'Z').toLocaleString() : '—'}</td>
               <td><span className={'status-pill ' + (row.is_active ? '' : 'inactive')}>{row.is_active ? 'Active' : 'Paused'}</span></td>
-              <td><div className="student-row-actions"><button onClick={() => runNow(row.id)} disabled={busy}><Send />Run now</button><button onClick={() => viewRuns(row.id)} disabled={busy}><History />Runs</button>{row.is_active && <button className="danger" onClick={() => pause(row.id)} disabled={busy}><PauseCircle />Pause</button>}</div></td>
+              <td><div className="student-row-actions"><button disabled={busy} onClick={()=>edit(row)}>Edit</button>{!row.is_active&&<button disabled={busy} onClick={()=>resume(row.id)}>Resume</button>}<button onClick={() => runNow(row.id)} disabled={busy}><Send />Run now</button><button onClick={() => viewRuns(row.id)} disabled={busy}><History />Runs</button>{row.is_active && <button className="danger" onClick={() => pause(row.id)} disabled={busy}><PauseCircle />Pause</button>}</div></td>
             </tr>)}
           </tbody></table></div>}
         {Object.entries(runs).map(([id, items]) => <div className="scheduled-run-history" key={id}>
