@@ -1,4 +1,7 @@
+import OfflineAttachment from './OfflineAttachment'
 import TeacherSubstitutions from './TeacherSubstitutions'
+import OfflineDrafts from './OfflineDrafts'
+import { savedDrafts, saveDraft, submitDraft } from '../lib/offlineDrafts'
 import LeaveDelivery from './LeaveDelivery'
 import { CalendarCheck, CalendarClock, Save, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -34,6 +37,9 @@ export default function LeaveManagement({ user, premium = false }) {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const person = people.find(item => `${item.person_type}:${item.person_id}` === selected)
+  const draftKey = `leave:${selected}`
+  function saveLocalLeave() { try { if (savedDrafts()[draftKey]?.queued) throw new Error('Retry or recover the queued submission before editing.'); saveDraft(draftKey, form); setNotice('Leave draft saved on this device.') } catch (e) { setError(e.message) } }
+  function restoreLocalLeave() { const saved = savedDrafts()[draftKey]; if (saved) setForm(saved.payload || saved); else setNotice('No saved draft for this person.') }
   const validYear = /^\d{4}$/.test(year) && Number(year) >= 2000 && Number(year) <= 2100
   function clearFilters() {
     setYear(String(currentYear))
@@ -113,7 +119,7 @@ export default function LeaveManagement({ user, premium = false }) {
   function submit(event) {
     event.preventDefault()
     if (!person) return
-    mutate(() => schoolApi.createLeaveRequest({ ...form, person_type: person.person_type, person_id: person.person_id }), () => {
+    mutate(() => submitDraft(draftKey, '/leave/requests', { ...form, person_type: person.person_type, person_id: person.person_id }), () => {
       setYear(form.start_date.slice(0, 4)); setOffset(0); setStatus('all'); setForm({ ...form, reason: '' })
     })
   }
@@ -160,6 +166,8 @@ export default function LeaveManagement({ user, premium = false }) {
 
   return <>
     <section className="people-hero"><div><span>School operations</span><h2>Leave management</h2><p>Employee leave requires School Admin approval. Student leave informs linked parents, assigned class teachers and School Admin without approval.</p></div><CalendarCheck /></section>
+    <OfflineDrafts onChanged={() => setRefresh(v => v + 1)} />
+    {person && <div className="page-actions"><button disabled={busy} onClick={saveLocalLeave}>Save leave draft</button><button disabled={busy} onClick={restoreLocalLeave}>Restore leave draft</button></div>}
     {premium && ['School Admin','Teacher'].includes(user.role) && <TeacherSubstitutions/>}
     {error && <div className="form-error" role="alert">{error}</div>}
     {notice && <div className="success-notice" role="status">{notice}</div>}
@@ -179,7 +187,7 @@ export default function LeaveManagement({ user, premium = false }) {
         <label>Start date<input required type="date" min="2000-01-01" max="2100-12-31" value={form.start_date} onChange={e => setForm({ ...form, start_date: e.target.value })} /></label>
         <label>End date<input required type="date" min={form.start_date || '2000-01-01'} max={form.start_date ? `${form.start_date.slice(0, 4)}-12-31` : '2100-12-31'} value={form.end_date} onChange={e => setForm({ ...form, end_date: e.target.value })} /></label>
         <label className="wide">Reason<textarea required maxLength="2000" value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} /></label>
-      </div><button className="button button-small" disabled={busy}>{person.person_type === 'student' ? 'Send leave information' : 'Submit leave request'}</button></form>}
+      <OfflineAttachment key={draftKey} draftKey={draftKey} category="leave" disabled={busy}/></div><button className="button button-small" disabled={busy}>{person.person_type === 'student' ? 'Send leave information' : 'Submit leave request'}</button></form>}
       {admin && premium && person?.person_type === 'staff' && <form className="editor-card" onSubmit={saveAllowance}><div className="editor-heading"><div><h3>Set {year} annual allowance</h3><p>Enter the total annual entitlement for {person.name}. Every adjustment is recorded.</p></div></div><div className="field-grid"><label>Leave type<select value={allowance.leave_type} onChange={e => setAllowance({ ...allowance, leave_type: e.target.value })}>{types.map(type => <option key={type}>{type}</option>)}</select></label><label>Total days<input required type="number" min="0" max="366" step="1" value={allowance.days} onChange={e => setAllowance({ ...allowance, days: e.target.value })} /></label><label className="wide">Adjustment reason<textarea required maxLength="1900" value={allowance.notes} onChange={e => setAllowance({ ...allowance, notes: e.target.value })} /></label></div><button className="button button-small" disabled={busy || !validYear}>Save allowance</button></form>}
     <section className="data-panel"><div className="panel-title"><div><h2>Leave requests</h2><p>{total} records</p></div></div><div className="table-wrap"><table><thead><tr><th>Person</th><th>Type</th><th>Dates</th><th>Days</th><th>Status</th><th>Reason</th><th>Evidence</th><th>Review / history</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td>{row.person_name}<small> ({row.person_type})</small></td><td>{row.leave_type}</td><td>{row.start_date} to {row.end_date}</td><td>{row.days}</td><td>{row.status}</td><td>{row.reason}</td><td>{row.attachment_file_id ? <button className="button button-small" disabled={busy} onClick={() => downloadEvidence(row)}>Download {row.attachment_filename || 'file'}</button> : '—'}</td><td><button className="button button-small" disabled={busy} onClick={() => openReview(row)}>Open #{row.id}</button></td></tr>)}{!rows.length && <tr><td colSpan="8">No leave requests match these filters.</td></tr>}</tbody></table></div><div className="page-actions"><button disabled={offset === 0 || busy} onClick={() => setOffset(value => Math.max(0, value - 25))}>Previous</button><span>Page {Math.floor(offset / 25) + 1}</span><button disabled={offset + 25 >= total || busy} onClick={() => setOffset(value => value + 25)}>Next</button></div></section>
     </>}

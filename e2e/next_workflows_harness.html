@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>School workflows</title></head><body><main id="root" style="padding:16px;max-width:1000px;margin:auto"></main><script type="module">
+import React from 'react'
+import {createRoot} from 'react-dom/client'
+import AttendanceCorrections from '/src/components/AttendanceCorrections.jsx'
+import MyPayslips from '/src/components/MyPayslips.jsx'
+import MessagingCenter from '/src/components/MessagingCenter.jsx'
+import IssuedDocuments from '/src/components/IssuedDocuments.jsx'
+import NotificationRecord from '/src/components/NotificationRecord.jsx'
+import '/src/styles.css'
+const query=new URLSearchParams(location.search),module=query.get('module'),admin=query.get('admin')==='true'
+const components={attendance:AttendanceCorrections,payslips:MyPayslips,messages:MessagingCenter,documents:IssuedDocuments,notification:NotificationRecord}
+createRoot(document.getElementById('root')).render(React.createElement(components[module],{row:{notification_type:'attendance_correction',destination:{type:'attendance_correction',record_id:8}},user:{id:4,role:query.get('role')||(admin?'School Admin':'Teacher')},admin}))
+</script></body></html>

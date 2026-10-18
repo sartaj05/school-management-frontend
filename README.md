@@ -47,3 +47,8 @@ the separate Flask repository.
 
 For deployment status and separate release work for each major capability, see
 the backend [feature deployment readiness matrix](../Flak-API---For-School-Management-System-app/docs/FEATURE_DEPLOYMENT_READINESS_MATRIX.md).
+
+
+## Website-to-app link setup
+
+The real HTTPS domain, Android release fingerprint and Apple Team ID are pending. See [the deployment guide](docs/APP_LINK_DEPLOYMENT.md). No production app-link verification is claimed.

@@ -1,3 +1,4 @@
+import AttendanceCorrections from './AttendanceCorrections'
 import { BarChart3, ChevronLeft, ChevronRight, Search } from 'lucide-react'
 import { useState } from 'react'
 import { schoolApi } from '../lib/api'
@@ -40,6 +41,7 @@ export default function AttendanceReport({ initialReport }) {
   const pagination = report?.pagination || { page: 1, pages: 0 }
 
   return <>
+    <AttendanceCorrections/>
     <form className="attendance-report-filter" onSubmit={event => { event.preventDefault(); load() }}>
       <label>From date<input required type="date" value={filters.from_date} onChange={e => field('from_date', e.target.value)} /></label>
       <label>To date<input required type="date" value={filters.to_date} onChange={e => field('to_date', e.target.value)} /></label>

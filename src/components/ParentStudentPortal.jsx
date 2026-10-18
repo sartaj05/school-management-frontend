@@ -1,4 +1,15 @@
+import ExamCorrections from './ExamCorrections'
+import StudentSupport from './StudentSupport'
+import AttendanceCorrections from './AttendanceCorrections'
+import NotificationRecord from './NotificationRecord'
+import MessagingCenter from './MessagingCenter'
+import HomeworkHistory from './HomeworkHistory'
+import OfflineAttachment from './OfflineAttachment'
+import OpenInApp from './OpenInApp'
+import IssuedDocuments from './IssuedDocuments'
 import MyChildren from './MyChildren'
+import OfflineDrafts from './OfflineDrafts'
+import { savedDrafts, saveDraft, submitDraft } from '../lib/offlineDrafts'
 import { openFeePayment } from '../lib/feePayment'
 /* eslint-disable react-hooks/set-state-in-effect */
 import { BookCheck, CalendarCheck, CircleDollarSign, LibraryBig, Award, UserRound, Download, Send, CreditCard, FileText, Bell, CheckCheck, MessageCircle } from 'lucide-react'
@@ -42,10 +53,15 @@ export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
   const children = me?.children || []
   return <>
     <section className="people-hero"><div><span>{me?.account?.role} portal</span><h2>My school information</h2><p>View records, submit homework, pay fees, and download school documents.</p></div><UserRound/></section>
+    <OfflineDrafts onChanged={() => setRevision(v => v + 1)} />
     {me?.account?.role === 'Parent' && tab === 'overview' && <MyChildren onSelect={(id,nextTab) => {setStudentId(id);setTab(nextTab);setRevision(v=>v+1)}} />}
+    <OpenInApp destination="child" id={studentId}/>
     {children.length > 1 && <label className="portal-child-picker">Viewing student<select value={studentId} onChange={e => setStudentId(e.target.value)}>{children.map(child => <option key={child.id} value={child.id}>{child.first_name} {child.last_name || ''} · {child.class_name} {child.section || ''}</option>)}</select></label>}
     <div className="portal-tabs">{tabs.map(([key,label,Icon]) => <button key={key} className={tab===key?'active':''} onClick={() => setTab(key)}><Icon size={16}/>{label}</button>)}</div>
     {error && <div className="api-notice"><b>Could not load portal data.</b><span>{error}</span></div>}
+    {tab==='results'&&<ExamCorrections key={studentId} user={user} studentId={studentId}/>}
+      {tab==='overview'&&<StudentSupport key={studentId} user={user} studentId={studentId}/>}
+      {tab==='attendance'&&<AttendanceCorrections key={studentId} user={user} studentId={studentId}/>}
     {loading ? <div className="loading-grid"><i/><i/><i/></div> : <PortalData tab={tab} data={data?.data} unreadCount={data?.unread_count} studentId={studentId} user={user} onChanged={() => setRevision(value => value + 1)} />}
   </>
 }
@@ -59,9 +75,9 @@ function PortalData({ tab, data, unreadCount, studentId, user, onChanged }) {
   </div>
   if (tab === 'calendar') return <PortalCalendar rows={Array.isArray(data) ? data : []}/>
   const rows = Array.isArray(data) ? data : []
-  if (tab === 'assignments') return <PortalAssignments rows={rows} onChanged={onChanged}/>
+  if (tab === 'assignments') return <PortalAssignments key={studentId} studentId={studentId} rows={rows} onChanged={onChanged}/>
   if (tab === 'fees') return <PortalFees rows={rows} onChanged={onChanged}/>
-  if (tab === 'documents') return <PortalDocuments rows={rows} studentId={studentId}/>
+  if (tab === 'documents') return <><IssuedDocuments key={studentId} studentId={studentId}/><PortalDocuments rows={rows} studentId={studentId}/></>
   if (tab === 'notifications') return <PortalNotifications rows={rows} unreadCount={unreadCount} onChanged={onChanged}/>
   if (tab === 'messages') return <PortalMessages rows={rows} studentId={studentId} user={user} onChanged={onChanged}/>
   if (!rows.length) return <section className="empty-state"><BookCheck/><h3>No records found</h3><p>There is no information to display for this student yet.</p></section>
@@ -73,16 +89,22 @@ function PortalCalendar({ rows }) {
   return <section className="calendar-event-grid">{rows.map(event=><article key={event.id} className="calendar-event published"><div className="calendar-event-date"><b>{new Date(event.starts_at).getDate()}</b><small>{new Date(event.starts_at).toLocaleString('default',{month:'short'})}</small></div><div><span>{event.event_type}</span><h3>{event.title}</h3><p>{event.description || 'No additional details.'}</p><small>{date(event.starts_at)} — {date(event.ends_at)}</small></div></article>)}</section>
 }
 
-function PortalAssignments({ rows, onChanged }) {
+function PortalAssignments({ rows, onChanged, studentId }) {
   const [drafts, setDrafts] = useState({}), [busy, setBusy] = useState(null), [message, setMessage] = useState(''), [error, setError] = useState('')
-  const value = (row, key) => drafts[row.id]?.[key] ?? row[key] ?? ''
-  const edit = (row, key, next) => setDrafts(current => ({ ...current, [row.id]: { ...current[row.id], [key]: next } }))
+  const draftKey = row => `homework:${studentId}:${row.id}`
+  const stored = row => { const d = savedDrafts()[draftKey(row)]; return d?.payload || d || {} }
+  const value = (row, key) => drafts[row.id]?.[key] ?? stored(row)[key] ?? row[key] ?? ''
+  const edit = (row, key, next) => {
+    if (savedDrafts()[draftKey(row)]?.queued) { setError('Retry the queued submission before editing, or keep it as a draft from Offline drafts.'); return }
+    const nextDraft = { content: value(row, 'content'), attachment_url: value(row, 'attachment_url'), expected_submitted_at: Object.hasOwn(stored(row), 'expected_submitted_at') ? stored(row).expected_submitted_at : row.submitted_at ?? null, [key]: next }
+    try { saveDraft(draftKey(row), nextDraft); setDrafts(current => ({ ...current, [row.id]: nextDraft })) } catch (e) { setError(e.message) }
+  }
   async function submit(row) {
     setBusy(row.id); setError(''); setMessage('')
-    try { const result = await schoolApi.portalSubmitAssignment(row.id, { content: value(row, 'content'), attachment_url: value(row, 'attachment_url') }); setMessage(result.message); onChanged() }
+    try { const result = await submitDraft(draftKey(row), `/portal/assignments/${row.id}/submission?student_id=${studentId}`, { content: value(row, 'content'), attachment_url: value(row, 'attachment_url'), expected_submitted_at: Object.hasOwn(stored(row), 'expected_submitted_at') ? stored(row).expected_submitted_at : row.submitted_at ?? null }); setMessage(result.message); if (!result.queued) { setDrafts(current => { const next = { ...current }; delete next[row.id]; return next }); onChanged() } }
     catch (e) { setError(e.message) } finally { setBusy(null) }
   }
-  return <section className="data-panel portal-action-panel"><div className="panel-title"><div><span>Learning tasks</span><h2>Homework submission</h2></div><b>{rows.length} assignments</b></div>{message && <div className="success-notice">{message}</div>}{error && <div className="form-error">{error}</div>}<div className="table-wrap"><table><thead><tr><th>Assignment</th><th>Due</th><th>Your submission</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><b>{row.title}</b><small>{row.subject_name}</small><small>{row.description}</small></td><td>{date(row.due_at)}<small>{row.status}</small></td><td><textarea rows="2" value={value(row, 'content')} onChange={e => edit(row, 'content', e.target.value)} placeholder="Write your answer" disabled={row.submission_status === 'graded'} /><input value={value(row, 'attachment_url')} onChange={e => edit(row, 'attachment_url', e.target.value)} placeholder="Attachment URL (optional)" disabled={row.submission_status === 'graded'} /></td><td><button className="button button-small" onClick={() => submit(row)} disabled={busy === row.id || row.submission_status === 'graded'}><Send size={14} />{row.submission_status === 'graded' ? 'Graded' : busy === row.id ? 'Saving…' : 'Submit homework'}</button>{row.submission_status && <small className="portal-action-status">Status: {row.submission_status}</small>}</td></tr>)}</tbody></table></div></section>
+  return <section className="data-panel portal-action-panel"><div className="panel-title"><div><span>Learning tasks</span><h2>Homework submission</h2></div><b>{rows.length} assignments</b></div>{message && <div className="success-notice">{message}</div>}{error && <div className="form-error">{error}</div>}<div className="table-wrap"><table><thead><tr><th>Assignment</th><th>Due</th><th>Your submission</th><th>Action</th></tr></thead><tbody>{rows.map(row => <tr key={row.id}><td><b>{row.title}</b><small>{row.subject_name}</small><small>{row.description}</small></td><td>{date(row.due_at)}<small>{row.status}</small></td><td><textarea rows="2" value={value(row, 'content')} onChange={e => edit(row, 'content', e.target.value)} placeholder="Write your answer" disabled={row.submission_status === 'graded'} /><input value={value(row, 'attachment_url')} onChange={e => edit(row, 'attachment_url', e.target.value)} placeholder="Attachment URL (optional)" disabled={row.submission_status === 'graded'} /><OfflineAttachment draftKey={draftKey(row)} category="homework" disabled={busy === row.id || row.submission_status === 'graded'}/></td><td><button className="button button-small" onClick={() => submit(row)} disabled={busy === row.id || row.submission_status === 'graded'}><Send size={14} />{row.submission_status === 'graded' ? 'Graded' : busy === row.id ? 'Saving…' : 'Submit homework'}</button><HomeworkHistory key={`${studentId}:${row.id}`} assignmentId={row.id} studentId={studentId}/>{row.submission_status && <small className="portal-action-status">Status: {row.submission_status}</small>}</td></tr>)}</tbody></table></div></section>
 }
 
 function PortalFees({ rows, onChanged }) {
@@ -114,37 +136,11 @@ function PortalNotifications({ rows, unreadCount = 0, onChanged }) {
     catch (e) { setError(e.message) } finally { setBusy(null) }
   }
 
-  return <section className="data-panel portal-notifications"><div className="panel-title"><div><span>School communication</span><h2>Notification inbox</h2></div><div className="portal-notification-toolbar"><b>{unreadCount} unread</b>{unreadCount > 0 && <button className="button button-small" onClick={markAllRead} disabled={busy === 'all'}><CheckCheck size={14}/>{busy === 'all' ? 'Updating…' : 'Mark all read'}</button>}</div></div>{error && <div className="form-error">{error}</div>}{!rows.length ? <div className="empty-state"><Bell/><h3>Your inbox is clear</h3><p>School announcements and reminders will appear here.</p></div> : <div className="portal-notification-list">{rows.map(row => <article key={row.id} className={row.is_read ? 'portal-notification' : 'portal-notification unread'}><span className="portal-notification-icon"><Bell size={17}/></span><div className="portal-notification-copy"><div><b>{row.title}</b>{!row.is_read && <span className="portal-unread-badge">New</span>}</div><p>{row.message}</p><small>{date(row.created_at)}{row.status ? ` · ${row.status}` : ''}</small></div>{!row.is_read && <button className="button button-small" onClick={() => markRead(row.id)} disabled={busy === row.id}>{busy === row.id ? 'Saving…' : 'Mark read'}</button>}</article>)}</div>}</section>
+  return <section className="data-panel portal-notifications"><div className="panel-title"><div><span>School communication</span><h2>Notification inbox</h2></div><div className="portal-notification-toolbar"><b>{unreadCount} unread</b>{unreadCount > 0 && <button className="button button-small" onClick={markAllRead} disabled={busy === 'all'}><CheckCheck size={14}/>{busy === 'all' ? 'Updating…' : 'Mark all read'}</button>}</div></div>{error && <div className="form-error">{error}</div>}{!rows.length ? <div className="empty-state"><Bell/><h3>Your inbox is clear</h3><p>School announcements and reminders will appear here.</p></div> : <div className="portal-notification-list">{rows.map(row => <article key={row.id} className={row.is_read ? 'portal-notification' : 'portal-notification unread'}><span className="portal-notification-icon"><Bell size={17}/></span><div className="portal-notification-copy"><div><b>{row.title}</b>{!row.is_read && <span className="portal-unread-badge">New</span>}</div><p>{row.message}</p><NotificationRecord row={row}/><small>{date(row.created_at)}{row.status ? ` · ${row.status}` : ''}</small></div>{!row.is_read && <button className="button button-small" onClick={() => markRead(row.id)} disabled={busy === row.id}>{busy === row.id ? 'Saving…' : 'Mark read'}</button>}</article>)}</div>}</section>
 }
 
-function PortalMessages({ rows, studentId, user, onChanged }) {
-  const [selected, setSelected] = useState(null), [thread, setThread] = useState(null), [recipients, setRecipients] = useState([])
-  const [form, setForm] = useState({ recipient_user_id: '', subject: '', body: '' }), [reply, setReply] = useState('')
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
-
-  useEffect(() => {
-    schoolApi.messageRecipients(studentId).then(result => setRecipients(result.data || [])).catch(error => setError(error.message))
-  }, [studentId])
-
-  useEffect(() => {
-    if (!selected) { setThread(null); return }
-    schoolApi.messageThread(selected).then(result => { setThread(result.data); schoolApi.markMessageThreadRead(selected).catch(() => {}) }).catch(error => setError(error.message))
-  }, [selected])
-
-  async function start(event) {
-    event.preventDefault(); setBusy(true); setError(''); setMessage('')
-    try { const result = await schoolApi.createMessageThread({ ...form, student_id: studentId, recipient_user_id: Number(form.recipient_user_id) }); setMessage(result.message); setForm({ recipient_user_id: '', subject: '', body: '' }); onChanged() }
-    catch (error) { setError(error.message) } finally { setBusy(false) }
-  }
-
-  async function sendReply(event) {
-    event.preventDefault(); if (!reply.trim()) return
-    setBusy(true); setError('')
-    try { await schoolApi.sendMessage(selected, { body: reply }); setReply(''); const result = await schoolApi.messageThread(selected); setThread(result.data); onChanged() }
-    catch (error) { setError(error.message) } finally { setBusy(false) }
-  }
-
-  return <section className="data-panel portal-messages"><div className="panel-title"><div><span>Two-way school communication</span><h2>Parent–teacher messages</h2></div><b>{rows.length} conversations</b></div>{error && <div className="form-error">{error}</div>}{message && <div className="success-notice">{message}</div>}<div className="message-layout"><div className="message-thread-list">{!rows.length ? <div className="empty-state"><MessageCircle/><h3>No conversations yet</h3><p>Start a conversation with an available teacher.</p></div> : rows.map(row => <button key={row.id} className={selected === row.id ? 'message-thread active' : 'message-thread'} onClick={() => setSelected(row.id)}><span><b>{row.subject}</b><small>{row.student_name}</small></span>{Number(row.unread_count) > 0 && <em>{row.unread_count}</em>}<small>{row.last_message || 'No messages yet'}</small></button>)}</div><div className="message-conversation">{thread ? <><div className="message-conversation-head"><div><span>{thread.thread.student_name}</span><h3>{thread.thread.subject}</h3></div><small>{thread.thread.status}</small></div><div className="message-bubbles">{thread.messages.map(item => <article key={item.id} className={item.sender_user_id === Number(user?.id) ? 'message-bubble own' : 'message-bubble'}><b>{item.sender_name || item.sender_role}</b><p>{item.body}</p><small>{date(item.created_at)}</small></article>)}</div><form className="message-reply" onSubmit={sendReply}><textarea required rows="2" value={reply} onChange={event => setReply(event.target.value)} placeholder="Reply to this conversation"/><button className="button button-small" disabled={busy}><Send size={14}/>{busy ? 'Sending…' : 'Send reply'}</button></form></> : <form className="message-compose" onSubmit={start}><div className="editor-heading"><MessageCircle/><div><h3>Start a conversation</h3><p>Ask a teacher about attendance, homework, exams, or school activities.</p></div></div><label>Teacher<select required value={form.recipient_user_id} onChange={event => setForm({ ...form, recipient_user_id: event.target.value })}><option value="">Choose a teacher</option>{recipients.map(row => <option key={row.id} value={row.id}>{row.name} · {row.role}</option>)}</select></label><label>Subject<input required maxLength="180" value={form.subject} onChange={event => setForm({ ...form, subject: event.target.value })} placeholder="Question about homework"/></label><label>Message<textarea required maxLength="2000" rows="5" value={form.body} onChange={event => setForm({ ...form, body: event.target.value })} placeholder="Write your message"/></label><button className="button button-small" disabled={busy}>{busy ? 'Starting…' : 'Start conversation'}</button></form>}</div></div></section>
+function PortalMessages({ studentId,user }) {
+  return <MessagingCenter key={studentId} studentId={studentId} user={user}/>
 }
 
 function headers(tab) {
@@ -155,7 +151,7 @@ function Cells({ tab, row }) {
   if (tab==='attendance') return <><td>{date(row.attendance_date)}</td><td>{row.status}</td><td>{row.remarks || '—'}</td></>
   if (tab==='timetable') return <><td>{['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][row.weekday]}</td><td>{row.start_time} - {row.end_time}</td><td>{row.subject_name}</td><td>{row.teacher_name}</td><td>{row.room || '—'}</td></>
   if (tab==='assignments') return <><td><b>{row.title}</b><small>{row.description}</small></td><td>{row.subject_name}</td><td>{date(row.due_at)}</td><td>{row.submission_status || 'Not submitted'}</td><td>{row.score ?? '—'}</td></>
-  if (tab==='results') return <><td>{row.exam_name}<small>{row.academic_year}</small></td><td>{row.subject_name}</td><td>{row.marks_obtained ?? '—'} / {row.max_marks}</td><td>{row.grade || '—'}</td></>
+  if (tab==='results') return <><td>{row.exam_name}<small>{row.academic_year}</small></td><td>{row.subject_name}</td><td>{row.marks_obtained ?? row.result_status ?? 'Pending'} / {row.max_marks}</td><td>{row.grade || '—'}</td></>
   if (tab==='fees') return <><td>{row.fee_name}</td><td>{date(row.due_date)}</td><td>₹{row.amount}</td><td>₹{row.paid_amount}</td><td>₹{row.balance}</td><td>{row.status}</td></>
   return <><td>{row.title}</td><td>{row.author}</td><td>{date(row.due_date)}</td><td>{row.status}</td><td>₹{row.fine_amount}</td></>
 }
