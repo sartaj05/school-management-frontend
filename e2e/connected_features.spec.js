@@ -31,7 +31,7 @@ for (const width of [390,1440]) {
       let rows=[]
       const token='a'.repeat(48)
       await page.route('**/documents/issued/options',r=>r.fulfill({json:{students:[{id:1,name:'Aarav',class_name:'Grade 5',section:'A'}],exams:[]}}))
-      await page.route('**/documents/issued',r=>{ if(r.request().method()==='POST') {const d=r.request().postDataJSON();expect(d.student_id).toBe(1);rows=[{...d,student_name:'Aarav',token,status:'valid',issued_at:'2026-10-16'}]} return r.fulfill({json:{data:rows,token}}) })
+      await page.route(/\/documents\/issued(?:\?.*)?$/,r=>{ if(r.request().method()==='POST') {const d=r.request().postDataJSON();expect(d.student_id).toBe(1);rows=[{...d,student_name:'Aarav',token,status:'valid',issued_at:'2026-10-16'}]} return r.fulfill({json:{data:rows,token}}) })
       await page.route('**/documents/issued/*/revoke',r=>{expect(r.request().postDataJSON().reason).toBe('Incorrect period');rows[0].status='revoked';return r.fulfill({json:{success:true}})})
       await page.goto('/e2e/connected_features_harness.html?module=documents')
       await page.getByRole('combobox',{name:'Student',exact:true}).selectOption('1')
