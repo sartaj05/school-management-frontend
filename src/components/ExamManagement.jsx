@@ -15,7 +15,7 @@ export default function ExamManagement({ user }) {
   const [form, setForm] = useState(emptyExam), [busy, setBusy] = useState(true), [error, setError] = useState(''), [message, setMessage] = useState('')
   const [correction,setCorrection]=useState(null)
   const isAdmin = user.role === 'School Admin', selectedExam = exams.find(item => item.id === Number(examId))
-  const load = useCallback(async () => { setBusy(true); setError(''); try { const [a, b, c] = await Promise.all([schoolApi.exams(), schoolApi.classes(), schoolApi.subjects()]); setExams(a.data || []); setClasses((b.data || []).filter(x => x.status === 'active')); setSubjects((c.data || []).filter(x => x.status === 'active')) } catch (e) { setError(e.message) } finally { setBusy(false) } }, [])
+  const load = useCallback(async () => { setBusy(true); setError(''); try { const [a, options] = await Promise.all([schoolApi.exams(), api('/exams/options')]); setExams(a.data || []); setClasses(options.classes || []); setSubjects(options.subjects || []) } catch (e) { setError(e.message) } finally { setBusy(false) } }, [])
   useEffect(() => { const timer = setTimeout(() => { load() }, 0); return () => clearTimeout(timer) }, [load])
   const field = (name, value) => setForm(current => ({ ...current, [name]: value }))
   async function createExam(event) { event.preventDefault(); setBusy(true); setError(''); setMessage(''); try { const result = await schoolApi.createExam({ ...form, class_id: Number(form.class_id) }); setMessage(result.message); setForm(emptyExam); await load(); setExamId(String(result.exam.id)) } catch (e) { setError(e.message) } finally { setBusy(false) } }
