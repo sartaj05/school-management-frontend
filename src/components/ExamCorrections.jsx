@@ -1,0 +1,24 @@
+import {useCallback,useEffect,useState} from 'react'
+import {api} from '../lib/api'
+import {confirmPopup} from '../lib/confirmPopup'
+
+const result = row => `${row.result_status}: ${row.marks_obtained ?? '—'} / ${row.max_marks}; grade ${row.grade || '—'}; ${row.remarks || ''}`
+export default function ExamCorrections({user,studentId,examId,correctionId,initial,onRequested}) {
+  const [rows,setRows]=useState([]),[page,setPage]=useState(1),[total,setTotal]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notes,setNotes]=useState({})
+  const [form,setForm]=useState(initial ? {...initial,reason:''} : null)
+  const load=useCallback(async()=>{setBusy(true);setError('');try{const q=new URLSearchParams({page,...(studentId?{student_id:studentId}:{}),...(examId?{exam_id:examId}:{}),...(correctionId?{id:correctionId}:{})});const r=await api(`/exams/corrections?${q}`);setRows(r.data);setTotal(r.total)}catch(e){setError(e.message)}finally{setBusy(false)}},[page,studentId,examId,correctionId])
+  useEffect(()=>{const t=setTimeout(load,0);return()=>clearTimeout(t)},[load])
+  async function submit(e){e.preventDefault();setBusy(true);setError('');try{await api('/exams/corrections',{method:'POST',body:JSON.stringify({...form,max_marks:Number(form.max_marks),marks_obtained:form.result_status==='graded'&&form.marks_obtained!==''?Number(form.marks_obtained):null})});setForm(null);await load();onRequested?.()}catch(e){setError(e.message)}finally{setBusy(false)}}
+  async function review(row,status){if(!notes[row.id]?.trim()){setError('Enter review notes.');return}if(!await confirmPopup({title:`${status==='approved'?'Approve':'Reject'} result correction?`,message:status==='approved'?'This updates the published result and replaces linked issued report cards. Previous PDFs remain in history.':'The published result will stay unchanged.',confirmLabel:'Confirm decision',tone:'primary'}))return;setBusy(true);setError('');try{await api(`/exams/corrections/${row.id}/review`,{method:'POST',body:JSON.stringify({status,review_notes:notes[row.id]})});await load()}catch(e){setError(e.message)}finally{setBusy(false)}}
+  const field=(key,value)=>setForm({...form,[key]:value})
+  return <section className="data-panel"><h2>Result corrections</h2><p>Teachers request changes; School Admin reviews them. Previous result versions remain visible.</p>{error&&<p role="alert">{error}</p>}
+    {form&&<form className="editor-card" onSubmit={submit}><h3>Request correction · {form.student_name}</h3><div className="field-grid">
+      <label>Result status<select value={form.result_status} onChange={e=>field('result_status',e.target.value)}>{['graded','absent','exempt'].map(s=><option key={s}>{s}</option>)}</select></label>
+      <label>Maximum marks<input required type="number" min="0.01" step="0.01" value={form.max_marks} onChange={e=>field('max_marks',e.target.value)}/></label>
+      <label>Obtained marks<input required={form.result_status==='graded'} disabled={form.result_status!=='graded'} type="number" min="0" max={form.max_marks} step="0.01" value={form.marks_obtained??''} onChange={e=>field('marks_obtained',e.target.value)}/></label>
+      <label>Grade<input maxLength={10} value={form.grade||''} onChange={e=>field('grade',e.target.value)}/></label><label>Remarks<textarea maxLength={2000} value={form.remarks||''} onChange={e=>field('remarks',e.target.value)}/></label>
+      <label>Reason for correction<textarea required maxLength={2000} value={form.reason} onChange={e=>field('reason',e.target.value)}/></label></div><button disabled={busy}>Send correction request</button></form>}
+    <button disabled={busy} onClick={load}>Refresh corrections</button>{rows.map(row=><article className="editor-card" key={row.id}><h3>{row.student_name} · {row.exam_name} · {row.subject_name}</h3><p>{row.status}{row.revision?` · Revision ${row.revision}`:''}</p><p>Original: {result(row.original)}</p><p>Requested: {result(row.proposed)}</p><p>Reason: {row.reason}</p>{row.review_notes&&<p>Decision notes: {row.review_notes}</p>}{row.replacement_tokens?.length>0&&<p>{row.replacement_tokens.length} replacement report card(s) available in Documents.</p>}{user?.role==='School Admin'&&row.status==='pending'&&<><label>Review notes #{row.id}<textarea maxLength={2000} value={notes[row.id]||''} onChange={e=>setNotes({...notes,[row.id]:e.target.value})}/></label><button disabled={busy} onClick={()=>review(row,'approved')}>Approve</button><button disabled={busy} onClick={()=>review(row,'rejected')}>Reject</button></>}</article>)}
+    {!busy&&!rows.length&&<p>No result corrections.</p>}<div className="student-row-actions"><button disabled={busy||page===1} onClick={()=>setPage(page-1)}>Previous corrections</button><span>Page {page} · {total} results</span><button disabled={busy||page*25>=total} onClick={()=>setPage(page+1)}>Next corrections</button></div>
+  </section>
+}
