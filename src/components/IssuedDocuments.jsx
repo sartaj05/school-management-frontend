@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react'
-import { api, downloadApi } from '../lib/api'
+import { useEffect, useState, useRef } from 'react'
+import { api, downloadApi, blobApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
+import DocumentArchiveFilters from './DocumentArchiveFilters'
 import BulkDocuments from './BulkDocuments'
 
 export default function IssuedDocuments({ admin = false, studentId }) {
+  const [filters,setFilters]=useState({}),[page,setPage]=useState(1),[total,setTotal]=useState(0)
   const [rows, setRows] = useState([]), [options, setOptions] = useState({ students: [], exams: [] }), [busy, setBusy] = useState(false), [message, setMessage] = useState('')
   const [form, setForm] = useState({ document_type: 'certificate', student_id: '', exam_id: '', title: '', body: '', replaces: '', reason: '', template_id: '' })
+  const requestId=useRef(0)
   async function load() {
-    try { const r = await api(`/documents/issued${studentId ? `?student_id=${studentId}` : ''}`); setRows(r.data); if (admin) setOptions(await api('/documents/issued/options')) } catch (e) { setMessage(e.message) }
+    const id=++requestId.current
+    try { const r = await api(`/documents/issued?${new URLSearchParams({...filters,page,...(studentId?{student_id:studentId}:{})})}`); if(id!==requestId.current)return; setRows(r.data); setTotal(r.total??r.data.length); if (admin) {const options=await api('/documents/issued/options');if(id===requestId.current)setOptions(options)} } catch (e) { setMessage(e.message) }
   }
-  useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [admin, studentId]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [admin, studentId, filters, page]) // eslint-disable-line react-hooks/exhaustive-deps
   async function issue(e) {
     e.preventDefault(); setBusy(true)
     try { await api('/documents/issued', { method: 'POST', body: JSON.stringify({ ...form, template_id: form.template_id ? Number(form.template_id) : null, student_id: Number(form.student_id), exam_id: Number(form.exam_id) }) }); setForm(f => ({ ...f, replaces: '', reason: '' })); setMessage('Document issued. Download its PDF to share the QR verification link.'); await load() } catch (err) { setMessage(err.message) } finally { setBusy(false) }
@@ -17,9 +21,8 @@ export default function IssuedDocuments({ admin = false, studentId }) {
   async function preview() {
     setBusy(true)
     try {
-      const r = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/documents/issued/preview`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${sessionStorage.getItem('school_access_token')}`},body:JSON.stringify({...form,student_id:Number(form.student_id),exam_id:Number(form.exam_id),template_id:form.template_id ? Number(form.template_id) : null})})
-      if (!r.ok) throw new Error((await r.json()).message || 'Preview failed')
-      const url=URL.createObjectURL(await r.blob()); setPreviewUrl(old=>{if(old) URL.revokeObjectURL(old); return url})
+      const blob = await blobApi('/documents/issued/preview', {method:'POST',body:JSON.stringify({...form,student_id:Number(form.student_id),exam_id:Number(form.exam_id),template_id:form.template_id ? Number(form.template_id) : null})})
+      const url=URL.createObjectURL(blob); setPreviewUrl(old=>{if(old) URL.revokeObjectURL(old); return url})
     } catch(e) {setMessage(e.message)} finally {setBusy(false)}
   }
   const [previewUrl,setPreviewUrl]=useState('')
@@ -41,6 +44,7 @@ export default function IssuedDocuments({ admin = false, studentId }) {
       <label>Reason for revocation / replacement<input required={Boolean(form.replaces)} maxLength="2000" value={form.reason} onChange={e => field('reason', e.target.value)} /></label>
     </div>{form.replaces && <p>Replacing document {form.replaces}. Review the student, type and new contents before issuing. <button type="button" onClick={() => field('replaces', '')}>Cancel replacement</button></p>}<button type="button" disabled={busy} onClick={preview}>Preview PDF</button> <button className="button" disabled={busy}>Issue {form.replaces ? 'replacement' : 'document'}</button></form>}
     {previewUrl && <section aria-label="Document preview"><button onClick={()=>setPreviewUrl('')}>Close preview</button><iframe title="PDF preview" src={previewUrl} style={{width:'100%',height:'65vh',border:0}} /></section>}
+    <DocumentArchiveFilters filters={filters} onChange={f=>{setFilters(f);setPage(1)}} page={page} total={total} onPage={setPage}/>
     <button disabled={busy} onClick={load}>Refresh issued documents</button><div className="table-wrap"><table><thead><tr><th>Document / student</th><th>Issued</th><th>Status</th><th>Actions</th></tr></thead><tbody>{rows.map(r => <tr key={r.token}><td>{r.title}<small>{r.student_name}</small></td><td>{new Date(r.issued_at).toLocaleDateString()}</td><td>{r.status}</td><td><button onClick={async () => { try { await downloadApi(`/documents/issued/${r.token}/pdf`, `${r.document_type}.pdf`) } catch (e) { setMessage(e.message) } }}>Download PDF</button> <a href={`/verify-document/${r.token}`} target="_blank" rel="noreferrer">Verify</a>{admin && r.status === 'valid' && <button disabled={busy} onClick={() => revoke(r)}>Revoke</button>}{admin && r.status !== 'replaced' && <button onClick={() => setForm(f => ({ ...f, student_id: String(r.student_id), document_type: r.document_type, title: r.title, body: '', exam_id: '', replaces: r.token, reason: '' }))}>Prepare replacement</button>}</td></tr>)}</tbody></table></div>
   </section>
 }

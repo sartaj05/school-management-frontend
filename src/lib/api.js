@@ -14,7 +14,7 @@ export class ApiError extends Error {
 
 let refreshPromise = null
 
-export async function api(path, options = {}) {
+async function authenticatedFetch(path, options = {}) {
   const { retry = true, accountScope, ...fetchOptions } = options
   const token = sessionStorage.getItem('school_access_token')
   if (accountScope) {
@@ -31,13 +31,12 @@ export async function api(path, options = {}) {
       ...fetchOptions.headers,
     },
   })
-  const data = await response.json().catch(() => ({}))
   const refreshToken = sessionStorage.getItem('school_refresh_token')
   if (response.status === 401 && retry && refreshToken && path !== '/auth/refresh') {
     try {
       if (!refreshPromise) refreshPromise = refreshAccessToken(refreshToken).finally(() => { refreshPromise = null })
       await refreshPromise
-      return api(path, { ...fetchOptions, accountScope, retry: false })
+      return authenticatedFetch(path, { ...fetchOptions, accountScope, retry: false })
     } catch {
       if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed. Reopen this draft.', 409)
       sessionStorage.removeItem('school_access_token')
@@ -46,14 +45,19 @@ export async function api(path, options = {}) {
       window.dispatchEvent(new Event('school-session-expired'))
     }
   }
-  if (!response.ok) throw new ApiError(data.error || data.message || data.msg || `Request failed (HTTP ${response.status}). Please try again.`, response.status, data)
-  return data
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new ApiError(data.error || data.message || data.msg || `Request failed (HTTP ${response.status}). Please try again.`, response.status, data)
+  }
+  return response
+}
+
+export async function api(path, options = {}) {
+  return (await authenticatedFetch(path, options)).json().catch(() => ({}))
 }
 
 export async function downloadApi(path, filename) {
-  const token = sessionStorage.getItem('school_access_token')
-  const response = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-  if (!response.ok) { const data = await response.json().catch(() => ({})); throw new ApiError(data.message || 'Download failed.', response.status, data) }
+  const response = await authenticatedFetch(path)
   const url = URL.createObjectURL(await response.blob())
   const link = document.createElement('a')
   const disposition = response.headers.get('content-disposition') || ''
@@ -64,11 +68,8 @@ export async function downloadApi(path, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export async function blobApi(path) {
-  const token = sessionStorage.getItem('school_access_token')
-  const response = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-  if (!response.ok) { const data = await response.json().catch(() => ({})); throw new ApiError(data.message || 'Media request failed.', response.status, data) }
-  return response.blob()
+export async function blobApi(path, options = {}) {
+  return (await authenticatedFetch(path, options)).blob()
 }
 
 async function refreshAccessToken(refreshToken) {
