@@ -5,9 +5,11 @@ import ScheduledReports from '/src/components/ScheduledReports.jsx'
 import ExamCorrections from '/src/components/ExamCorrections.jsx'
 import StudentSupport from '/src/components/StudentSupport.jsx'
 import AcademicAnalytics from '/src/components/AcademicAnalytics.jsx'
+import ExamManagement from '/src/components/ExamManagement.jsx'
+import IssuedDocuments from '/src/components/IssuedDocuments.jsx'
 import {ConfirmationDialogHost} from '/src/components/ConfirmationDialog.jsx'
 import '/src/styles.css'
 const q=new URLSearchParams(location.search),module=q.get('module'),role=q.get('role')||'School Admin'
 const initial=q.has('request')?{exam_id:1,subject_id:1,student_id:1,student_name:'Asha',result_status:'graded',max_marks:100,marks_obtained:30}:undefined
-createRoot(document.getElementById('root')).render(React.createElement(React.Fragment,null,React.createElement({schedules:ScheduledReports,corrections:ExamCorrections,support:StudentSupport,analytics:AcademicAnalytics}[module],{user:{role},initial}),React.createElement(ConfirmationDialogHost)))
+createRoot(document.getElementById('root')).render(React.createElement(React.Fragment,null,React.createElement({exams:ExamManagement,documents:IssuedDocuments,schedules:ScheduledReports,corrections:ExamCorrections,support:StudentSupport,analytics:AcademicAnalytics}[module],{user:{role},initial,admin:role==='School Admin'}),React.createElement(ConfirmationDialogHost)))
 </script></body></html>

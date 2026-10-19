@@ -151,7 +151,7 @@ function Cells({ tab, row }) {
   if (tab==='attendance') return <><td>{date(row.attendance_date)}</td><td>{row.status}</td><td>{row.remarks || '—'}</td></>
   if (tab==='timetable') return <><td>{['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][row.weekday]}</td><td>{row.start_time} - {row.end_time}</td><td>{row.subject_name}</td><td>{row.teacher_name}</td><td>{row.room || '—'}</td></>
   if (tab==='assignments') return <><td><b>{row.title}</b><small>{row.description}</small></td><td>{row.subject_name}</td><td>{date(row.due_at)}</td><td>{row.submission_status || 'Not submitted'}</td><td>{row.score ?? '—'}</td></>
-  if (tab==='results') return <><td>{row.exam_name}<small>{row.academic_year}</small></td><td>{row.subject_name}</td><td>{row.marks_obtained ?? row.result_status ?? 'Pending'} / {row.max_marks}</td><td>{row.grade || '—'}</td></>
+  if (tab==='results') return <><td>{row.exam_name}<small>{row.academic_year} · {row.class_name} {row.section}</small></td><td>{row.subject_name}</td><td>{row.marks_obtained ?? row.result_status ?? 'Pending'} / {row.max_marks}</td><td>{row.grade || '—'}</td></>
   if (tab==='fees') return <><td>{row.fee_name}</td><td>{date(row.due_date)}</td><td>₹{row.amount}</td><td>₹{row.paid_amount}</td><td>₹{row.balance}</td><td>{row.status}</td></>
   return <><td>{row.title}</td><td>{row.author}</td><td>{date(row.due_date)}</td><td>{row.status}</td><td>₹{row.fine_amount}</td></>
 }

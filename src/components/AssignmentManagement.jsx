@@ -1,7 +1,7 @@
 import HomeworkHistory from './HomeworkHistory'
 import { BookCheck, ClipboardCheck, Plus, Save, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { schoolApi } from '../lib/api'
+import { api, schoolApi } from '../lib/api'
 import { confirmPopup } from '../lib/confirmPopup'
 
 const localDateTime = () => new Date(Date.now() + 86400000 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)
@@ -11,7 +11,7 @@ export default function AssignmentManagement() {
   const [assignments, setAssignments] = useState([]), [classes, setClasses] = useState([]), [subjects, setSubjects] = useState([])
   const [form, setForm] = useState(empty), [selected, setSelected] = useState(null), [students, setStudents] = useState([])
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('')
-  async function load() { setBusy(true); setError(''); try { const [a, b, c] = await Promise.all([schoolApi.assignments(), schoolApi.classes(), schoolApi.subjects()]); setAssignments(a.data || []); setClasses((b.data || []).filter(x => x.status === 'active')); setSubjects((c.data || []).filter(x => x.status === 'active')) } catch (e) { setError(e.message) } finally { setBusy(false) } }
+  async function load() { setBusy(true); setError(''); try { const [a, options] = await Promise.all([schoolApi.assignments(), api('/exams/options')]); setAssignments(a.data || []); setClasses(options.classes || []); setSubjects(options.subjects || []) } catch (e) { setError(e.message) } finally { setBusy(false) } }
   useEffect(() => { const timer = setTimeout(load, 0); return () => clearTimeout(timer) }, [])
   const field = (name, value) => setForm(current => ({ ...current, [name]: value }))
   async function create(event) { event.preventDefault(); setBusy(true); setError(''); try { const result = await schoolApi.createAssignment({ ...form, class_id: Number(form.class_id), subject_id: Number(form.subject_id), max_score: Number(form.max_score), due_at: new Date(form.due_at).toISOString() }); setMessage(result.message); setForm(empty); await load() } catch (e) { setError(e.message) } finally { setBusy(false) } }

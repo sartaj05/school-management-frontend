@@ -1,7 +1,7 @@
 import {confirmPopup} from '../lib/confirmPopup'
 import { CalendarClock, History, Mail, PauseCircle, Plus, Send, Smartphone } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
-import { schoolApi } from '../lib/api'
+import { useCallback, useEffect, useState, useRef } from 'react'
+import { api, schoolApi } from '../lib/api'
 
 const empty = {
   report_key: 'attendance',
@@ -19,6 +19,7 @@ const empty = {
 const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 export default function ScheduledReports() {
+  const operations=useRef({})
   const [catalog, setCatalog] = useState([])
   const [rows, setRows] = useState([])
   const [runs, setRuns] = useState({})
@@ -103,7 +104,10 @@ export default function ScheduledReports() {
     setBusy(true)
     setError('')
     try {
-      const result = await schoolApi.runScheduledReport(id)
+      const key=`run:${id}`; operations.current[key] ||= crypto.randomUUID()
+      const result = await api(`/scheduled-reports/${id}/run`,{method:'POST',headers:{'X-Client-Operation-Id':operations.current[key]}})
+      delete operations.current[key]
+      await viewRuns(id)
       setMessage(result.message + ' Delivery status is recorded below.')
       await load()
     } catch (requestError) {
@@ -111,6 +115,14 @@ export default function ScheduledReports() {
     } finally {
       setBusy(false)
     }
+  }
+
+  async function retryFailed(id,run) {
+    if(!await confirmPopup({title:'Retry failed recipients?',message:'Only confirmed failed recipients will be retried. Successful and unknown deliveries will not be resent.',confirmLabel:'Retry failed',tone:'primary'}))return
+    setBusy(true);setError('')
+    const key=`retry:${id}:${run}`;operations.current[key] ||= crypto.randomUUID()
+    try {await api(`/scheduled-reports/${id}/runs/${run}/retry`,{method:'POST',headers:{'X-Client-Operation-Id':operations.current[key]}});delete operations.current[key];await viewRuns(id)}
+    catch(e){setError(e.message)}finally{setBusy(false)}
   }
 
   async function pause(id) {
@@ -244,7 +256,7 @@ export default function ScheduledReports() {
           </tbody></table></div>}
         {Object.entries(runs).map(([id, items]) => <div className="scheduled-run-history" key={id}>
           <h3>Run history · schedule {id}</h3>
-          {items.length === 0 ? <p>No delivery runs recorded yet.</p> : <ul>{items.map(item => <li key={item.id}><b>{String(item.status || '').toUpperCase()}</b> · {item.record_count || 0} records · {item.started_at ? new Date(item.started_at).toLocaleString() : '—'}{item.error ? ' · ' + item.error : ''}</li>)}</ul>}
+          {items.length === 0 ? <p>No delivery runs recorded yet.</p> : <ul>{items.map(item => <li key={item.id}><b>{String(item.status || '').toUpperCase()}</b> · {item.record_count || 0} records · {item.started_at ? new Date(item.started_at).toLocaleString() : '—'}{item.error ? ' · ' + item.error : ''}{(item.delivery_results||[]).map((r,index)=><div key={index}>{r.channel} · {r.recipient} · {r.status || (r.success?'sent':'failed')} · Attempts: {r.attempts??1}</div>)}{item.uncertain_count>0&&<p>Unknown delivery: verify with the provider before any resend.</p>}{item.retryable_count>0&&<button disabled={busy} onClick={()=>retryFailed(id,item.id)}>Retry failed recipients</button>}</li>)}</ul>}
         </div>)}
       </section>
     </section>
