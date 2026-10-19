@@ -20,6 +20,7 @@ const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 
 export default function ScheduledReports() {
   const operations=useRef({})
+  const [resolution,setResolution]=useState(null)
   const [catalog, setCatalog] = useState([])
   const [rows, setRows] = useState([])
   const [runs, setRuns] = useState({})
@@ -117,6 +118,7 @@ export default function ScheduledReports() {
     }
   }
 
+  async function resolveUnknown(event){event.preventDefault();if(!await confirmPopup({title:'Record provider confirmation?',message:'This decision updates delivery history. Confirm that you checked the provider evidence.',confirmLabel:'Confirm outcome'}))return;setBusy(true);setError('');try{await api(`/scheduled-reports/${resolution.report}/runs/${resolution.run}/resolve`,{method:'POST',body:JSON.stringify(resolution)});await viewRuns(resolution.report);setResolution(null)}catch(e){setError(e.message)}finally{setBusy(false)}}
   async function retryFailed(id,run) {
     if(!await confirmPopup({title:'Retry failed recipients?',message:'Only confirmed failed recipients will be retried. Successful and unknown deliveries will not be resent.',confirmLabel:'Retry failed',tone:'primary'}))return
     setBusy(true);setError('')
@@ -254,9 +256,10 @@ export default function ScheduledReports() {
               <td><div className="student-row-actions"><button disabled={busy} onClick={()=>edit(row)}>Edit</button>{!row.is_active&&<button disabled={busy} onClick={()=>resume(row.id)}>Resume</button>}<button onClick={() => runNow(row.id)} disabled={busy}><Send />Run now</button><button onClick={() => viewRuns(row.id)} disabled={busy}><History />Runs</button>{row.is_active && <button className="danger" onClick={() => pause(row.id)} disabled={busy}><PauseCircle />Pause</button>}</div></td>
             </tr>)}
           </tbody></table></div>}
-        {Object.entries(runs).map(([id, items]) => <div className="scheduled-run-history" key={id}>
+        {resolution&&<form className="editor-card" onSubmit={resolveUnknown}><h3>Review unknown delivery · {resolution.recipient}</h3><label>Confirmed outcome<select value={resolution.outcome} onChange={e=>setResolution({...resolution,outcome:e.target.value})}><option value="delivered">Confirmed delivered</option><option value="not_delivered">Confirmed not delivered</option></select></label><label>Provider evidence<textarea required minLength={10} maxLength={2000} value={resolution.evidence} onChange={e=>setResolution({...resolution,evidence:e.target.value})} placeholder="Provider reference, checked time and confirmation details"/></label><button disabled={busy}>Record provider confirmation</button><button type="button" disabled={busy} onClick={()=>setResolution(null)}>Cancel</button></form>}
+      {Object.entries(runs).map(([id, items]) => <div className="scheduled-run-history" key={id}>
           <h3>Run history · schedule {id}</h3>
-          {items.length === 0 ? <p>No delivery runs recorded yet.</p> : <ul>{items.map(item => <li key={item.id}><b>{String(item.status || '').toUpperCase()}</b> · {item.record_count || 0} records · {item.started_at ? new Date(item.started_at).toLocaleString() : '—'}{item.error ? ' · ' + item.error : ''}{(item.delivery_results||[]).map((r,index)=><div key={index}>{r.channel} · {r.recipient} · {r.status || (r.success?'sent':'failed')} · Attempts: {r.attempts??1}</div>)}{item.uncertain_count>0&&<p>Unknown delivery: verify with the provider before any resend.</p>}{item.retryable_count>0&&<button disabled={busy} onClick={()=>retryFailed(id,item.id)}>Retry failed recipients</button>}</li>)}</ul>}
+          {items.length === 0 ? <p>No delivery runs recorded yet.</p> : <ul>{items.map(item => <li key={item.id}><b>{String(item.status || '').toUpperCase()}</b> · {item.record_count || 0} records · {item.started_at ? new Date(item.started_at).toLocaleString() : '—'}{item.error ? ' · ' + item.error : ''}{(item.delivery_results||[]).map((r,index)=><div key={index}>{r.channel} · {r.recipient} · {r.status || (r.success?'sent':'failed')} · Attempts: {r.attempts??1}{r.result?.resolution&&<p>Provider review: {r.result.resolution.outcome} · {r.result.resolution.evidence}</p>}{r.status==='unknown'&&<button disabled={busy||item.status==='running'} onClick={()=>setResolution({report:Number(id),run:item.id,channel:r.channel,recipient:r.recipient,expected_attempts:r.attempts,outcome:'delivered',evidence:''})}>Review unknown delivery</button>}</div>)}{item.uncertain_count>0&&<p>Unknown delivery: verify with the provider before any resend.</p>}{item.retryable_count>0&&<button disabled={busy} onClick={()=>retryFailed(id,item.id)}>Retry failed recipients</button>}</li>)}</ul>}
         </div>)}
       </section>
     </section>
