@@ -20,10 +20,10 @@ export default function RosterReview({assignmentId}) {
     {!data.editable&&<p>This original publication roster is read-only.</p>}
     {error&&<p role="alert">{error}</p>}
     <h4>Current members</h4>{data.members.map(m=><label key={m.student_id}><input type="checkbox" disabled={busy||!data.editable||m.has_submission} checked={remove.includes(m.student_id)} onChange={()=>toggle(m.student_id,remove,setRemove)}/> Remove {m.student_snapshot.name} · {m.has_submission?'Saved submission — protected':m.provenance}</label>)}
-    {data.editable&&<><label>Find historical student<input value={q} onChange={e=>{setQ(e.target.value);setPage(1)}}/></label>
+    {data.editable&&<><label>Find historical student<input disabled={busy} value={q} onChange={e=>{setQ(e.target.value);setPage(1)}}/></label>
       {data.candidates.filter(s=>!data.members.some(m=>m.student_id===s.id)).map(s=><label key={s.id}><input type="checkbox" disabled={busy} checked={add.includes(s.id)} onChange={()=>toggle(s.id,add,setAdd)}/> Add {s.name} · {s.admission_no} · {s.class_name} {s.section}</label>)}
       <button disabled={busy||page===1} onClick={()=>setPage(page-1)}>Previous students</button><button disabled={busy||page*25>=data.total} onClick={()=>setPage(page+1)}>Next students</button>
-      <p>{add.length} additions · {remove.length} removals</p><label>Historical evidence<textarea minLength={10} maxLength={2000} value={evidence} onChange={e=>{setEvidence(e.target.value);setPreview(null)}}/></label>
+      <p>{add.length} additions · {remove.length} removals</p><label>Historical evidence<textarea disabled={busy} minLength={10} maxLength={2000} value={evidence} onChange={e=>{setEvidence(e.target.value);setPreview(null)}}/></label>
       <button disabled={busy||evidence.trim().length<10||!(add.length+remove.length)} onClick={()=>submit()}>Preview roster changes</button>
       {preview&&<div><h4>Review changes</h4><p>Add: {preview.add.map(s=>s.name).join(', ')||'None'}</p><p>Remove: {preview.remove.map(s=>s.name).join(', ')||'None'}</p><p>{preview.evidence}</p><button disabled={busy} onClick={()=>submit(true)}>Apply reviewed changes</button></div>}</>}
     <h4>Review history</h4>{data.history.map(h=><p key={h.revision}>Revision {h.revision} · {h.reviewed_at} · {h.evidence}</p>)}
