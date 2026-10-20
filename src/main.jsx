@@ -1,12 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import App from './App.jsx'
+import UnsavedNavigationGuard from './components/UnsavedNavigationGuard.jsx'
 import { ConfirmationDialogHost } from './components/ConfirmationDialog.jsx'
 import './styles.css'
 import './dashboard-design.css'
 import './landing-design.css'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode><BrowserRouter><App /><ConfirmationDialogHost /></BrowserRouter></StrictMode>,
+  <StrictMode><RouterProvider router={createBrowserRouter([{path:"*",element:<><UnsavedNavigationGuard/><App/><ConfirmationDialogHost/></>}])}/></StrictMode>,
 )

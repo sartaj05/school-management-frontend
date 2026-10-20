@@ -54,7 +54,7 @@ export function ConfirmationDialogHost() {
       <button className="confirm-close" aria-label="Close confirmation" onClick={() => finish(false)}><X /></button>
       <span className="confirm-icon"><AlertTriangle /></span>
       <div className="confirm-copy"><small>Action confirmation</small><h2 id="confirm-title">{dialog.title}</h2><p id="confirm-message">{dialog.message}</p></div>
-      <div className="confirm-actions"><button ref={cancelRef} className="confirm-cancel" onClick={() => finish(false)}>{dialog.cancelLabel}</button><button className="confirm-primary" onClick={() => finish(true)}>{dialog.confirmLabel}</button></div>
+      <div className="confirm-actions"><button ref={cancelRef} className="confirm-cancel" onClick={() => finish(false)}>{dialog.cancelLabel}</button><>{dialog.alternateLabel&&<button onClick={() => finish("discard")}>{dialog.alternateLabel}</button>}</><button className="confirm-primary" onClick={() => finish(true)}>{dialog.confirmLabel}</button></div>
     </section>
   </div>
 }
