@@ -1,5 +1,9 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main id="root" style="padding:16px;max-width:1000px;margin:auto"></main><script type="module">
 import React from 'react'
+import {createBrowserRouter,RouterProvider,Link} from 'react-router-dom'
+import UnsavedNavigationGuard from '/src/components/UnsavedNavigationGuard.jsx'
+import StudentProgress from '/src/components/StudentProgress.jsx'
+import PromotionWizard from '/src/components/PromotionWizard.jsx'
 import {createRoot} from 'react-dom/client'
 import ScheduledReports from '/src/components/ScheduledReports.jsx'
 import ExamCorrections from '/src/components/ExamCorrections.jsx'
@@ -11,5 +15,7 @@ import {ConfirmationDialogHost} from '/src/components/ConfirmationDialog.jsx'
 import '/src/styles.css'
 const q=new URLSearchParams(location.search),module=q.get('module'),role=q.get('role')||'School Admin'
 const initial=q.has('request')?{exam_id:1,subject_id:1,student_id:1,student_name:'Asha',result_status:'graded',max_marks:100,marks_obtained:30}:undefined
-createRoot(document.getElementById('root')).render(React.createElement(React.Fragment,null,React.createElement({exams:ExamManagement,documents:IssuedDocuments,schedules:ScheduledReports,corrections:ExamCorrections,support:StudentSupport,analytics:AcademicAnalytics}[module],{user:{role},initial,admin:role==='School Admin'}),React.createElement(ConfirmationDialogHost)))
+const content=React.createElement(React.Fragment,null,React.createElement({progress:StudentProgress,promotion:PromotionWizard,exams:ExamManagement,documents:IssuedDocuments,schedules:ScheduledReports,corrections:ExamCorrections,support:StudentSupport,analytics:AcademicAnalytics}[module],{user:{role},initial,admin:role==='School Admin',years:[{id:1,year_label:'2025',status:'active'},{id:2,year_label:'2026',status:'active'}]}),React.createElement(Link,{to:'/left'},'Leave workspace'),React.createElement(ConfirmationDialogHost));
+const router=createBrowserRouter([{path:'/left',element:React.createElement('p',null,'Destination workspace')},{path:'*',element:React.createElement(React.Fragment,null,React.createElement(UnsavedNavigationGuard),content)}]);
+createRoot(document.getElementById('root')).render(React.createElement(RouterProvider,{router}))
 </script></body></html>
