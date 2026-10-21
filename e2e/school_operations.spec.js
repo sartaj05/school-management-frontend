@@ -53,14 +53,14 @@ for(const width of [390,1440]) {
     })
     test('promotion previews selected students before confirmation',async({page})=>{
       let payload
-      await page.route('**/academic-years/promotion-preview',r=>{if(r.request().method()==='POST'){payload=r.request().postDataJSON();return r.fulfill({json:{data:[{...payload.promotions[0],student_name:'Aarav Sharma',from_class:'Grade 5',from_section:'A'}],capacities:[{class_name:'Grade 6',projected_students:1,limit:30}]}})}return r.fulfill({json:{students:[student],classes:[{id:2,class_name:'Grade 6',section:'A'}]}})})
-      await page.route('**/academic-years/promote',r=>{expect(r.request().postDataJSON()).toEqual(payload);return r.fulfill({json:{promoted:1}})})
+      await page.route('**/academic-years/promotion-preview',r=>{if(r.request().method()==='POST'){payload=r.request().postDataJSON();return r.fulfill({json:{data:[{...payload.promotions[0],student_name:'Aarav Sharma',from_class:'Grade 5',from_section:'A'}],capacities:[{class_name:'Grade 6',projected_students:1,reserved_seats:2,limit:30}]}})}return r.fulfill({json:{students:[student],classes:[{id:2,class_name:'Grade 6',section:'A'}]}})})
+      await page.route('**/academic-years/promote',r=>{expect(r.request().postDataJSON()).toEqual({...payload,support_handovers:[]});return r.fulfill({json:{promoted:1}})})
       await page.goto('/e2e/school_operations_harness.html?module=promotion')
       await page.getByLabel('From year').selectOption('2025');await page.getByLabel('To year').selectOption('2026');await page.getByLabel('Destination class').selectOption('2')
       await page.getByRole('checkbox').check()
       await expect(page.getByRole('button',{name:'Confirm promotion'})).toHaveCount(0)
       await page.getByRole('button',{name:'Preview promotion'}).click()
-      await expect(page.getByText('Grade 6: 1 / 30',{exact:true})).toBeVisible()
+      await expect(page.getByText('Grade 6: 1 students + 2 reserved seats / 30',{exact:true})).toBeVisible()
       await page.getByRole('button',{name:'Confirm promotion'}).click()
       await expect(page.getByRole('status')).toContainText('1 students promoted')
     })
