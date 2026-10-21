@@ -1,3 +1,4 @@
+import AdmissionWaitlist from './AdmissionWaitlist'
 /* eslint-disable react-hooks/set-state-in-effect */
 import { ChevronLeft, ChevronRight, GraduationCap, PhoneCall, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -96,6 +97,7 @@ export default function AdmissionManagement() {
   }
 
   return <>
+    <AdmissionWaitlist/>
     <section className="people-hero"><div><span>Admissions CRM</span><h2>Turn enquiries into enrolled students.</h2><p>Track every application, follow up with families, and convert approved applicants into linked student and guardian records.</p></div><GraduationCap /></section>
     <section className="people-stat-grid admission-stat-grid">
       <article><span>Total enquiries</span><b>{summary.total || 0}</b><small>{summary.by_status?.submitted || 0} newly submitted</small></article>
