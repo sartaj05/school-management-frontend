@@ -13,9 +13,25 @@ export class ApiError extends Error {
 }
 
 let refreshPromise = null
+let sessionGeneration = 0
+let observedRefreshToken
+
+function currentSessionGeneration() {
+  const refreshToken = sessionStorage.getItem('school_refresh_token')
+  if (refreshToken !== observedRefreshToken) {
+    observedRefreshToken = refreshToken
+    sessionGeneration += 1
+  }
+  return sessionGeneration
+}
+
+function requireSession(generation) {
+  if (generation !== currentSessionGeneration()) throw new ApiError('School account changed. Please retry from the current account.', 409)
+}
 
 async function authenticatedFetch(path, options = {}) {
-  const { retry = true, accountScope, ...fetchOptions } = options
+  const { retry = true, accountScope, sessionGuard = currentSessionGeneration(), ...fetchOptions } = options
+  requireSession(sessionGuard)
   const token = sessionStorage.getItem('school_access_token')
   if (accountScope) {
     let currentScope
@@ -31,13 +47,22 @@ async function authenticatedFetch(path, options = {}) {
       ...fetchOptions.headers,
     },
   })
+  requireSession(sessionGuard)
   const refreshToken = sessionStorage.getItem('school_refresh_token')
   if (response.status === 401 && retry && refreshToken && path !== '/auth/refresh') {
     try {
-      if (!refreshPromise) refreshPromise = refreshAccessToken(refreshToken).finally(() => { refreshPromise = null })
-      await refreshPromise
-      return authenticatedFetch(path, { ...fetchOptions, accountScope, retry: false })
+      if (!refreshPromise || refreshPromise.generation !== sessionGuard) {
+        const flight = { generation: sessionGuard }
+        flight.promise = refreshAccessToken(refreshToken, sessionGuard).finally(() => {
+          if (refreshPromise === flight) refreshPromise = null
+        })
+        refreshPromise = flight
+      }
+      await refreshPromise.promise
+      requireSession(sessionGuard)
+      return authenticatedFetch(path, { ...fetchOptions, accountScope, sessionGuard, retry: false })
     } catch {
+      requireSession(sessionGuard)
       if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed. Reopen this draft.', 409)
       sessionStorage.removeItem('school_access_token')
       sessionStorage.removeItem('school_refresh_token')
@@ -72,16 +97,18 @@ export async function blobApi(path, options = {}) {
   return (await authenticatedFetch(path, options)).blob()
 }
 
-async function refreshAccessToken(refreshToken) {
+async function refreshAccessToken(refreshToken, generation) {
   const response = await fetch(`${API_BASE}/auth/refresh`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${refreshToken}` },
   })
   const data = await response.json().catch(() => ({}))
+  requireSession(generation)
   if (!response.ok) throw new ApiError(data.error || data.message || 'Your session has expired.', response.status, data)
   if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed during session refresh.', 409)
   sessionStorage.setItem('school_access_token', data.token)
   sessionStorage.setItem('school_refresh_token', data.refresh_token)
+  observedRefreshToken = data.refresh_token
   const session = JSON.parse(sessionStorage.getItem('school_session') || '{}')
   sessionStorage.setItem('school_session', JSON.stringify({ ...session, token: data.token, refresh_token: data.refresh_token }))
   return data
