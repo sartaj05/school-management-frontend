@@ -3,9 +3,6 @@ import { KeyRound, ShieldCheck } from 'lucide-react'
 import { schoolApi } from '../lib/api'
 
 export default function MfaSecurityCard() {
-  const [available] = useState(() => {
-    try { return !['Super Admin', 'super_admin', 'superadmin'].includes(JSON.parse(sessionStorage.getItem('school_session') || '{}').role) } catch { return true }
-  })
   const [status, setStatus] = useState(null)
   const [setup, setSetup] = useState(null)
   const [recoveryCodes, setRecoveryCodes] = useState([])
@@ -19,10 +16,9 @@ export default function MfaSecurityCard() {
   }
 
   useEffect(() => {
-    if (!available) return undefined
     const timer = setTimeout(load, 0)
     return () => clearTimeout(timer)
-  }, [available])
+  }, [])
 
   async function startSetup() {
     setBusy(true); setError(''); setSuccess('')
@@ -44,7 +40,6 @@ export default function MfaSecurityCard() {
     try { const result = await schoolApi.mfaRegenerateRecoveryCodes(code); setRecoveryCodes(result.recovery_codes || []); setCode(''); setSuccess('Recovery codes regenerated. The previous codes no longer work.'); await load() } catch (err) { setError(err.message) } finally { setBusy(false) }
   }
 
-  if (!available) return null
   return <section className="data-panel">
     <div className="panel-title"><div><span>Account security</span><h2><ShieldCheck size={18} /> Two-factor authentication</h2></div></div>
     <p>Protect sign-in with an authenticator app and one-time recovery codes.</p>
