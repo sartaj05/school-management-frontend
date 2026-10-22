@@ -172,6 +172,7 @@ export const schoolApi = {
   superAdminSchools: (filters = {}) => api(`/super-admin/schools?${new URLSearchParams(filters)}`),
   schoolAdminOptions: () => api('/super-admin/schools/admin-options'),
   school: (schoolId) => api(`/school/${schoolId}`),
+  subscriptionHistory: (schoolId, page = 1) => api(`/super-admin/schools/${schoolId}/subscription/history?page=${page}`),
   schoolSubscription: (schoolId) => api(`/super-admin/schools/${schoolId}/subscription`),
   updateSchoolSubscription: (schoolId, values) => api(`/super-admin/schools/${schoolId}/subscription`, { method: 'PATCH', body: JSON.stringify(values) }),
   updateSchool: (schoolId, values) => api(`/school/${schoolId}`, { method: 'PUT', body: values instanceof FormData ? values : JSON.stringify(values) }),

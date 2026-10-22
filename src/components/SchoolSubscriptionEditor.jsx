@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import SubscriptionHistory from './SubscriptionHistory'
 import { schoolApi } from '../lib/api'
 import { subscriptionForm, subscriptionPayload, subscriptionStatuses } from '../lib/subscription'
 
@@ -40,5 +41,6 @@ export default function SchoolSubscriptionEditor({ schoolId, onSaved }) {
       </div><p>Clear an expiry field to remove that date. To reactivate an expired subscription, choose active and set a future plan expiry or clear it.</p>
       <button className="button button-small" type="submit">{busy ? 'Saving…' : 'Save subscription'}</button></fieldset>
     </form>}
+    <SubscriptionHistory key={`${schoolId}-${subscription?.changed_at}`} schoolId={schoolId}/>
   </section>
 }
