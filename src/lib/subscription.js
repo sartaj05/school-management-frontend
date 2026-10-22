@@ -1,8 +1,10 @@
 export const subscriptionStatuses = ['active', 'trialing', 'past_due', 'expired', 'suspended', 'cancelled']
 
 export function subscriptionForm(subscription) {
+  const rawPlan = String(subscription.plan || '').trim().toLowerCase()
+  const plan = ['standard', 'trial', 'premium', 'enterprise'].includes(rawPlan) ? rawPlan : 'standard'
   return {
-    plan: subscription.plan || 'standard', status: subscription.status || 'active',
+    plan: plan || 'standard', status: subscription.status || 'active',
     trial_ends_at: (subscription.trial_ends_at || '').slice(0, 16),
     plan_ends_at: (subscription.plan_ends_at || '').slice(0, 16), reason: '',
   }

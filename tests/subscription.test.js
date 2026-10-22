@@ -17,3 +17,9 @@ test('subscription changes require a reason and reject invalid dates', () => {
   form.reason = 'Renewal'; form.plan_ends_at = 'invalid'
   assert.throws(() => subscriptionPayload(form), /valid/)
 })
+
+test('legacy and trial plans remain selectable', () => {
+  assert.equal(subscriptionForm({plan:'Trial'}).plan, 'trial')
+  assert.equal(subscriptionForm({plan:'Premium'}).plan, 'premium')
+  assert.equal(subscriptionForm({plan:'Basic'}).plan, 'standard')
+})

@@ -32,7 +32,7 @@ export default function SchoolSubscriptionEditor({ schoolId, onSaved }) {
     {!values ? <p>{error ? 'Close and reopen this school to retry.' : 'Loading subscription…'}</p> : <form onSubmit={save}>
       <p>Effective status: <strong>{subscription.effective_status}</strong> · Workspace access: <strong>{subscription.access_enabled ? 'Enabled' : 'Disabled'}</strong></p>
       <fieldset disabled={busy} style={{ border: 0, padding: 0 }}><div className="field-grid">
-        <label>Subscription plan<select name="plan" value={values.plan} onChange={change}>{['standard', 'premium', 'enterprise'].map(plan => <option key={plan}>{plan}</option>)}</select></label>
+        <label>Subscription plan<select name="plan" value={values.plan} onChange={change}>{['standard', 'trial', 'premium', 'enterprise'].map(plan => <option key={plan}>{plan}</option>)}</select></label>
         <label>Subscription status<select name="status" value={values.status} onChange={change}>{subscriptionStatuses.map(status => <option key={status}>{status}</option>)}</select></label>
         <label>Trial expiry (UTC)<input type="datetime-local" name="trial_ends_at" value={values.trial_ends_at} onChange={change}/></label>
         <label>Plan expiry (UTC)<input type="datetime-local" name="plan_ends_at" value={values.plan_ends_at} onChange={change}/></label>
