@@ -56,3 +56,22 @@ test('a late successful response is discarded after an account switch', () => sc
   await assert.rejects(request, error => error.status === 409)
   assert.equal(store.get('school_access_token'), 'B-access')
 }))
+
+for (const type of ['json', 'blob']) test(`account switch while consuming ${type} rejects stale data`, () => scenario(async ({ api, blobApi }, store, switchAccount) => {
+  let finish, started
+  const reading = new Promise(resolve => { started=resolve })
+  globalThis.fetch = async () => ({ok:true,status:200,[type]:()=>new Promise(resolve=>{finish=resolve;started()})})
+  const request = type==='json' ? api('/private') : blobApi('/private')
+  await reading; switchAccount(); finish(type==='json'?{owner:'A'}:new Blob(['A']))
+  await assert.rejects(request,error=>error.status===409)
+}))
+
+test('access-token-only account switches are detected', () => scenario(async ({ api }, store) => {
+  store.delete('school_refresh_token')
+  let finish
+  globalThis.fetch=()=>new Promise(resolve=>{finish=resolve})
+  const request=api('/private')
+  store.set('school_access_token','B-super-admin')
+  finish(Response.json({owner:'A'}))
+  await assert.rejects(request,error=>error.status===409)
+}))
