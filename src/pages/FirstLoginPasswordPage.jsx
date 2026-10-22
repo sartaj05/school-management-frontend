@@ -23,7 +23,7 @@ export default function FirstLoginPasswordPage({ onComplete, onLogout }) {
     try {
       await schoolApi.changePassword(values)
       onComplete()
-      navigate('/dashboard', { replace: true })
+      navigate('/login', { replace: true })
     } catch (requestError) {
       setError(requestError.message)
     } finally {
