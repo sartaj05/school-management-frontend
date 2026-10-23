@@ -89,11 +89,36 @@ async function authenticatedFetch(path, options = {}) {
 }
 
 export async function api(path, options = {}) {
-  const { response, sessionGuard } = await authenticatedFetch(path, options)
-  const data = await response.json().catch(() => ({}))
+  const { validateResponse, ...requestOptions } = options
+  const { response, sessionGuard } = await authenticatedFetch(path, requestOptions)
+  return readJsonResponse(response, sessionGuard, validateResponse)
+}
+
+function invalidResponse() {
+  return new ApiError('The server returned an invalid response. Check whether the operation completed before trying again.', 502, { code: 'invalid_response' })
+}
+
+async function readJsonResponse(response, sessionGuard, validateResponse) {
+  if (response.status === 204) {
+    requireSession(sessionGuard)
+    if (validateResponse) throw invalidResponse()
+    return {}
+  }
+  let data
+  try { data = await response.json() } catch {
+    requireSession(sessionGuard)
+    throw invalidResponse()
+  }
   requireSession(sessionGuard)
+  if (!data || typeof data !== 'object' || (!Array.isArray(data) && !Object.keys(data).length)) throw invalidResponse()
+  if (data.success === false) throw new ApiError(data.message || data.error || 'The operation was not completed.', response.status, data)
+  if (validateResponse && !validateResponse(data)) throw invalidResponse()
   return data
 }
+
+const hasToken = value => typeof value === 'string' && value.trim().length > 0
+const loginResponse = data => hasToken(data.token) && data.user && typeof data.user === 'object' && hasToken(data.user.role)
+const creationResponse = data => data.success === true && hasToken(data.message)
 
 export async function downloadApi(path, filename) {
   const { response, sessionGuard } = await authenticatedFetch(path)
@@ -121,9 +146,8 @@ async function refreshAccessToken(refreshToken, generation) {
     method: 'POST',
     headers: { Authorization: `Bearer ${refreshToken}` },
   })
-  const data = await response.json().catch(() => ({}))
-  requireSession(generation)
-  if (!response.ok) throw new ApiError(data.error || data.message || 'Your session has expired.', response.status, data)
+  const data = await readJsonResponse(response, generation, data => hasToken(data.token) && hasToken(data.refresh_token))
+  if (!response.ok) throw new ApiError('Your session has expired.', response.status)
   if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed during session refresh.', 409)
   sessionStorage.setItem('school_access_token', data.token)
   sessionStorage.setItem('school_refresh_token', data.refresh_token)
@@ -135,7 +159,7 @@ async function refreshAccessToken(refreshToken, generation) {
 }
 
 export const schoolApi = {
-  schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values) }),
+  schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values), validateResponse: loginResponse }),
   mfaStatus: () => api('/auth/mfa/status'),
   mfaSetup: () => api('/auth/mfa/setup', { method: 'POST' }),
   mfaEnable: (code) => api('/auth/mfa/enable', { method: 'POST', body: JSON.stringify({ code }) }),
@@ -154,7 +178,7 @@ export const schoolApi = {
   updateProfile: (values) => api('/auth/profile', { method: 'PUT', body: JSON.stringify(values) }),
   sessions: () => api('/auth/sessions'),
   revokeSession: (sessionId) => api(`/auth/sessions/${sessionId}`, { method: 'DELETE' }),
-  superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
+  superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values), validateResponse: loginResponse }),
   dashboard: () => api('/dashboard/home'),
   globalSearch: (query) => api(`/search?q=${encodeURIComponent(query)}`),
   featureAccess: () => api('/school/feature-access'),
@@ -177,7 +201,7 @@ export const schoolApi = {
   updateSchoolSubscription: (schoolId, values) => api(`/super-admin/schools/${schoolId}/subscription`, { method: 'PATCH', body: JSON.stringify(values) }),
   updateSchool: (schoolId, values) => api(`/school/${schoolId}`, { method: 'PUT', body: values instanceof FormData ? values : JSON.stringify(values) }),
   updateSchoolStatus: (schoolId, status) => api(`/school/${schoolId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  createSchool: (values) => api('/school/setup', { method: 'POST', body: toFormData(values) }),
+  createSchool: (values) => api('/school/setup', { method: 'POST', body: toFormData(values), validateResponse: creationResponse }),
   branches: (filters = {}) => api('/branches?' + new URLSearchParams(filters)),
   createBranch: (values) => api('/branches', { method: 'POST', body: JSON.stringify(values) }),
   updateBranchStatus: (branchId, status) => api('/branches/' + branchId + '/status', { method: 'PATCH', body: JSON.stringify({ status }) }),
@@ -231,11 +255,11 @@ export const schoolApi = {
   updateUserStatus: (userId, values) => api(`/super-admin/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
   updateTenantUser: (userId, values) => api(`/users/${userId}`, { method: 'PUT', body: JSON.stringify(values) }),
   updateTenantUserStatus: (userId, values) => api(`/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
-  createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values) }),
-  createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values) }),
+  createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values), validateResponse: creationResponse }),
+  createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values), validateResponse: creationResponse }),
   createTeacher: (values) => api('/teacher/create', { method: 'POST', body: toFormData(values) }),
   createParent: (values) => api('/parent/create', { method: 'POST', body: JSON.stringify(values) }),
-  createClass: (values) => api('/class/create', { method: 'POST', body: JSON.stringify(values) }),
+  createClass: (values) => api('/class/create', { method: 'POST', body: JSON.stringify(values), validateResponse: creationResponse }),
   attendance: (date, className = 'All', section = 'All') => api(`/attendance/get?attendance_date=${date}&class_name=${encodeURIComponent(className)}&section=${encodeURIComponent(section)}`),
   attendanceReport: (filters = '') => api(`/attendance/report${filters ? `?${filters}` : ''}`),
   markAttendance: (values) => api('/attendance/mark', { method: 'POST', body: JSON.stringify(values) }),
