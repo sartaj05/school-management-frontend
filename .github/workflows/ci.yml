@@ -41,6 +41,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # Pin the coordinated API contract; update this SHA when changing it.
+      - name: Validate private API checkout access
+        env:
+          API_REPO_READ_TOKEN: ${{ secrets.API_REPO_READ_TOKEN }}
+        run: |
+          if [ -z "$API_REPO_READ_TOKEN" ]; then
+            echo "::error::Add the API_REPO_READ_TOKEN repository Actions secret with read-only Contents access to the private Flask repository. See docs/ci-smoke.md."
+            exit 1
+          fi
       - uses: actions/checkout@v4
         with:
           repository: SABIR02071992/Flak-API---For-School-Management-System-app
