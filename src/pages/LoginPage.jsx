@@ -32,10 +32,10 @@ export default function LoginPage({ onLogin, language = 'en' }) {
     e.preventDefault(); setError(''); setBusy(true)
     try {
       const values = mfaChallenge ? { ...form, mfa_token: mfaChallenge } : form
-      const data = superAdmin ? await schoolApi.superAdminLogin({ email: form.email, password: form.password }) : await schoolApi.schoolLogin(values)
+      const data = superAdmin ? await schoolApi.superAdminLogin({ email: form.email, password: form.password, mfa_token: mfaChallenge, mfa_code: form.mfa_code }) : await schoolApi.schoolLogin(values)
       setMfaChallenge(''); onLogin(data); navigate('/dashboard')
     } catch (err) {
-      if (!superAdmin && err.data?.mfa_required && err.data?.mfa_token) {
+      if (err.data?.mfa_required && err.data?.mfa_token) {
         setMfaChallenge(err.data.mfa_token)
         setMessage(t('Enter the six-digit code from your authenticator app.'))
         setError('')

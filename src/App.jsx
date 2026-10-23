@@ -10,11 +10,11 @@ import FeePaymentPage from './pages/FeePaymentPage'
 import FirstLoginPasswordPage from './pages/FirstLoginPasswordPage'
 import AdmissionPage from './pages/AdmissionPage'
 import ContactPage from './pages/ContactPage'
-import { schoolApi } from './lib/api'
+import { beginSession, schoolApi } from './lib/api'
 import { CheckCircle2, Contrast, Languages, Minus, Plus, RotateCcw, X } from 'lucide-react'
 import { accessibilityTranslations, getLanguage, languageOptions } from './lib/i18n'
 
-const AUTH_STORAGE_KEYS = ['school_access_token', 'school_refresh_token', 'school_session']
+const AUTH_STORAGE_KEYS = ['school_access_token', 'school_refresh_token', 'school_session', 'school_session_id']
 
 function clearLegacyAuthStorage() { AUTH_STORAGE_KEYS.forEach(key => localStorage.removeItem(key)) }
 function readSession() { try { clearLegacyAuthStorage(); return JSON.parse(sessionStorage.getItem('school_session')) } catch { return null } }
@@ -23,9 +23,9 @@ export default function App() {
   const [session,setSession]=useState(readSession)
   const [flash,setFlash]=useState('')
   const [preferences,setPreferences]=useState(() => ({ language: 'en', fontScale: 1, highContrast: false, reduceMotion: false, ...readPreferences() }))
-  const login=data=>{ sessionStorage.setItem('school_access_token',data.token); if(data.refresh_token)sessionStorage.setItem('school_refresh_token',data.refresh_token); sessionStorage.setItem('school_session',JSON.stringify(data)); setSession(data); setFlash(data.message||'Login successful.') }
+  const login=data=>{ beginSession(); sessionStorage.setItem('school_access_token',data.token); if(data.refresh_token)sessionStorage.setItem('school_refresh_token',data.refresh_token);else sessionStorage.removeItem('school_refresh_token'); sessionStorage.setItem('school_session',JSON.stringify(data)); setSession(data); setFlash(data.message||'Login successful.') }
   const updateProfile=profile=>{const updated={...session,user:{...session.user,name:profile.name,mobile:profile.mobile}};sessionStorage.setItem('school_session',JSON.stringify(updated));setSession(updated)}
-  const logout=async()=>{ const accessToken=sessionStorage.getItem('school_access_token'); const refreshToken=sessionStorage.getItem('school_refresh_token'); try{if(accessToken)await schoolApi.logoutAccess(accessToken); if(refreshToken)await schoolApi.logout(refreshToken)}catch{/* Local logout must still complete when the API is unavailable. */}finally{clearAllMarkDrafts();AUTH_STORAGE_KEYS.forEach(key=>sessionStorage.removeItem(key));setSession(null);setFlash('Logout successful.')} }
+  const logout=async()=>{ const accessToken=sessionStorage.getItem('school_access_token'); const refreshToken=sessionStorage.getItem('school_refresh_token'); const revoke=async()=>{try{if(accessToken)await schoolApi.logoutAccess(accessToken); if(refreshToken)await schoolApi.logout(refreshToken)}catch{/* Local logout completes even when revocation is unavailable. */}}; const pending=revoke();clearAllMarkDrafts();AUTH_STORAGE_KEYS.forEach(key=>sessionStorage.removeItem(key));setSession(null);setFlash('Logout successful.');await pending }
   const mustChangePassword=Boolean(session?.must_change_password||session?.user?.must_change_password)
   const completePasswordChange=()=>{clearAllMarkDrafts();AUTH_STORAGE_KEYS.forEach(key=>sessionStorage.removeItem(key));setSession(null);setFlash('Password updated. Sign in with your new password.')}
   useEffect(()=>{ if(!flash) return undefined; const timer=setTimeout(()=>setFlash(''),3200); return()=>clearTimeout(timer) },[flash])

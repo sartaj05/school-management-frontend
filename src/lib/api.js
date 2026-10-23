@@ -15,14 +15,24 @@ export class ApiError extends Error {
 let refreshPromise = null
 let sessionGeneration = 0
 let observedRefreshToken
+let observedAccessToken
+let observedSessionId
 
 function currentSessionGeneration() {
   const refreshToken = sessionStorage.getItem('school_refresh_token')
-  if (refreshToken !== observedRefreshToken) {
+  const accessToken = sessionStorage.getItem('school_access_token')
+  const sessionId = sessionStorage.getItem('school_session_id')
+  if (refreshToken !== observedRefreshToken || accessToken !== observedAccessToken || sessionId !== observedSessionId) {
+    observedAccessToken = accessToken
+    observedSessionId = sessionId
     observedRefreshToken = refreshToken
     sessionGeneration += 1
   }
   return sessionGeneration
+}
+
+export function beginSession() {
+  sessionStorage.setItem('school_session_id', crypto.randomUUID())
 }
 
 function requireSession(generation) {
@@ -72,18 +82,24 @@ async function authenticatedFetch(path, options = {}) {
   }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
+    requireSession(sessionGuard)
     throw new ApiError(data.error || data.message || data.msg || `Request failed (HTTP ${response.status}). Please try again.`, response.status, data)
   }
-  return response
+  return { response, sessionGuard }
 }
 
 export async function api(path, options = {}) {
-  return (await authenticatedFetch(path, options)).json().catch(() => ({}))
+  const { response, sessionGuard } = await authenticatedFetch(path, options)
+  const data = await response.json().catch(() => ({}))
+  requireSession(sessionGuard)
+  return data
 }
 
 export async function downloadApi(path, filename) {
-  const response = await authenticatedFetch(path)
-  const url = URL.createObjectURL(await response.blob())
+  const { response, sessionGuard } = await authenticatedFetch(path)
+  const blob = await response.blob()
+  requireSession(sessionGuard)
+  const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   const disposition = response.headers.get('content-disposition') || ''
   const storedName = disposition.match(/filename="?([^";]+)"?/i)?.[1]?.split(/[\\/]/).pop()?.replace(/[\r\n]/g, '')
@@ -94,7 +110,10 @@ export async function downloadApi(path, filename) {
 }
 
 export async function blobApi(path, options = {}) {
-  return (await authenticatedFetch(path, options)).blob()
+  const { response, sessionGuard } = await authenticatedFetch(path, options)
+  const blob = await response.blob()
+  requireSession(sessionGuard)
+  return blob
 }
 
 async function refreshAccessToken(refreshToken, generation) {
@@ -109,6 +128,7 @@ async function refreshAccessToken(refreshToken, generation) {
   sessionStorage.setItem('school_access_token', data.token)
   sessionStorage.setItem('school_refresh_token', data.refresh_token)
   observedRefreshToken = data.refresh_token
+  observedAccessToken = data.token
   const session = JSON.parse(sessionStorage.getItem('school_session') || '{}')
   sessionStorage.setItem('school_session', JSON.stringify({ ...session, token: data.token, refresh_token: data.refresh_token }))
   return data
@@ -152,6 +172,7 @@ export const schoolApi = {
   superAdminSchools: (filters = {}) => api(`/super-admin/schools?${new URLSearchParams(filters)}`),
   schoolAdminOptions: () => api('/super-admin/schools/admin-options'),
   school: (schoolId) => api(`/school/${schoolId}`),
+  subscriptionHistory: (schoolId, page = 1) => api(`/super-admin/schools/${schoolId}/subscription/history?page=${page}`),
   schoolSubscription: (schoolId) => api(`/super-admin/schools/${schoolId}/subscription`),
   updateSchoolSubscription: (schoolId, values) => api(`/super-admin/schools/${schoolId}/subscription`, { method: 'PATCH', body: JSON.stringify(values) }),
   updateSchool: (schoolId, values) => api(`/school/${schoolId}`, { method: 'PUT', body: values instanceof FormData ? values : JSON.stringify(values) }),

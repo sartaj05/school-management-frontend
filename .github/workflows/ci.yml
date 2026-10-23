@@ -18,3 +18,68 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  browser-api-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: eduflow_client_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d eduflow_client_test"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/eduflow_client_test
+      APP_CONFIG: development
+      AUTH_RATE_LIMIT_ENABLED: 'false'
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      # Pin the coordinated API contract; update this SHA when changing it.
+      - uses: actions/checkout@v4
+        with:
+          repository: SABIR02071992/Flak-API---For-School-Management-System-app
+          token: ${{ secrets.API_REPO_READ_TOKEN }}
+          ref: 2803b96bfdeb52787559a6c564f3ee56b2d27484
+          path: api
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r api/requirements.txt
+      - name: Prepare real API and synthetic tenant
+        working-directory: api
+        run: |
+          python init_db.py
+          python scripts/seed_ci_smoke.py
+          python app.py > api.log 2>&1 &
+          curl --retry 30 --retry-connrefused --retry-delay 1 --fail http://127.0.0.1:5000/health
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start web app
+        run: |
+          npm run dev -- --host 127.0.0.1 > vite.log 2>&1 &
+          curl --retry 30 --retry-connrefused --retry-delay 1 --fail http://127.0.0.1:5173
+      - name: Exercise browser workflows against PostgreSQL API
+        env:
+          E2E_SCHOOL_DOMAIN: eduflow_demo_ci_smoke
+          E2E_ADMIN_EMAIL: demo.admin@eduflow.test
+          E2E_ADMIN_PASSWORD: DemoOnly@12345
+        run: npx playwright test e2e/release_smoke.spec.js e2e/subscription.spec.js e2e/bank_pagination.spec.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-smoke-results
+          path: |
+            playwright-report/
+            test-results/
+            api/api.log
+            vite.log

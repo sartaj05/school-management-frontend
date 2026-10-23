@@ -35,8 +35,8 @@ test.describe('React browser release smoke', () => {
     const admission = `E2E-${Date.now()}`
     await page.getByLabel(/Admission number/).fill(admission)
     await page.getByLabel(/First name/).fill('Browser')
-    await page.getByLabel(/Class/).fill('Grade 5')
-    await page.getByLabel(/Section/).fill('A')
+    await page.getByLabel(/Class \*/).selectOption({ label: 'Grade 5' })
+    await page.getByLabel(/Section \*/).selectOption({ label: 'A' })
     await page.getByRole('button', { name: /register student/i }).click()
     await expect(page.getByText(/student created successfully/i)).toBeVisible()
     await expect(page.locator('.student-directory')).toContainText(admission)
