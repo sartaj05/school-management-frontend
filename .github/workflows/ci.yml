@@ -44,6 +44,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: SABIR02071992/Flak-API---For-School-Management-System-app
+          token: ${{ secrets.API_REPO_READ_TOKEN }}
           ref: 2803b96bfdeb52787559a6c564f3ee56b2d27484
           path: api
       - uses: actions/setup-python@v5
