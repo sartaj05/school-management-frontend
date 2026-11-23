@@ -75,3 +75,35 @@ test('access-token-only account switches are detected', () => scenario(async ({ 
   finish(Response.json({owner:'A'}))
   await assert.rejects(request,error=>error.status===409)
 }))
+
+test('expired access-only sessions clear authentication and notify the app', () => scenario(async ({ api }, store) => {
+  store.delete('school_refresh_token')
+  store.set('school_session', '{"user":{"role":"super_admin"}}')
+  store.set('school_session_id', 'admin-session')
+  const events = []
+  globalThis.window = { dispatchEvent: event => events.push(event.type) }
+  globalThis.fetch = async () => Response.json({ msg: 'Token has expired' }, { status: 401 })
+  await assert.rejects(api('/dashboard/home'), error => error.status === 401)
+  for (const key of ['school_access_token', 'school_refresh_token', 'school_session', 'school_session_id']) assert.equal(store.has(key), false)
+  assert.deepEqual(events, ['school-session-expired'])
+}))
+
+test('invalid login credentials do not expire an existing access-only session', () => scenario(async ({ schoolApi }, store) => {
+  store.delete('school_refresh_token')
+  globalThis.fetch = async () => Response.json({ message: 'Invalid password' }, { status: 401 })
+  await assert.rejects(schoolApi.superAdminLogin({}), error => error.status === 401)
+  assert.equal(store.get('school_access_token'), 'A-access')
+}))
+
+test('late access-only 401 body cannot clear a new account', () => scenario(async ({ api }, store, switchAccount) => {
+  store.delete('school_refresh_token')
+  let finish, reading
+  const started = new Promise(resolve => { reading = resolve })
+  globalThis.fetch = async () => ({ ok: false, status: 401, json: () => new Promise(resolve => { finish = resolve; reading() }) })
+  const pending = api('/dashboard/home')
+  await started
+  switchAccount()
+  finish({ message: 'Expired' })
+  await assert.rejects(pending, error => error.status === 409)
+  assert.equal(store.get('school_access_token'), 'B-access')
+}))

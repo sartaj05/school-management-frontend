@@ -83,6 +83,12 @@ async function authenticatedFetch(path, options = {}) {
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     requireSession(sessionGuard)
+    const isLogin = path === '/auth/login' || path === '/super-admin/login'
+    const sentToken = fetchOptions.headers?.Authorization || (token ? `Bearer ${token}` : null)
+    if (response.status === 401 && !refreshToken && token && !isLogin && sentToken === `Bearer ${token}`) {
+      for (const key of ['school_access_token', 'school_refresh_token', 'school_session', 'school_session_id']) sessionStorage.removeItem(key)
+      window.dispatchEvent(new Event('school-session-expired'))
+    }
     throw new ApiError(data.error || data.message || data.msg || `Request failed (HTTP ${response.status}). Please try again.`, response.status, data)
   }
   return { response, sessionGuard }
