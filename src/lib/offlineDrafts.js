@@ -9,10 +9,24 @@ export function draftScope() {
   } catch { return null }
 }
 const storageKey = () => { const scope = draftScope(); if (!scope) throw new Error('Sign in to save an offline draft.'); return `school-drafts:${scope}` }
-export function savedDrafts() { try { return JSON.parse(localStorage.getItem(storageKey()) || '{}') } catch { return {} } }
+const transientStatus = status => [408, 425, 429].includes(status) || status >= 500
+export function savedDrafts() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(storageKey()) || '{}')
+    // Older entries did not store a failure status. Their server outcome is
+    // unknown, so preserve the operation ID and offer retry before editing.
+    return Object.fromEntries(Object.entries(rows).map(([key, row]) => [key,
+      row?.queued && row.blocked && (!row.failureStatus || transientStatus(row.failureStatus)) ? { ...row, blocked: false } : row]))
+  } catch { return {} }
+}
 export function saveDraft(key, data) {
   const rows = savedDrafts(); if (data === null) delete rows[key]; else rows[key] = data
   localStorage.setItem(storageKey(), JSON.stringify(rows)); window.dispatchEvent(new Event('school-drafts-changed'))
+}
+export function keepDraftForEditing(key) {
+  const row = savedDrafts()[key]
+  if (!row?.queued || !row.blocked) throw new Error('Retry this submission to confirm its outcome before editing.')
+  saveDraft(key, Object.fromEntries(Object.entries(row.payload).filter(([field]) => field !== 'expected_submitted_at')))
 }
 export async function submitDraft(key, path, payload) {
   const owner = draftScope()
@@ -38,8 +52,8 @@ export async function submitDraft(key, path, payload) {
     return result
   } catch (e) {
     if (draftScope() !== owner) throw e
-    if (e.status) { saveDraft(key, { ...row, blocked: true, error: e.message }); throw e }
-    saveDraft(key, { ...row, error: 'Waiting for connection. Not confirmed by the school.' })
-    return { queued: true, message: 'Saved offline. Not submitted yet; retry from Offline drafts when connected.' }
+    if (e.status && !transientStatus(e.status)) { saveDraft(key, { ...row, blocked: true, failureStatus: e.status, error: e.message }); throw e }
+    saveDraft(key, { ...row, blocked: false, failureStatus: e.status || null, error: 'Not confirmed by the school. Retry this submission when the service is available.' })
+    return { queued: true, message: 'Saved on this device; confirmation is pending. Retry from Offline drafts when connected.' }
   }
 }
