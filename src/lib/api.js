@@ -60,6 +60,11 @@ async function authenticatedFetch(path, options = {}) {
   requireSession(sessionGuard)
   const refreshToken = sessionStorage.getItem('school_refresh_token')
   if (response.status === 401 && retry && refreshToken && path !== '/auth/refresh') {
+    // A concurrent request may already have refreshed this same session while
+    // this response was in flight. Retry once with its current credentials.
+    if (token !== sessionStorage.getItem('school_access_token')) {
+      return authenticatedFetch(path, { ...fetchOptions, accountScope, sessionGuard, retry: false })
+    }
     try {
       if (!refreshPromise || refreshPromise.generation !== sessionGuard) {
         const flight = { generation: sessionGuard }

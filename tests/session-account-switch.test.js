@@ -16,6 +16,34 @@ async function scenario(run) {
   } finally { Object.assign(globalThis, originals) }
 }
 
+test('a delayed old-token 401 reuses refreshed credentials without rotating again', () => scenario(async ({ api }, store) => {
+  let releaseSlow, refreshes = 0
+  const calls = []
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url, ...options })
+    if (url.endsWith('/auth/refresh')) {
+      refreshes++
+      return Response.json({ token: `A-new-${refreshes}`, refresh_token: `A-rotated-${refreshes}` })
+    }
+    if (options.headers.Authorization === 'Bearer A-access') {
+      if (url.endsWith('/slow')) return new Promise(resolve => { releaseSlow = resolve })
+      return Response.json({ message: 'Expired' }, { status: 401 })
+    }
+    return Response.json({ success: true })
+  }
+  const slow = api('/slow', { method: 'POST', body: '{"answer":"saved"}', headers: { 'X-Client-Operation-Id': 'same-operation' } })
+  await api('/fast')
+  releaseSlow(Response.json({ message: 'Expired' }, { status: 401 }))
+  await slow
+  assert.equal(refreshes, 1)
+  assert.equal(store.get('school_refresh_token'), 'A-rotated-1')
+  const replay = calls.filter(call => call.url.endsWith('/slow'))
+  assert.equal(replay.length, 2)
+  assert.equal(replay[1].headers.Authorization, 'Bearer A-new-1')
+  assert.equal(replay[1].headers['X-Client-Operation-Id'], 'same-operation')
+  assert.equal(replay[1].body, replay[0].body)
+}))
+
 test('an old 401 cannot replay a write in a newly signed-in account', () => scenario(async ({ schoolApi }, store, switchAccount) => {
   let finish
   let calls = 0
