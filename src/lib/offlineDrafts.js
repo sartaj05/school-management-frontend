@@ -47,7 +47,7 @@ export async function submitDraft(key, path, payload) {
     if (draftScope() === owner) {
       saveDraft(key, null)
       // A confirmed submission must not be replayed if local cleanup fails.
-      clearAttachment(key, owner).catch(() => {})
+      if (row.attachment) clearAttachment(key, owner, row.attachment.id).catch(() => {})
     }
     return result
   } catch (e) {
