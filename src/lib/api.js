@@ -164,6 +164,14 @@ async function refreshAccessToken(refreshToken, generation) {
   return data
 }
 
+async function revokeToken(path, token) {
+  // Logout owns captured credentials and must survive local logout/account switches.
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new ApiError('Server logout could not be confirmed.', response.status)
+}
+
 export const schoolApi = {
   schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values), validateResponse: loginResponse }),
   mfaStatus: () => api('/auth/mfa/status'),
@@ -178,8 +186,8 @@ export const schoolApi = {
   changePassword: (values) => api('/auth/change-password', { method: 'POST', body: JSON.stringify(values) }),
   forgotPassword: (values) => api('/auth/forgot-password', { method: 'POST', body: JSON.stringify(values) }),
   resetPassword: (values) => api('/auth/reset-password', { method: 'POST', body: JSON.stringify(values) }),
-  logout: (refreshToken) => api('/auth/logout', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${refreshToken}` } }),
-  logoutAccess: (accessToken) => api('/auth/logout/access', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${accessToken}` } }),
+  logout: (refreshToken) => revokeToken('/auth/logout', refreshToken),
+  logoutAccess: (accessToken) => revokeToken('/auth/logout/access', accessToken),
   profile: () => api('/auth/profile'),
   updateProfile: (values) => api('/auth/profile', { method: 'PUT', body: JSON.stringify(values) }),
   sessions: () => api('/auth/sessions'),
