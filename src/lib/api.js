@@ -71,13 +71,19 @@ async function authenticatedFetch(path, options = {}) {
       await refreshPromise.promise
       requireSession(sessionGuard)
       return authenticatedFetch(path, { ...fetchOptions, accountScope, sessionGuard, retry: false })
-    } catch {
+    } catch (error) {
       requireSession(sessionGuard)
       if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed. Reopen this draft.', 409)
+      const temporary = !error.status || [408, 425, 429].includes(error.status) || (error.status >= 500 && error.data?.code !== 'invalid_response')
+      if (temporary) {
+        throw new ApiError('Session refresh is temporarily unavailable. Please retry when the connection is restored.', error.status || 503, { code: 'refresh_unavailable' })
+      }
       sessionStorage.removeItem('school_access_token')
       sessionStorage.removeItem('school_refresh_token')
       sessionStorage.removeItem('school_session')
+      sessionStorage.removeItem('school_session_id')
       window.dispatchEvent(new Event('school-session-expired'))
+      throw error
     }
   }
   if (!response.ok) {
@@ -152,8 +158,12 @@ async function refreshAccessToken(refreshToken, generation) {
     method: 'POST',
     headers: { Authorization: `Bearer ${refreshToken}` },
   })
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    requireSession(generation)
+    throw new ApiError(data.message || data.error || data.msg || 'Unable to refresh your session.', response.status, data)
+  }
   const data = await readJsonResponse(response, generation, data => hasToken(data.token) && hasToken(data.refresh_token))
-  if (!response.ok) throw new ApiError('Your session has expired.', response.status)
   if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed during session refresh.', 409)
   sessionStorage.setItem('school_access_token', data.token)
   sessionStorage.setItem('school_refresh_token', data.refresh_token)

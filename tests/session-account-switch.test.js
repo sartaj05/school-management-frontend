@@ -107,3 +107,32 @@ test('late access-only 401 body cannot clear a new account', () => scenario(asyn
   await assert.rejects(pending, error => error.status === 409)
   assert.equal(store.get('school_access_token'), 'B-access')
 }))
+
+for (const status of [429, 502, 503, 'offline']) test(`temporary refresh failure ${status} preserves credentials and does not replay a write`, () => scenario(async ({ api }, store) => {
+  let writes = 0
+  globalThis.fetch = async url => {
+    if (!url.endsWith('/auth/refresh')) { writes++; return Response.json({ msg: 'Expired' }, { status: 401 }) }
+    if (status === 'offline') throw new TypeError('Network failed')
+    return new Response('<html>Temporarily unavailable</html>', { status })
+  }
+  await assert.rejects(api('/save', { method: 'POST', body: '{}' }), error => error.data?.code === 'refresh_unavailable')
+  assert.equal(writes, 1)
+  assert.equal(store.get('school_access_token'), 'A-access')
+  assert.equal(store.get('school_refresh_token'), 'A-refresh')
+  globalThis.fetch = async (url, options) => url.endsWith('/auth/refresh')
+    ? Response.json({ token: 'A-new', refresh_token: 'A-rotated' })
+    : options.headers.Authorization === 'Bearer A-access'
+      ? Response.json({ msg: 'Expired' }, { status: 401 }) : Response.json({ success: true })
+  assert.deepEqual(await api('/save', { method: 'POST', body: '{}' }), { success: true })
+  assert.equal(store.get('school_refresh_token'), 'A-rotated')
+}))
+
+test('rejected refresh expires the session instead of leaving unusable credentials', () => scenario(async ({ api }, store) => {
+  const events = []
+  globalThis.window = { dispatchEvent: e => events.push(e.type) }
+  globalThis.fetch = async () => Response.json({ message: 'Revoked session' }, { status: 401 })
+  await assert.rejects(api('/dashboard/home'), error => error.status === 401)
+  assert.equal(store.has('school_access_token'), false)
+  assert.equal(store.has('school_refresh_token'), false)
+  assert.deepEqual(events, ['school-session-expired'])
+}))
