@@ -1,0 +1,7 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Portal links test</title></head><body><main id="root"></main><script type="module">
+import React from 'react'
+import {createRoot} from 'react-dom/client'
+import PortalLinkManager from '/src/components/PortalLinkManager.jsx'
+import {ConfirmationDialogHost} from '/src/components/ConfirmationDialog.jsx'
+createRoot(document.getElementById('root')).render(React.createElement(React.Fragment,null,React.createElement(PortalLinkManager),React.createElement(ConfirmationDialogHost)))
+</script></body></html>

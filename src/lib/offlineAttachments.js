@@ -30,11 +30,13 @@ export async function stageAttachment(key, file, category) {
   window.dispatchEvent(new Event('school-drafts-changed'))
   return meta
 }
-export async function clearAttachment(key, owner = draftScope()) {
+export async function clearAttachment(key, owner = draftScope(), expectedId) {
   const raw = localStorage.getItem(metaKey(owner, key)); if (!raw) return
   const meta = JSON.parse(raw)
+  if (expectedId && meta.id !== expectedId) return
   await blobs('readwrite', store => store.delete(`${owner}:${meta.id}`))
-  localStorage.removeItem(metaKey(owner, key))
+  // A new file may have been selected while the IndexedDB delete was pending.
+  if (localStorage.getItem(metaKey(owner, key)) === raw) localStorage.removeItem(metaKey(owner, key))
   window.dispatchEvent(new Event('school-drafts-changed'))
 }
 export async function uploadAttachment(meta) {

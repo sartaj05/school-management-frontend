@@ -9,7 +9,7 @@ import OpenInApp from './OpenInApp'
 import IssuedDocuments from './IssuedDocuments'
 import MyChildren from './MyChildren'
 import OfflineDrafts from './OfflineDrafts'
-import { savedDrafts, saveDraft, submitDraft } from '../lib/offlineDrafts'
+import { draftScope, savedDrafts, saveDraft, submitDraft } from '../lib/offlineDrafts'
 import { openFeePayment } from '../lib/feePayment'
 /* eslint-disable react-hooks/set-state-in-effect */
 import { BookCheck, CalendarCheck, CircleDollarSign, LibraryBig, Award, UserRound, Download, Send, CreditCard, FileText, Bell, CheckCheck, MessageCircle } from 'lucide-react'
@@ -24,17 +24,31 @@ const tabs = [
 
 const date = value => value ? new Date(value).toLocaleDateString() : '—'
 
-export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
+export default function ParentStudentPortal({ user, initialTab = 'overview', initialStudentId = '', initialSchool = '' }) {
   const [me, setMe] = useState(null), [studentId, setStudentId] = useState(''), [tab, setTab] = useState(initialTab)
   const [data, setData] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [revision, setRevision] = useState(0)
 
   useEffect(() => {
+    let active = true
+    setStudentId(''); setMe(null); setError(''); setLoading(true)
     schoolApi.portalMe().then(result => {
+      if (!active) return
       setMe(result)
-      const initial = result.student?.id || result.children?.[0]?.id || ''
+      const linked = result.student ? [result.student] : (result.children || [])
+      if (initialSchool && initialSchool !== draftScope()?.split(':')[0]) {
+        setError('This link belongs to a different school. Sign in to that school first.')
+        return
+      }
+      const requested = initialStudentId ? linked.find(child => String(child.id) === String(initialStudentId)) : null
+      if (initialStudentId && !requested) {
+        setError('This child is not linked to your account.')
+        return
+      }
+      const initial = requested?.id || linked[0]?.id || ''
       setStudentId(initial ? String(initial) : '')
-    }).catch(e => setError(e.message)).finally(() => setLoading(false))
-  }, [])
+    }).catch(e => { if (active) setError(e.message) }).finally(() => { if (active) setLoading(false) })
+    return () => { active = false }
+  }, [initialStudentId, initialSchool])
 
   useEffect(() => {
     if (!studentId) return
@@ -48,7 +62,7 @@ export default function ParentStudentPortal({ user, initialTab = 'overview' }) {
 
   if (loading && !me) return <div className="loading-grid"><i/><i/><i/></div>
   if (error && !me) return <section className="empty-state"><UserRound/><h3>Portal access is not ready</h3><p>{error}</p></section>
-  if (!studentId) return <section className="empty-state"><UserRound/><h3>No student is linked</h3><p>Ask your School Admin to link your account to an active Parent or Student profile.</p></section>
+  if (!studentId) return <section className="empty-state"><UserRound/><h3>{error ? 'Unable to open this student' : 'No student is linked'}</h3><p>{error || 'Ask your School Admin to link your account to an active Parent or Student profile.'}</p></section>
 
   const children = me?.children || []
   return <>

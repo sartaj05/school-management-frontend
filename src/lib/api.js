@@ -60,6 +60,11 @@ async function authenticatedFetch(path, options = {}) {
   requireSession(sessionGuard)
   const refreshToken = sessionStorage.getItem('school_refresh_token')
   if (response.status === 401 && retry && refreshToken && path !== '/auth/refresh') {
+    // A concurrent request may already have refreshed this same session while
+    // this response was in flight. Retry once with its current credentials.
+    if (token !== sessionStorage.getItem('school_access_token')) {
+      return authenticatedFetch(path, { ...fetchOptions, accountScope, sessionGuard, retry: false })
+    }
     try {
       if (!refreshPromise || refreshPromise.generation !== sessionGuard) {
         const flight = { generation: sessionGuard }
@@ -71,29 +76,66 @@ async function authenticatedFetch(path, options = {}) {
       await refreshPromise.promise
       requireSession(sessionGuard)
       return authenticatedFetch(path, { ...fetchOptions, accountScope, sessionGuard, retry: false })
-    } catch {
+    } catch (error) {
       requireSession(sessionGuard)
       if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed. Reopen this draft.', 409)
+      const temporary = !error.status || [408, 425, 429].includes(error.status) || (error.status >= 500 && error.data?.code !== 'invalid_response')
+      if (temporary) {
+        throw new ApiError('Session refresh is temporarily unavailable. Please retry when the connection is restored.', error.status || 503, { code: 'refresh_unavailable' })
+      }
       sessionStorage.removeItem('school_access_token')
       sessionStorage.removeItem('school_refresh_token')
       sessionStorage.removeItem('school_session')
+      sessionStorage.removeItem('school_session_id')
       window.dispatchEvent(new Event('school-session-expired'))
+      throw error
     }
   }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}))
     requireSession(sessionGuard)
+    const isLogin = path === '/auth/login' || path === '/super-admin/login'
+    const sentToken = fetchOptions.headers?.Authorization || (token ? `Bearer ${token}` : null)
+    if (response.status === 401 && !refreshToken && token && !isLogin && sentToken === `Bearer ${token}`) {
+      for (const key of ['school_access_token', 'school_refresh_token', 'school_session', 'school_session_id']) sessionStorage.removeItem(key)
+      window.dispatchEvent(new Event('school-session-expired'))
+    }
     throw new ApiError(data.error || data.message || data.msg || `Request failed (HTTP ${response.status}). Please try again.`, response.status, data)
   }
   return { response, sessionGuard }
 }
 
 export async function api(path, options = {}) {
-  const { response, sessionGuard } = await authenticatedFetch(path, options)
-  const data = await response.json().catch(() => ({}))
+  const { validateResponse, ...requestOptions } = options
+  const { response, sessionGuard } = await authenticatedFetch(path, requestOptions)
+  return readJsonResponse(response, sessionGuard, validateResponse)
+}
+
+function invalidResponse() {
+  return new ApiError('The server returned an invalid response. Check whether the operation completed before trying again.', 502, { code: 'invalid_response' })
+}
+
+async function readJsonResponse(response, sessionGuard, validateResponse) {
+  if (response.status === 204) {
+    requireSession(sessionGuard)
+    if (validateResponse) throw invalidResponse()
+    return {}
+  }
+  let data
+  try { data = await response.json() } catch {
+    requireSession(sessionGuard)
+    throw invalidResponse()
+  }
   requireSession(sessionGuard)
+  if (!data || typeof data !== 'object' || (!Array.isArray(data) && !Object.keys(data).length)) throw invalidResponse()
+  if (data.success === false) throw new ApiError(data.message || data.error || 'The operation was not completed.', response.status, data)
+  if (validateResponse && !validateResponse(data)) throw invalidResponse()
   return data
 }
+
+const hasToken = value => typeof value === 'string' && value.trim().length > 0
+const loginResponse = data => hasToken(data.token) && data.user && typeof data.user === 'object' && hasToken(data.user.role)
+const creationResponse = data => data.success === true && hasToken(data.message)
 
 export async function downloadApi(path, filename) {
   const { response, sessionGuard } = await authenticatedFetch(path)
@@ -121,9 +163,12 @@ async function refreshAccessToken(refreshToken, generation) {
     method: 'POST',
     headers: { Authorization: `Bearer ${refreshToken}` },
   })
-  const data = await response.json().catch(() => ({}))
-  requireSession(generation)
-  if (!response.ok) throw new ApiError(data.error || data.message || 'Your session has expired.', response.status, data)
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    requireSession(generation)
+    throw new ApiError(data.message || data.error || data.msg || 'Unable to refresh your session.', response.status, data)
+  }
+  const data = await readJsonResponse(response, generation, data => hasToken(data.token) && hasToken(data.refresh_token))
   if (sessionStorage.getItem('school_refresh_token') !== refreshToken) throw new ApiError('School account changed during session refresh.', 409)
   sessionStorage.setItem('school_access_token', data.token)
   sessionStorage.setItem('school_refresh_token', data.refresh_token)
@@ -134,8 +179,16 @@ async function refreshAccessToken(refreshToken, generation) {
   return data
 }
 
+async function revokeToken(path, token) {
+  // Logout owns captured credentials and must survive local logout/account switches.
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'POST', headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) throw new ApiError('Server logout could not be confirmed.', response.status)
+}
+
 export const schoolApi = {
-  schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values) }),
+  schoolLogin: (values) => api('/auth/login', { method: 'POST', body: JSON.stringify(values), validateResponse: loginResponse }),
   mfaStatus: () => api('/auth/mfa/status'),
   mfaSetup: () => api('/auth/mfa/setup', { method: 'POST' }),
   mfaEnable: (code) => api('/auth/mfa/enable', { method: 'POST', body: JSON.stringify({ code }) }),
@@ -148,13 +201,13 @@ export const schoolApi = {
   changePassword: (values) => api('/auth/change-password', { method: 'POST', body: JSON.stringify(values) }),
   forgotPassword: (values) => api('/auth/forgot-password', { method: 'POST', body: JSON.stringify(values) }),
   resetPassword: (values) => api('/auth/reset-password', { method: 'POST', body: JSON.stringify(values) }),
-  logout: (refreshToken) => api('/auth/logout', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${refreshToken}` } }),
-  logoutAccess: (accessToken) => api('/auth/logout/access', { method: 'POST', retry: false, headers: { Authorization: `Bearer ${accessToken}` } }),
+  logout: (refreshToken) => revokeToken('/auth/logout', refreshToken),
+  logoutAccess: (accessToken) => revokeToken('/auth/logout/access', accessToken),
   profile: () => api('/auth/profile'),
   updateProfile: (values) => api('/auth/profile', { method: 'PUT', body: JSON.stringify(values) }),
   sessions: () => api('/auth/sessions'),
   revokeSession: (sessionId) => api(`/auth/sessions/${sessionId}`, { method: 'DELETE' }),
-  superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values) }),
+  superAdminLogin: (values) => api('/super-admin/login', { method: 'POST', body: JSON.stringify(values), validateResponse: loginResponse }),
   dashboard: () => api('/dashboard/home'),
   globalSearch: (query) => api(`/search?q=${encodeURIComponent(query)}`),
   featureAccess: () => api('/school/feature-access'),
@@ -177,7 +230,7 @@ export const schoolApi = {
   updateSchoolSubscription: (schoolId, values) => api(`/super-admin/schools/${schoolId}/subscription`, { method: 'PATCH', body: JSON.stringify(values) }),
   updateSchool: (schoolId, values) => api(`/school/${schoolId}`, { method: 'PUT', body: values instanceof FormData ? values : JSON.stringify(values) }),
   updateSchoolStatus: (schoolId, status) => api(`/school/${schoolId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
-  createSchool: (values) => api('/school/setup', { method: 'POST', body: toFormData(values) }),
+  createSchool: (values) => api('/school/setup', { method: 'POST', body: toFormData(values), validateResponse: creationResponse }),
   branches: (filters = {}) => api('/branches?' + new URLSearchParams(filters)),
   createBranch: (values) => api('/branches', { method: 'POST', body: JSON.stringify(values) }),
   updateBranchStatus: (branchId, status) => api('/branches/' + branchId + '/status', { method: 'PATCH', body: JSON.stringify({ status }) }),
@@ -231,11 +284,11 @@ export const schoolApi = {
   updateUserStatus: (userId, values) => api(`/super-admin/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
   updateTenantUser: (userId, values) => api(`/users/${userId}`, { method: 'PUT', body: JSON.stringify(values) }),
   updateTenantUserStatus: (userId, values) => api(`/users/${userId}/status`, { method: 'PATCH', body: JSON.stringify(values) }),
-  createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values) }),
-  createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values) }),
+  createUser: (values) => api('/create-school-admin', { method: 'POST', body: JSON.stringify(values), validateResponse: creationResponse }),
+  createStudent: (values) => api('/student/create', { method: 'POST', body: toFormData(values), validateResponse: creationResponse }),
   createTeacher: (values) => api('/teacher/create', { method: 'POST', body: toFormData(values) }),
   createParent: (values) => api('/parent/create', { method: 'POST', body: JSON.stringify(values) }),
-  createClass: (values) => api('/class/create', { method: 'POST', body: JSON.stringify(values) }),
+  createClass: (values) => api('/class/create', { method: 'POST', body: JSON.stringify(values), validateResponse: creationResponse }),
   attendance: (date, className = 'All', section = 'All') => api(`/attendance/get?attendance_date=${date}&class_name=${encodeURIComponent(className)}&section=${encodeURIComponent(section)}`),
   attendanceReport: (filters = '') => api(`/attendance/report${filters ? `?${filters}` : ''}`),
   markAttendance: (values) => api('/attendance/mark', { method: 'POST', body: JSON.stringify(values) }),

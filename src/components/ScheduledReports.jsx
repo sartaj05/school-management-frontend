@@ -2,6 +2,7 @@ import {confirmPopup} from '../lib/confirmPopup'
 import { CalendarClock, History, Mail, PauseCircle, Plus, Send, Smartphone } from 'lucide-react'
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { api, schoolApi } from '../lib/api'
+import { reportTimestamp } from '../lib/reportTime'
 
 const empty = {
   report_key: 'attendance',
@@ -251,7 +252,7 @@ export default function ScheduledReports() {
               <td>{String(row.export_format || 'csv').toUpperCase()}</td>
               <td>{row.schedule_type} at {String(row.run_at).slice(0, 5)}</td>
               <td><small>{[...(row.email_recipients || []), ...(row.whatsapp_recipients || [])].join(', ') || '—'}</small></td>
-              <td>{row.next_run_at ? new Date(row.next_run_at + 'Z').toLocaleString() : '—'}</td>
+              <td>{reportTimestamp(row.next_run_at)}</td>
               <td><span className={'status-pill ' + (row.is_active ? '' : 'inactive')}>{row.is_active ? 'Active' : 'Paused'}</span></td>
               <td><div className="student-row-actions"><button disabled={busy} onClick={()=>edit(row)}>Edit</button>{!row.is_active&&<button disabled={busy} onClick={()=>resume(row.id)}>Resume</button>}<button onClick={() => runNow(row.id)} disabled={busy}><Send />Run now</button><button onClick={() => viewRuns(row.id)} disabled={busy}><History />Runs</button>{row.is_active && <button className="danger" onClick={() => pause(row.id)} disabled={busy}><PauseCircle />Pause</button>}</div></td>
             </tr>)}
@@ -259,7 +260,7 @@ export default function ScheduledReports() {
         {resolution&&<form className="editor-card" onSubmit={resolveUnknown}><h3>Review unknown delivery · {resolution.recipient}</h3><label>Confirmed outcome<select value={resolution.outcome} onChange={e=>setResolution({...resolution,outcome:e.target.value})}><option value="delivered">Confirmed delivered</option><option value="not_delivered">Confirmed not delivered</option></select></label><label>Provider evidence<textarea required minLength={10} maxLength={2000} value={resolution.evidence} onChange={e=>setResolution({...resolution,evidence:e.target.value})} placeholder="Provider reference, checked time and confirmation details"/></label><button disabled={busy}>Record provider confirmation</button><button type="button" disabled={busy} onClick={()=>setResolution(null)}>Cancel</button></form>}
       {Object.entries(runs).map(([id, items]) => <div className="scheduled-run-history" key={id}>
           <h3>Run history · schedule {id}</h3>
-          {items.length === 0 ? <p>No delivery runs recorded yet.</p> : <ul>{items.map(item => <li key={item.id}><b>{String(item.status || '').toUpperCase()}</b> · {item.record_count || 0} records · {item.started_at ? new Date(item.started_at).toLocaleString() : '—'}{item.error ? ' · ' + item.error : ''}{(item.delivery_results||[]).map((r,index)=><div key={index}>{r.channel} · {r.recipient} · {r.status || (r.success?'sent':'failed')} · Attempts: {r.attempts??1}{r.result?.resolution&&<p>Provider review: {r.result.resolution.outcome} · {r.result.resolution.evidence}</p>}{r.status==='unknown'&&<button disabled={busy||item.status==='running'} onClick={()=>setResolution({report:Number(id),run:item.id,channel:r.channel,recipient:r.recipient,expected_attempts:r.attempts,outcome:'delivered',evidence:''})}>Review unknown delivery</button>}</div>)}{(item.resolutions||[]).map((r,i)=><p key={`resolution-${i}`}>Provider review · {r.recipient} · {r.outcome} · {r.evidence} · {r.reviewed_at}</p>)}{item.uncertain_count>0&&<p>Unknown delivery: verify with the provider before any resend.</p>}{item.retryable_count>0&&<button disabled={busy} onClick={()=>retryFailed(id,item.id)}>Retry failed recipients</button>}</li>)}</ul>}
+          {items.length === 0 ? <p>No delivery runs recorded yet.</p> : <ul>{items.map(item => <li key={item.id}><b>{String(item.status || '').toUpperCase()}</b> · {item.record_count || 0} records · {reportTimestamp(item.started_at)}{item.error ? ' · ' + item.error : ''}{(item.delivery_results||[]).map((r,index)=><div key={index}>{r.channel} · {r.recipient} · {r.status || (r.success?'sent':'failed')} · Attempts: {r.attempts??1}{r.result?.resolution&&<p>Provider review: {r.result.resolution.outcome} · {r.result.resolution.evidence}</p>}{r.status==='unknown'&&<button disabled={busy||item.status==='running'} onClick={()=>setResolution({report:Number(id),run:item.id,channel:r.channel,recipient:r.recipient,expected_attempts:r.attempts,outcome:'delivered',evidence:''})}>Review unknown delivery</button>}</div>)}{(item.resolutions||[]).map((r,i)=><p key={`resolution-${i}`}>Provider review · {r.recipient} · {r.outcome} · {r.evidence} · {reportTimestamp(r.reviewed_at)}</p>)}{item.uncertain_count>0&&<p>Unknown delivery: verify with the provider before any resend.</p>}{item.retryable_count>0&&<button disabled={busy} onClick={()=>retryFailed(id,item.id)}>Retry failed recipients</button>}</li>)}</ul>}
         </div>)}
       </section>
     </section>
