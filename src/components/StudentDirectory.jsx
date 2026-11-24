@@ -152,7 +152,7 @@ function StudentEditForm({ student, students, classes, field, save, busy, error 
       <label>Section *<select required value={student.section || ''} disabled={!student.class_name} onChange={e => field('section', e.target.value)}><option value="">Select section</option>{sections.map(section => <option key={section} value={section}>{section}</option>)}</select></label>
       <label>Gender<select value={student.gender || ''} onChange={e => field('gender', e.target.value)}><option value="">Select</option><option>Male</option><option>Female</option><option>Other</option></select></label>
       <label>Date of birth<input type="date" value={student.dob || ''} onChange={e => field('dob', e.target.value)} /></label>
-      <label>Mobile<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Optional. If entered, use 10 digits starting with 6, 7, 8, or 9." value={student.mobile || ''} onChange={e => field('mobile', normalizeIndiaMobile(e.target.value))} /></label>
+      <label>Mobile<input type="tel" inputMode="tel" pattern="[+]91[6-9][0-9]{9}" title="Optional. If entered, use 10 digits starting with 6, 7, 8, or 9." value={student.mobile || ''} onChange={e => field('mobile', normalizeIndiaMobile(e.target.value))} /></label>
       <label>Email<input type="email" value={student.email || ''} onChange={e => field('email', e.target.value)} /></label>
       <label>Father name<input value={student.father_name || ''} onChange={e => field('father_name', e.target.value)} /></label>
       <label>Mother name<input value={student.mother_name || ''} onChange={e => field('mother_name', e.target.value)} /></label>

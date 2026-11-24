@@ -72,7 +72,7 @@ export default function AdmissionPage({ language = 'en' }) {
         <label>{t('Date of birth')}<input type="date" value={values.dob} onChange={e => field('dob', e.target.value)} /></label>
         <label>{t('Guardian name')} *<input required value={values.guardian_name} onChange={e => field('guardian_name', e.target.value)} /></label>
         <label>{t('Relationship')}<select value={values.guardian_relation} onChange={e => field('guardian_relation', e.target.value)}><option value="father">{t('Father')}</option><option value="mother">{t('Mother')}</option><option value="guardian">{t('Guardian')}</option><option value="other">{t('Other')}</option></select></label>
-        <label>{t('Guardian mobile')} *<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Enter 10 digits starting with 6, 7, 8, or 9." required value={values.guardian_mobile} onChange={e => field('guardian_mobile', e.target.value)} /></label>
+        <label>{t('Guardian mobile')} *<input type="tel" inputMode="tel" pattern="[+]91[6-9][0-9]{9}" title="Enter 10 digits starting with 6, 7, 8, or 9." required value={values.guardian_mobile} onChange={e => field('guardian_mobile', e.target.value)} /></label>
         <label>{t('Guardian email')}<input type="email" value={values.guardian_email} onChange={e => field('guardian_email', e.target.value)} /></label>
         {values.guardian_mobile && values.guardian_mobile !== '+91' && !phoneOk(values.guardian_mobile) && <div className="form-error">{t('Enter a valid Indian mobile number.')}</div>}
         {values.guardian_email && !emailOk(values.guardian_email) && <div className="form-error">{t('Enter a valid email address.')}</div>}
@@ -88,7 +88,7 @@ export default function AdmissionPage({ language = 'en' }) {
       <form className="field-grid three" onSubmit={checkStatus}>
         <label>{t('School')} *<select required value={trackValues.school_domain} onChange={e => trackField('school_domain', e.target.value)}><option value="">{t('Select school')}</option>{schools.map(s => <option key={s.id} value={s.domain}>{s.schoolName}</option>)}</select></label>
         <label>{t('Application number')} *<input required value={trackValues.application_no} onChange={e => trackField('application_no', e.target.value.toUpperCase())} placeholder="ADM-1234ABCD" /></label>
-        <label>{t('Guardian mobile')} *<input type="tel" inputMode="tel" maxLength="13" pattern="[+]91[6-9][0-9]{9}" title="Enter 10 digits starting with 6, 7, 8, or 9." required value={trackValues.guardian_mobile} onChange={e => trackField('guardian_mobile', e.target.value)} /></label>
+        <label>{t('Guardian mobile')} *<input type="tel" inputMode="tel" pattern="[+]91[6-9][0-9]{9}" title="Enter 10 digits starting with 6, 7, 8, or 9." required value={trackValues.guardian_mobile} onChange={e => trackField('guardian_mobile', e.target.value)} /></label>
         <div><button className="button button-small" disabled={trackBusy || !phoneOk(trackValues.guardian_mobile)}><Search size={16} />{trackBusy ? t('Checking...') : t('Check status')}</button></div>
       </form>
       {trackError && <div className="form-error">{trackError}</div>}
